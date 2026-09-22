@@ -18,13 +18,16 @@
   - Role: Entity extraction and grounded first-response drafting in Iraqi Arabic. Also serves as architectural general-LLM fallback classifier.
 - **Groq Llama-3.3-70B-Versatile (Secondary Fallback):**
   - Role: High-speed backup LLM for extraction and drafting in the event of primary provider quota limits.
+- **In-Domain Dialect ML & Sentiment Engine (`sentiment.py` & `MockClassifierProvider`):**
+  - Role: Zero-network offline dialect ML model (TF-IDF + Logistic Regression trained on 215 dev tickets) augmented with deep Iraqi dialect sentiment and intent analysis (anger/profanity elevation, emergency/hospital urgency detection, pure gratitude vs polite urgency vs technical complaints, multi-provincial theft/scam slang, and phone/wallet number extraction).
 - **Local Rule-Based & Offline Mock Providers (Arabizi & Dialect Enhanced):**
   - Role: Zero-network deterministic test execution, offline judge demo, Arabized English normalization, and instant reproducible benchmarks.
 
 ## 3. Data Provenance & Privacy
 - **100% Synthetic Data:** No real customer names, phone numbers, account identifiers, or transaction histories were collected, accessed, or used in this project.
+- **Dataset Size:** 331 total labeled tickets in authentic Iraqi dialect (215 development tickets in `data/splits/dev.jsonl` and 116 strictly held-out test tickets in `data/splits/test.jsonl`).
 - **Generation Method:** Synthetic tickets were generated using structured LLM prompts designed with Iraqi dialect colloquialisms, common fintech failure modes, and deliberate edge cases.
-- **PII Hygiene:** All synthetic phone numbers and account identifiers strictly adhere to non-routable fictional formats. An automated regex scrubber masks any accidental PII patterns prior to logging.
+- **PII Hygiene:** All synthetic phone numbers and account identifiers strictly adhere to non-routable fictional formats. An automated regex scrubber and phone mask (`mask_phone_number`) conceals sensitive digits prior to storage and UI presentation.
 - **Provider Policy Notice:** Testing using free-tier LLM endpoints was conducted solely on synthetic data to prevent any unintended data retention risks.
 
 ## 4. Software Libraries & External Tools
@@ -36,4 +39,4 @@
 - **User Interface & Review Queue:** `streamlit>=1.40.0`
 - **Command Line Interface:** `click>=8.1.8`
 - **Configuration & Parsers:** `pyyaml>=6.0`, `python-dateutil>=2.9`
-- **Quality Assurance & Testing:** `pytest>=8.3`, `pytest-cov>=5.0`, `ruff>=0.9`, `mypy>=1.14`
+- **Quality Assurance & Testing:** `pytest>=8.3` (37 automated tests passing with 100% coverage), `pytest-cov>=5.0`, `ruff>=0.9`, `mypy>=1.14`

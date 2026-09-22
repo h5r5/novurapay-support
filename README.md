@@ -25,7 +25,7 @@
 | **Gate 1** | Real commit history spanning build period | Continuous, atomic Git commits on `main` tracking `https://github.com/h5r5/ZainCash-support-`. |
 | **Gate 2** | Live run on judge-supplied input | `uv run supportpipe run --input <file.json>` and interactive "Paste JSON" panel in UI. |
 | **Gate 3** | Full disclosure of models, tools, and data | Full disclosure in [`DISCLOSURE.md`](file:///c:/Users/heyder/Desktop/dev/zine/DISCLOSURE.md) (Gemini 3.8 Flash, Jev 1.13, synthetic data, uv). |
-| **Gate 4** | Documented failure modes and handling (>= 3) | 5 failure modes with unit tests in [`FAILURE_MODES.md`](file:///c:/Users/heyder/Desktop/dev/zine/FAILURE_MODES.md) and [`tests/test_failure_modes.py`](file:///c:/Users/heyder/Desktop/dev/zine/tests/test_failure_modes.py). |
+| **Gate 4** | Documented failure modes and handling (>= 3) | 6 failure modes with unit tests in [`FAILURE_MODES.md`](file:///c:/Users/heyder/Desktop/dev/zine/FAILURE_MODES.md) and [`tests/test_failure_modes.py`](file:///c:/Users/heyder/Desktop/dev/zine/tests/test_failure_modes.py). |
 
 ---
 
@@ -94,35 +94,37 @@ uv run mypy src
 ZainCash-support-/
 ├── README.md                      # Project documentation, demo guide, benchmark results
 ├── DISCLOSURE.md                  # Gate 3: Model, data, and tool disclosures
-├── FAILURE_MODES.md               # Gate 4: 5 detailed failure modes and automated tests
+├── FAILURE_MODES.md               # Gate 4: 6 detailed failure modes and automated tests
 ├── pyproject.toml                 # uv package configuration and dependencies
 ├── docs/
+│   ├── ARCHITECTURE_MAP.md        # Master architectural roadmap & directory layout guide
 │   ├── BRIEF_DIGEST.md            # Master compliance tracking table
 │   ├── category_taxonomy.md       # Grounded taxonomy with evidence grades (A/B/C)
 │   ├── slides_evidence.md         # Verifiable evidence for Stage 2 presentation slides
 │   ├── sample_drafts_for_review.md# 10 sample pre-drafted Iraqi Arabic responses
 │   ├── decisions/                 # Architecture Decision Records (ADR-0001 to ADR-0004)
 │   ├── user_research/             # Bilingual interview guide for support agents
-│   └── self_audit/                # Milestone audit reports (M0.md, M1.md, M2.md)
+│   └── self_audit/                # Milestone audit reports (M0.md, M1.md, M2.md, M3.md)
 ├── src/supportpipe/
 │   ├── schemas.py                 # Pydantic v2 data models
 │   ├── pipeline.py                # Core batch orchestrator
 │   ├── logging_store.py           # Review queue storage with PII regex scrubbing
-│   ├── cli.py                     # CLI commands (health, run, eval)
+│   ├── cli.py                     # CLI commands (health, run, eval, patterns)
 │   ├── taxonomy/                  # categories.yaml, routing_table.yaml, priority_rubric.yaml
-│   ├── classify/                  # Classifier providers (Jev 1.13, Gemini, Mock)
-│   ├── extract/                   # Structured extraction and code-based date/amount normalization
+│   ├── classify/                  # Classifier providers (Jev 1.13, Gemini, Mock) and sentiment.py
+│   ├── extract/                   # Structured extraction (refs, amounts, dates, Iraqi/intl phones)
 │   ├── draft/                     # Grounded response generator and reviewed Arabic templates
 │   ├── routing/                   # Deterministic routing and confidence escalation
 │   ├── datagen/                   # 331 synthetic tickets generator with edge cases
 │   ├── evaluation/                # Evaluation benchmark suite and confusion matrices
+│   ├── patterns/                  # Systemic outage and weekly pattern detection
 │   └── ui/                        # Streamlit review queue UI
 ├── data/
 │   ├── manifest.json              # Frozen SHA-256 test set hashes
 │   ├── QA_NOTES.md                # 65-ticket manual inspection notes
-│   └── splits/                    # dev.jsonl and test.jsonl
+│   └── splits/                    # dev.jsonl (215 tickets) and test.jsonl (116 tickets)
 ├── results/                       # Reproducible run outputs (metrics.json, confusion.csv)
-└── tests/                         # 27 unit, integration, and failure mode tests
+└── tests/                         # 37 unit, integration, failure mode, and dialect tests (100% pass)
 ```
 
 ---

@@ -222,74 +222,91 @@ class MockClassifierProvider(BaseClassifierProvider):
             )
 
         # 4. Deterministic Heuristic Fallback (Safety net if ML pipelines are unavailable)
-        return self._heuristic_fallback(raw, text, norm)
+        return self._heuristic_fallback(raw, text, norm, sentiment)
 
-    def _heuristic_fallback(self, raw: str, text: str, norm: str) -> ClassificationResult:
+    def _heuristic_fallback(
+        self, raw: str, text: str, norm: str, sentiment: Any = None
+    ) -> ClassificationResult:
         """Rule-based fallback if ML pipeline is unavailable."""
+        stags = sentiment.sentiment_tags if sentiment else []
+
         if re.search(r"(انسرقت|احتيال|نصب|هكر|hack|scam|phishing|فيشنك|سرقوا|صفحة وهمية)", text, re.I):
             return ClassificationResult(
                 category="fraud_report", category_confidence=0.94, priority="high", priority_confidence=0.92,
                 reasoning_summary="Customer reports unauthorized transaction or suspected social engineering scam",
+                sentiment_tags=stags,
             )
         if re.search(r"(محظور|مجمد|تجميد|مقفل|راجع الادارة|موقوف|بلوك|باند|block|blocked)", text, re.I):
             return ClassificationResult(
                 category="account_blocked", category_confidence=0.93, priority="high", priority_confidence=0.91,
                 reasoning_summary="Customer account is suspended or blocked from operations",
+                sentiment_tags=stags,
             )
         if re.search(r"(شخص غلط|رقم غلط|حولت بالخطأ|غلطت بالرقم|غلطت برقم|لشخص غريب)", text, re.I):
             return ClassificationResult(
                 category="wrong_recipient", category_confidence=0.92, priority="high", priority_confidence=0.88,
                 reasoning_summary="User accidentally transferred money to an unintended recipient",
+                sentiment_tags=stags,
             )
         if re.search(r"(تسجيل\s*دخول|رمز\s*الدخول|باسورد|password|login|لوجن|رمز\s*التحقق|OTP|البصمة)", text, re.I):
             return ClassificationResult(
                 category="login_problem", category_confidence=0.91, priority="medium", priority_confidence=0.85,
                 reasoning_summary="Authentication or login credentials issue",
+                sentiment_tags=stags,
             )
         if re.search(r"(فاتورة|كهرباء|ماء|شحن رصيد|شحنت رصيد|كارت شحن|تسديد|اشتراك)", text, re.I):
             return ClassificationResult(
                 category="bill_payment_failure", category_confidence=0.89, priority="medium", priority_confidence=0.86,
                 reasoning_summary="Utility bill payment or mobile recharge issue",
+                sentiment_tags=stags,
             )
         if re.search(r"(تحويل|حولت|معلق|ما وصل|الحوالة معلقة|ترانسفير|دزيت حوالة)", text, re.I) and not re.search(r"بدون ما اسوي تحويل", text):
             return ClassificationResult(
                 category="failed_transfer", category_confidence=0.91, priority="high", priority_confidence=0.85,
                 reasoning_summary="P2P transfer pending or uncredited",
+                sentiment_tags=stags,
             )
         if re.search(r"(كارت|بطاقة مصرفية|ماستركارد|فيزا|الصراف|ATM|POS)", text, re.I) and not re.search(r"(بطاقة موحدة|بطاقة وطنية)", text):
             return ClassificationResult(
                 category="card_issue", category_confidence=0.90, priority="medium", priority_confidence=0.87,
                 reasoning_summary="Debit/prepaid card decline or ATM issue",
+                sentiment_tags=stags,
             )
         if re.search(r"(هوية|مستمسكات|توثيق|بطاقة موحدة|بطاقة وطنية|جواز|سيلفي|kyc)", text, re.I):
             return ClassificationResult(
                 category="kyc_document_issue", category_confidence=0.90, priority="medium", priority_confidence=0.88,
                 reasoning_summary="Identity verification document rejection or delay",
+                sentiment_tags=stags,
             )
         if re.search(r"(استرجاع|ريفاوند|refund|فلوس المتجر|لغيت طلب|رجعنا الفلوس)", text, re.I):
             return ClassificationResult(
                 category="refund_status", category_confidence=0.87, priority="medium", priority_confidence=0.82,
                 reasoning_summary="Merchant purchase cancellation refund status",
+                sentiment_tags=stags,
             )
         if re.search(r"(لاگ|لاك|كراش|تصفن|شاشة بيضاء|يعلك|عطل فني|التطبيق يسكر)", text, re.I):
             return ClassificationResult(
                 category="app_bug", category_confidence=0.85, priority="low", priority_confidence=0.80,
                 reasoning_summary="Cosmetic or client application bug",
+                sentiment_tags=stags,
             )
         if re.search(r"(رصيدي|كشف حساب|الحركات|خصم|بدون ما اسوي تحويل|balance|statement)", text, re.I):
             return ClassificationResult(
                 category="balance_or_statement_inquiry", category_confidence=0.86, priority="low", priority_confidence=0.85,
                 reasoning_summary="Wallet balance, fee, or statement inquiry",
+                sentiment_tags=stags,
             )
         if re.search(r"(وكيل|عمولة زايدة|رفض يسحب|مكتب|كاش اوت)", text, re.I) and not re.search(r"(وين اكدر|اقرب وكيل)", text):
             return ClassificationResult(
                 category="agent_dispute", category_confidence=0.88, priority="medium", priority_confidence=0.84,
                 reasoning_summary="Dispute with physical cash agent",
+                sentiment_tags=stags,
             )
         if re.search(r"(وين|فروع|رسوم|حدود|خدمات|help|مساعدة|اقرب وكيل)", text, re.I):
             return ClassificationResult(
                 category="general_inquiry", category_confidence=0.84, priority="low", priority_confidence=0.85,
                 reasoning_summary="General customer inquiry",
+                sentiment_tags=stags,
             )
 
         return ClassificationResult(
@@ -298,4 +315,5 @@ class MockClassifierProvider(BaseClassifierProvider):
             priority="low",
             priority_confidence=0.55,
             reasoning_summary="Message lacks explicit keywords matching established fintech categories",
+            sentiment_tags=stags,
         )
