@@ -20,7 +20,9 @@ class Settings(BaseSettings):
     gemini_api_key: str = ""
     groq_api_key: str = ""
     jev_api_key: str = ""
-    jev_base_url: str = "https://api.jev.ai/v1"
+    typesafe_api_key: str = ""
+    jev_base_url: str = "https://api.typesafe.ai"
+    jev_model: str = "jev-latest"
 
     # Escalation Thresholds (Defaults tuned on dev split)
     category_confidence_threshold: float = 0.65
