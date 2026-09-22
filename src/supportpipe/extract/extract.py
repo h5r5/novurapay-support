@@ -29,7 +29,7 @@ def extract_entities_offline(
     # 2. Amount IQD parsing (mask reference first to prevent ref digits colliding with amount)
     text_for_amt = text.replace(found_ref, " ") if found_ref else text
     amt_match = re.search(
-        r"(?:مبلغ\s*)?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?|\b\d+\s*الف|\bنص\s*مليون|\bربع\s*مليون|\bمليون|\b\d+\s*ألف)\s*(?:دينار|الف|ألف|iqd)?",
+        r"(?:مبلغ\s*)?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?\s*[km]|\d+(?:\.\d+)?|\b\d+\s*(?:الاف|آلاف|الف|ألف)|\bنص\s*مليون|\bربع\s*مليون|\bمليون|\b\d+\s*(?:الاف|آلاف|ألف|الف))\s*(?:دينار|الاف|آلاف|الف|ألف|iqd)?",
         text_for_amt,
         re.IGNORECASE,
     )

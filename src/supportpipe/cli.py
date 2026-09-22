@@ -102,9 +102,16 @@ def run(input_path: Path, output_dir: Path | None) -> None:
     default="test",
     help="Dataset split to evaluate on (frozen test set by default).",
 )
-def eval(split: str) -> None:
+@click.option(
+    "--mode",
+    type=click.Choice(["offline", "live"], case_sensitive=False),
+    default="offline",
+    help="Evaluation mode: 'offline' (reproducible deterministic benchmark, default) or 'live' (calls active API).",
+)
+def eval(split: str, mode: str) -> None:
     """Execute evaluation benchmark and produce metrics and confusion matrix."""
-    click.echo(f"Starting evaluation on frozen split: {split.upper()}...")
+    click.echo(f"Starting evaluation on frozen split: {split.upper()} (Mode: {mode.upper()})...")
+    settings.llm_mode = mode.lower()  # type: ignore[assignment]
     try:
         metrics = execute_evaluation(split=split.lower())
         click.echo("=" * 60)

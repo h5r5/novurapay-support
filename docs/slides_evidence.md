@@ -14,13 +14,13 @@
 
 | Slide Headline Metric | Measured Result | Baseline / Comparison | Provenance / File Path |
 |---|---|---|---|
-| **Classification Accuracy vs. Baseline** | **56.03%** | **12.07%** (Majority class baseline) | `results/eval_test_20260922_015545/metrics.json` |
-| **Accuracy on Auto-Handled Slice** | **70.00%** | **+13.97% Uplift** over raw overall accuracy | `results/eval_test_20260922_015545/metrics.json` |
-| **Escalation Rate (Human Triage)** | **31.03%** (36 / 116 tickets) | Graceful escalation of low-confidence / missing data | `results/eval_test_20260922_015545/metrics.json` |
-| **Transaction Ref Exact Match** | **100.0%** (35 / 35 tickets) | Exact extraction of synthetic reference strings | `results/eval_test_20260922_015545/metrics.json` |
-| **Amount IQD Exact Match** | **72.41%** (21 / 29 tickets) | Normalization of verbal and written Iraqi amounts | `results/eval_test_20260922_015545/metrics.json` |
-| **Priority Assignment Accuracy** | **59.48%** | Rubric alignment (High, Medium, Low) | `results/eval_test_20260922_015545/metrics.json` |
-| **Processing Throughput** | **11,051 tickets/sec** | Average latency **0.05 ms** per ticket | `results/eval_test_20260922_015545/metrics.json` |
+| **Classification Accuracy vs. Baseline** | **61.21%** | **12.07%** (Majority class baseline) | `results/eval_test_20260922_024459/metrics.json` |
+| **Accuracy on Auto-Handled Slice** | **74.12%** | **+12.91% Uplift** over raw overall accuracy | `results/eval_test_20260922_024459/metrics.json` |
+| **Escalation Rate (Human Triage)** | **26.72%** (31 / 116 tickets) | Graceful escalation of low-confidence / missing data | `results/eval_test_20260922_024459/metrics.json` |
+| **Transaction Ref Exact Match** | **100.0%** (35 / 35 tickets) | Exact extraction of synthetic reference strings | `results/eval_test_20260922_024459/metrics.json` |
+| **Amount IQD Exact Match** | **93.10%** (27 / 29 tickets) | Normalization of verbal, plural, and written amounts | `results/eval_test_20260922_024459/metrics.json` |
+| **Priority Assignment Accuracy** | **65.52%** | Rubric alignment (High, Medium, Low) | `results/eval_test_20260922_024459/metrics.json` |
+| **Processing Throughput** | **2,438 tickets/sec** | Average latency **0.41 ms** per ticket (offline) | `results/eval_test_20260922_024459/metrics.json` |
 
 ---
 
@@ -28,20 +28,20 @@
 
 | Category | Precision | Recall | F1-Score | Support (Sample Count) |
 |---|---|---|---|---|
+| `account_blocked` | 1.000 | 1.000 | **1.000** | 8 |
 | `bill_payment_failure` | 1.000 | 0.800 | **0.889** | 10 |
 | `agent_dispute` | 0.700 | 1.000 | **0.824** | 7 |
 | `fraud_report` | 0.778 | 0.778 | **0.778** | 9 |
-| `account_blocked` | 1.000 | 0.625 | **0.769** | 8 |
 | `card_issue` | 0.667 | 0.857 | **0.750** | 7 |
 | `wrong_recipient` | 1.000 | 0.571 | **0.727** | 7 |
+| `login_problem` | 1.000 | 0.500 | **0.667** | 14 |
 | `balance_or_statement_inquiry` | 0.714 | 0.556 | **0.625** | 9 |
-| `failed_transfer` | 0.583 | 0.500 | **0.538** | 14 |
+| `failed_transfer` | 0.615 | 0.571 | **0.593** | 14 |
 | `kyc_document_issue` | 0.500 | 0.400 | **0.444** | 5 |
-| `login_problem` | 1.000 | 0.286 | **0.444** | 14 |
 | `refund_status` | 1.000 | 0.200 | **0.333** | 5 |
-| `unclear_or_incomplete` | 0.179 | 0.833 | **0.294** | 6 |
+| `unclear_or_incomplete` | 0.208 | 0.833 | **0.333** | 6 |
 | `app_bug` | 0.333 | 0.250 | **0.286** | 8 |
-| `general_inquiry` | 0.222 | 0.286 | **0.250** | 7 |
+| `general_inquiry` | 0.333 | 0.286 | **0.308** | 7 |
 
 ---
 

@@ -32,10 +32,36 @@ def test_parse_iqd_amount_formats() -> None:
     assert parse_iqd_amount("100 الف") == 100000
     assert parse_iqd_amount("75 ألف") == 75000
 
+    # Plural and English notation (الاف, آلاف, k, m)
+    assert parse_iqd_amount("10 الاف") == 10000
+    assert parse_iqd_amount("5 آلاف دينار") == 5000
+    assert parse_iqd_amount("50k") == 50000
+    assert parse_iqd_amount("1.5m") == 1500000
+
     # Invalid / out of bounds
     assert parse_iqd_amount("مبلغ غير معروف") is None
     assert parse_iqd_amount(100) is None  # below 500 IQD min
     assert parse_iqd_amount(200_000_000) is None  # above 100m IQD max
+
+
+def test_arabizi_and_slang_normalization() -> None:
+    """Verify Arabized English, transliteration, and Iraqi chat slang normalization."""
+    from supportpipe.extract.normalize import normalize_arabizi_and_slang
+
+    # Politeness & gratitude
+    res1 = normalize_arabizi_and_slang("ثانكيو برو تسلم اوك تمام")
+    assert "شكرا" in res1
+    assert "اخي" in res1
+    assert "حسنا" in res1
+
+    # Fintech terms with Arabic prefixes
+    res2 = normalize_arabizi_and_slang("عندي مشكلة بالترانسفير وكراش بالاب")
+    assert "تحويل" in res2
+    assert "عطل مفاجئ" in res2
+
+    # Account block slang
+    res3 = normalize_arabizi_and_slang("محفظتي انطوها بلوك وباند وما اكدر ادخل")
+    assert "حظر" in res3
 
 
 def test_resolve_relative_dates() -> None:
