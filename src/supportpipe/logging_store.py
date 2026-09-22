@@ -51,3 +51,28 @@ class ReviewQueueStore:
             json.dump(summary.model_dump(), f, ensure_ascii=False, indent=2)
 
         return run_folder
+
+    def record_human_action(
+        self,
+        ticket_id: str,
+        action: str,
+        agent_id: str = "AGENT-QA-01",
+        notes: str | None = None,
+        final_reply: str | None = None,
+    ) -> dict[str, str]:
+        """Record an immutable audit log entry for human-in-the-loop review actions."""
+        from datetime import datetime
+
+        audit_file = self.storage_dir / "human_audit_log.jsonl"
+        entry = {
+            "timestamp": datetime.now().astimezone().isoformat(),
+            "ticket_id": ticket_id,
+            "agent_id": agent_id,
+            "action": action,  # APPROVED | EDITED | ESCALATED
+            "notes": mask_pii(notes) if notes else "",
+            "final_reply": mask_pii(final_reply) if final_reply else "",
+        }
+        with open(audit_file, "a", encoding="utf-8") as f:
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        return entry
+

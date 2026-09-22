@@ -36,6 +36,9 @@ ENV/
 *.swp
 *.swo
 .skills
+.agents
+.agent
+.claude/
 
 # Testing & Coverage
 .pytest_cache/
