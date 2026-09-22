@@ -1,0 +1,129 @@
+# Category Taxonomy for Support Pipeline Automation
+# Closed enum of valid support categories with Arabic names and descriptions.
+
+categories:
+  failed_transfer:
+    id: failed_transfer
+    name_ar: تحويل مالي معلق أو فاشل
+    name_en: Failed or Pending Transfer
+    description_ar: أموال تم خصمها من المحفظة لكنها لم تصل إلى المستلم أو فشلت العملية مع بقاء الخصم معلقاً.
+    requires_transaction_ref: true
+    requires_amount: true
+    evidence_grade: A
+
+  wrong_recipient:
+    id: wrong_recipient
+    name_ar: تحويل إلى مستلم خاطئ
+    name_en: Transfer to Wrong Recipient
+    description_ar: قام العميل بتحويل مبلغ مالي عن طريق الخطأ إلى رقم هاتف أو محفظة شخص آخر ويطلب استرجاعه.
+    requires_transaction_ref: true
+    requires_amount: true
+    evidence_grade: A
+
+  login_problem:
+    id: login_problem
+    name_ar: مشكلة في تسجيل الدخول والتطبيق
+    name_en: Login or Authentication Issue
+    description_ar: عدم القدرة على الدخول للتطبيق، نسيان كلمة المرور، عدم استلام رمز التحقق OTP، أو إغلاق التطبيق فجأة.
+    requires_transaction_ref: false
+    requires_amount: false
+    evidence_grade: A
+
+  agent_dispute:
+    id: agent_dispute
+    name_ar: نزاع أو شكوى على وكيل
+    name_en: Agent Dispute or Cash-out Issue
+    description_ar: وكيل السحب والإيداع رفض تقديم الخدمة، أو فرض عمولة إضافية غير قانونية، أو سلم مبلغاً غير مطابق.
+    requires_transaction_ref: false
+    requires_amount: false
+    evidence_grade: A
+
+  card_issue:
+    id: card_issue
+    name_ar: مشاكل بطاقات الدفع (ماستركارد/فيزا)
+    name_en: Payment Card Issue
+    description_ar: رفض البطاقة في أجهزة الصراف الآلي أو نقاط البيع POS، احتجاز البطاقة، أو فشل الشراء عبر الإنترنت.
+    requires_transaction_ref: false
+    requires_amount: false
+    evidence_grade: A
+
+  balance_or_statement_inquiry:
+    id: balance_or_statement_inquiry
+    name_ar: استفسار عن الرصيد أو كشف الحساب
+    name_en: Balance or Statement Inquiry
+    description_ar: العميل يعتقد أن رصيده الحالي غير صحيح، أو يطلب كشفاً بالعمليات والرسوم المقتطعة.
+    requires_transaction_ref: false
+    requires_amount: false
+    evidence_grade: B
+
+  bill_payment_failure:
+    id: bill_payment_failure
+    name_ar: فشل تسديد فاتورة أو شحن رصيد
+    name_en: Bill Payment or Recharge Failure
+    description_ar: دفع فاتورة كهرباء/ماء أو شحن خط اتصالات وتم خصم المبلغ لكن الخدمة لم تتفعل أو لم تسدد.
+    requires_transaction_ref: true
+    requires_amount: true
+    evidence_grade: A
+
+  account_blocked:
+    id: account_blocked
+    name_ar: تجميد أو حظر الحساب
+    name_en: Blocked or Suspended Account
+    description_ar: ظهور رسالة بأن الحساب معطل أو مقيد، أو طلب مراجعة الشركة لفك الحظر.
+    requires_transaction_ref: false
+    requires_amount: false
+    evidence_grade: A
+
+  kyc_document_issue:
+    id: kyc_document_issue
+    name_ar: مشاكل توثيق الهوية والبيانات
+    name_en: KYC or Identity Document Issue
+    description_ar: رفض صور المستمسكات الرسمية (البطاقة الموحدة/جواز السفر)، أو طلب تحديث البيانات الشخصية.
+    requires_transaction_ref: false
+    requires_amount: false
+    evidence_grade: A
+
+  fraud_report:
+    id: fraud_report
+    name_ar: بلاغ عن احتيال أو سرقة
+    name_en: Fraud or Scam Report
+    description_ar: إبلاغ العميل بعد وقوع احتيال عليه (مثل إعطاء OTP لمحتال يدعي أنه موظف، أو رابط مسابقة وهمي).
+    requires_transaction_ref: false
+    requires_amount: false
+    evidence_grade: A
+
+  refund_status:
+    id: refund_status
+    name_ar: متابعة حالة استرجاع مالي
+    name_en: Refund Status Inquiry
+    description_ar: استفسار العميل عن موعد عودة أموال عملية ملغاة أو مسترجعة من تاجر أو موقع تجارة إلكترونية.
+    requires_transaction_ref: true
+    requires_amount: false
+    evidence_grade: B
+
+  app_bug:
+    id: app_bug
+    name_ar: عطل فني أو خطأ برمجي بالتطبيق
+    name_en: App Bug or Technical Glitch
+    description_ar: شاشة بيضاء، تعليق الواجهة، أو رسائل خطأ غير مفهومة داخل التطبيق لا تتعلق بتسجيل الدخول.
+    requires_transaction_ref: false
+    requires_amount: false
+    evidence_grade: B
+
+  general_inquiry:
+    id: general_inquiry
+    name_ar: استفسار عام أو رسوم وميزات
+    name_en: General Service Inquiry
+    description_ar: استفسار عن حدود السحب والإيداع، أماكن الوكلاء القريبين، العروض، أو أوقات الدوام.
+    requires_transaction_ref: false
+    requires_amount: false
+    evidence_grade: B
+
+  unclear_or_incomplete:
+    id: unclear_or_incomplete
+    name_ar: رسالة غير واضحة أو ناقصة التفاصيل
+    name_en: Unclear or Incomplete Ticket
+    description_ar: نص التذكرة غامض جداً، مجرد تحية بدون مشكلة، أو فارغ، أو بلغة غير مدعومة. يجب التصعيد دائماً.
+    requires_transaction_ref: false
+    requires_amount: false
+    evidence_grade: A
