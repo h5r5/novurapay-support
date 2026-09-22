@@ -105,3 +105,24 @@ def test_failure_mode_ungrounded_draft_rejected() -> None:
     assert source == "template_fallback"
     assert any("forbidden outcome promise" in r or "Unverified number" in r for r in reasons)
     assert "نضمن لك" not in draft
+
+
+def test_failure_mode_street_slang_theft_and_anger() -> None:
+    """FM-06: Raw street slang theft (باكوني/انبكت) with customer anger must route to Security/Fraud with High priority."""
+    ticket = Ticket(
+        ticket_id="TKT-THEFT-TEST",
+        channel="app",
+        synthetic_user_id="USR-THEFT-01",
+        submitted_at="2026-09-22T10:00:00+03:00",
+        raw_text="باكوني الرميال اريدك كلش ضايج انعل ابوكم يابو الخلفكم اوت البارحه انبكت عشرتالاف دينار !!",
+    )
+    res = process_ticket(ticket, provider_override="mock")
+
+    assert res.category == "fraud_report"
+    assert res.priority == "high"
+    assert res.team == "Security/Fraud"
+    assert res.extracted_fields.amount_iqd == 10_000
+    assert res.extracted_fields.event_date_text == "اوت البارحه"
+    assert res.extracted_fields.event_date_resolved == "2026-09-21"
+    assert "Customer reports unauthorized theft" in res.reasoning_summary
+

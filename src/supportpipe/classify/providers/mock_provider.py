@@ -150,6 +150,31 @@ class MockClassifierProvider(BaseClassifierProvider):
                 reasoning_summary="Customer compliment or courtesy appreciation without reported technical issue",
             )
 
+        # 2.5 Urgent Theft, Fraud, Scam & Social Engineering Report (High Priority)
+        # Captures authentic Iraqi street slang: باكوني, انبكت, باكوا, يبوكون, قفاصة, طيروا فلوسي
+        if re.search(
+            r"(باكوني|باكونه|باكون|باكوا|باكني|باك|انبكت|انباكت|انبكنه|يبوكون|يبوك|"
+            r"انسرقت|سرقوا|سرقني|سرقة|احتيال|نصب|نصابين|قفاصة|قفاص|طيروا\s*فلوسي|"
+            r"طارت\s*فلوسي|اخذوا\s*فلوسي|هكر|hack|scam|phishing|فيشنك|صفحة\s*وهمية)",
+            raw,
+            re.IGNORECASE,
+        ) or re.search(r"(احتيال|سرقة|سرقوني)", norm):
+            is_angry = bool(re.search(
+                r"(كلش\s*ضايج|معصب|انعل|حرامية|قشامر|كذابين|ما\s*تستحون|طايح\s*حظكم|لحكولي|الفلوس\s*طارت)",
+                raw,
+                re.IGNORECASE,
+            ))
+            reason = "Customer reports unauthorized theft (باكوني/انبكت) or fraud"
+            if is_angry:
+                reason += " with severe customer frustration/anger; prioritized for expedited fraud triage"
+            return ClassificationResult(
+                category="fraud_report",
+                category_confidence=0.96,
+                priority="high",
+                priority_confidence=0.96,
+                reasoning_summary=reason,
+            )
+
         # 3. Hybrid ML Model Inference (if dev data trained successfully)
         if self.cat_pipe is not None and self.prio_pipe is not None:
             probs = self.cat_pipe.predict_proba([norm])[0]

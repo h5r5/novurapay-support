@@ -71,3 +71,16 @@ In mission-critical fintech and banking operations, failure is inevitable; what 
   - The pipeline falls back to a deterministic, human-reviewed Iraqi Arabic template from `templates_ar.yaml`.
   - A warning note is logged in `PipelineResult.provider_path = 'template_fallback'`.
 - **Verification Test:** `tests/test_failure_modes.py::test_failure_mode_ungrounded_draft_rejected`
+
+---
+
+### Failure Mode 6: Extreme Street Dialect Theft/Fraud with Customer Anger & Colloquial Amounts (FM-06)
+- **Trigger:** A customer uses authentic, unfiltered Iraqi street colloquialisms for theft (*"باكوني"*, *"انبكت"*, *"باكوا"*, *"يبوكون"*, *"طيروا فلوسي"*, *"قفاصة"*) paired with extreme customer distress/anger (*"كلش ضايج"*, *"انعل..."*) and vernacular connected amounts (*"عشرتالاف"*, *"خمستالاف"*).
+- **Failure Risk:** Standard NLP models trained only on synthetic or Modern Standard Arabic (MSA) misinterpret these words as general transfer failures (`failed_transfer`), fail to parse connected Iraqi words as numbers, and ignore the customer's urgent sentiment.
+- **Detection & Handling:**
+  1. Lexical and morphological Iraqi dialect roots (`باكوني`, `انبكت`, `باكوا`, `قفاصة`) directly trigger category `fraud_report` at 96% confidence.
+  2. Urgent distress / anger sentiment analysis triggers `priority = "high"` and routes immediately to `Security/Fraud`.
+  3. Pre-split dialect normalization parses compound amounts (`عشرتالاف` $\rightarrow$ 10,000 IQD) and relative dates (`اوت البارحه` / `اولت البارحة` $\rightarrow$ $T - 2$ days).
+  4. Response draft generated specifically for security fraud response with urgent human review triage.
+- **Verification Test:** `tests/test_failure_modes.py::test_failure_mode_street_slang_theft_and_anger`
+
