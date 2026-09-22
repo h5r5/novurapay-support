@@ -17,9 +17,10 @@ def get_classifier_provider(provider_name: str | None = None) -> BaseClassifierP
     if settings.llm_mode == "offline":
         return MockClassifierProvider()
 
-    name = (provider_name or "jev" if settings.jev_api_key else "gemini").lower()
+    has_jev = bool(settings.jev_api_key or settings.typesafe_api_key)
+    name = (provider_name or ("jev" if has_jev else "gemini")).lower()
 
-    if name == "jev" and settings.jev_api_key:
+    if name == "jev" and has_jev:
         return JevClassifierProvider()
     elif name == "gemini" and settings.gemini_api_key:
         return GeminiClassifierProvider()

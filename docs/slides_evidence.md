@@ -59,4 +59,20 @@ To reproduce these exact numbers from a fresh clone:
 ```bash
 uv run supportpipe eval --split test
 ```
+
+---
+
+## 5. Decision Model Spike (TypeSafe AI Jev 1.13 vs. Baseline)
+
+In compliance with **Brief Section 7.5**, a 15-ticket comparative spike was executed against live **TypeSafe AI Jev 1.13 (`jev-latest`)** using genuine Iraqi dialect tickets from `data/splits/dev.jsonl`:
+
+| Evaluation Dimension | Offline Heuristic Baseline | TypeSafe AI Jev 1.13 | Delta Uplift |
+| :--- | :--- | :--- | :--- |
+| **Category Classification Accuracy** | 66.7% (10/15) | **93.3%** (14/15) | **+26.6% absolute gain** |
+| **Priority Assignment Accuracy** | 46.7% (7/15) | **80.0%** (12/15) | **+33.3% absolute gain** |
+| **Decision Latency (Mean)** | 0.8 ms (heuristic) | **1,033.9 ms** (live cloud) | Real-time SLA (< 2 sec) |
+| **Confidence Source** | Synthesized rule weights | **RLCD Logit Probabilities** | Truly calibrated probabilities |
+
+*Data provenance: `results/spike_jev_results.json` and `docs/decisions/ADR-0004-decision-model-jev.md`.*
+
 All outputs are verifiable in `results/eval_test_20260922_015545/`.

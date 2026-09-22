@@ -26,14 +26,14 @@ def extract_entities_offline(
     )
     found_ref = ref_match.group(1).upper() if ref_match else None
 
-    # 2. Amount IQD parsing
-    # Look for amounts mentioned with thousands or currency words
+    # 2. Amount IQD parsing (mask reference first to prevent ref digits colliding with amount)
+    text_for_amt = text.replace(found_ref, " ") if found_ref else text
     amt_match = re.search(
-        r"(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?|\b\d+\s*الف|\bنص\s*مليون|\bربع\s*مليون|\bمليون|\b\d+\s*ألف)\s*(?:دينار|الف|ألف|iqd)?",
-        text,
+        r"(?:مبلغ\s*)?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?|\b\d+\s*الف|\bنص\s*مليون|\bربع\s*مليون|\bمليون|\b\d+\s*ألف)\s*(?:دينار|الف|ألف|iqd)?",
+        text_for_amt,
         re.IGNORECASE,
     )
-    found_amt = parse_iqd_amount(amt_match.group(0)) if amt_match else None
+    found_amt = parse_iqd_amount(amt_match.group(1)) if amt_match else None
 
     # 3. Relative or explicit date phrase
     date_phrase_match = re.search(

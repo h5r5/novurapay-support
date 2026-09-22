@@ -1,8 +1,21 @@
 """Pytest test configuration and fixtures."""
 
+from collections.abc import Generator
+
 import pytest
 
 from supportpipe.config import Settings
+
+
+@pytest.fixture(autouse=True)
+def force_offline_mode_for_unit_tests(
+    monkeypatch: pytest.MonkeyPatch,
+) -> Generator[None, None, None]:
+    """Force offline mock mode during unit testing to prevent API quota consumption."""
+    from supportpipe.config import settings
+
+    monkeypatch.setattr(settings, "llm_mode", "offline")
+    yield
 
 
 @pytest.fixture

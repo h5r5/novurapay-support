@@ -170,5 +170,57 @@ def patterns(input_path: Path) -> None:
     click.echo(report_md)
 
 
+@main.command(name="classify-one")
+@click.option("--text", "-t", required=True, help="Raw ticket message text (in Iraqi Arabic).")
+@click.option(
+    "--channel",
+    "-c",
+    default="app",
+    type=click.Choice(["app", "whatsapp", "sms"]),
+    help="Ticket channel.",
+)
+def classify_one_cmd(text: str, channel: str) -> None:
+    """Classify and process a single ticket in real-time through the pipeline."""
+    from datetime import datetime
+
+    from supportpipe.pipeline import process_ticket
+
+    ticket = Ticket(
+        ticket_id="CLI-TKT-LIVE",
+        submitted_at=datetime.now().astimezone().isoformat(),
+        synthetic_user_id="USER-CLI",
+        channel=channel,  # type: ignore[arg-type]
+        raw_text=text,
+    )
+    result = process_ticket(ticket)
+    click.echo("\n" + "=" * 60)
+    click.echo("SupportPipe Live Decision:")
+    click.echo(
+        f"  Category:        {result.category} (Confidence: {result.category_confidence:.2f})"
+    )
+    click.echo(
+        f"  Priority:        {result.priority} (Confidence: {result.priority_confidence:.2f})"
+    )
+    click.echo(f"  Routed Team:     {result.team}")
+    click.echo(f"  Escalated:       {result.escalated} ({result.escalation_reason or 'None'})")
+    click.echo(f"  Extracted Ref:   {result.extracted_fields.transaction_ref or 'None'}")
+    click.echo(f"  Extracted IQD:   {result.extracted_fields.amount_iqd or 'None'}")
+    click.echo(f"  Latency:         {result.latency_ms:.1f} ms")
+    click.echo(f"  Provider:        {result.provider_path}")
+    click.echo("-" * 60)
+    click.echo("Draft Response:")
+    click.echo(result.draft_reply or "(No draft generated; ticket escalated)")
+    click.echo("=" * 60 + "\n")
+
+
+@main.command(name="spike")
+@click.option("--count", "-n", default=15, help="Number of diverse tickets to evaluate.")
+def spike_cmd(count: int) -> None:
+    """Run the 15-ticket comparative spike between Jev 1.13 and baseline (Section 7.5)."""
+    from supportpipe.evaluation.spike_jev import run_spike
+
+    run_spike(count)
+
+
 if __name__ == "__main__":
     main()
