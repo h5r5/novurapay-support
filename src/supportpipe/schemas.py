@@ -99,6 +99,7 @@ class PipelineResult(BaseModel):
     escalation_reason: str | None = None
     draft_reply: str | None = None
     provider_path: str  # e.g., 'jev', 'gemini', 'groq', 'template', 'offline_mock'
+    reasoning_summary: str = ""
     latency_ms: float = 0.0
 
 

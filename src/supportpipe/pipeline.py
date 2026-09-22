@@ -16,7 +16,7 @@ from supportpipe.schemas import (
 )
 
 
-def process_ticket(ticket: Ticket) -> PipelineResult:
+def process_ticket(ticket: Ticket, provider_override: str | None = None) -> PipelineResult:
     """Process a single ticket through the complete typed pipeline."""
     start_time = time.perf_counter()
 
@@ -24,6 +24,7 @@ def process_ticket(ticket: Ticket) -> PipelineResult:
     classification, provider_tag = classify_ticket(
         ticket_text=ticket.raw_text,
         channel=ticket.channel,
+        provider_name=provider_override,
     )
 
     # 2. Structured Extraction & Code Normalization
@@ -81,11 +82,15 @@ def process_ticket(ticket: Ticket) -> PipelineResult:
         escalation_reason=escalation_reason,
         draft_reply=draft_reply,
         provider_path=f"{provider_tag}+{draft_source}",
+        reasoning_summary=classification.reasoning_summary,
         latency_ms=round(total_latency_ms, 2),
     )
 
 
-def run_batch(tickets: list[Ticket]) -> tuple[list[PipelineResult], BatchSummary]:
+def run_batch(
+    tickets: list[Ticket],
+    provider_override: str | None = None,
+) -> tuple[list[PipelineResult], BatchSummary]:
     """Execute pipeline over a batch of tickets and compute aggregate summary."""
     batch_start = time.perf_counter()
     results: list[PipelineResult] = []
@@ -98,7 +103,7 @@ def run_batch(tickets: list[Ticket]) -> tuple[list[PipelineResult], BatchSummary
     total_latency = 0.0
 
     for ticket in tickets:
-        res = process_ticket(ticket)
+        res = process_ticket(ticket, provider_override=provider_override)
         results.append(res)
 
         total_latency += res.latency_ms
