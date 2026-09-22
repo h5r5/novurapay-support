@@ -16,6 +16,7 @@ dependencies = [
     "tenacity>=9.0.0",
     "click>=8.1.8",
     "python-dateutil>=2.9.0",
+    "streamlit>=1.40.0",
     "google-genai>=1.0.0; extra == 'live'",
     "groq>=0.15.0; extra == 'live'",
 ]

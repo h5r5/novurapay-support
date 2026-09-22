@@ -52,8 +52,8 @@ class DraftManager:
         Returns:
             (draft_reply, safety_passed, failure_reasons, provider_source)
         """
-        # If candidate provided and not offline
-        if llm_draft_candidate and settings.llm_mode != "offline":
+        # If a candidate draft was provided (from LLM or test input), validate against safety gates
+        if llm_draft_candidate:
             passed, reasons = validate_draft_response(
                 draft_text=llm_draft_candidate,
                 ticket_raw_text=ticket_raw_text,
@@ -62,7 +62,7 @@ class DraftManager:
             )
             if passed:
                 return llm_draft_candidate, True, [], "llm"
-            # Candidate failed validation, fall back to template with warning note
+            # Candidate failed validation, fall back to reviewed template with warning note
             fallback = self.render_template(category, extracted)
             return fallback, False, reasons, "template_fallback"
 

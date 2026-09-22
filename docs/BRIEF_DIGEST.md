@@ -13,7 +13,7 @@
 | **GATE-01** | Repository with commit history spanning build period | `https://github.com/h5r5/ZainCash-support-`, Git log | `git log --oneline` shows continuous, meaningful commits across build days | `IN_PROGRESS` |
 | **GATE-02** | Live run on judge-supplied input | `src/supportpipe/cli.py`, `src/supportpipe/ui/app.py` | CLI batch run command (`supportpipe run --input <file>`) accepting novel batch | `VERIFIED_COMPLETE` |
 | **GATE-03** | Full disclosure of models, tools, and data | `DISCLOSURE.md` | Audit of models (Gemini 3.8 Flash, Jev 1.13), libraries, prompts, synthetic data | `VERIFIED_COMPLETE` |
-| **GATE-04** | At least 3 documented failure modes and how each is handled (target >= 5) | `FAILURE_MODES.md`, `tests/test_failure_modes.py` | 5+ failure modes documented with triggers, mitigations, and passing unit tests | `IN_PROGRESS` |
+| **GATE-04** | At least 3 documented failure modes and how each is handled (target >= 5) | `FAILURE_MODES.md`, `tests/test_failure_modes.py` | 5 failure modes documented with triggers, mitigations, and passing unit tests | `VERIFIED_COMPLETE` |
 
 ---
 
@@ -26,7 +26,7 @@
 | **JUDGE-03** | **Problem and impact (20%)** | `docs/user_research/INTERVIEW_GUIDE.md`, `docs/category_taxonomy.md` | Grounded taxonomy; interview guide ready for owner's user session | `IN_PROGRESS` |
 | **JUDGE-04** | **Grounding, security & responsibility (15%)** | `src/supportpipe/draft/validate.py`, `src/supportpipe/logging_store.py` | Grounding check (no invented numbers); PII scrubbing; injection defense | `VERIFIED_COMPLETE` |
 | **JUDGE-05** | **Evaluation evidence (15%)** | `data/manifest.json`, `results/`, `docs/slides_evidence.md` | Frozen held-out test set, precision/recall/F1, confusion matrix, throughput stats | `VERIFIED_COMPLETE` |
-| **JUDGE-06** | **Demo clarity (5%)** | `README.md` (60-second pitch), Streamlit UI | Clear explanation, interactive review queue understood in < 60 seconds | `IN_PROGRESS` |
+| **JUDGE-06** | **Demo clarity (5%)** | `README.md` (60-second pitch), Streamlit UI | Clear explanation, interactive review queue understood in < 60 seconds | `VERIFIED_COMPLETE` |
 
 ---
 
