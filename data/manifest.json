@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "created_at": "2026-09-22T04:45:00+03:00",
+  "random_seed": 42,
+  "total_tickets": 331,
+  "splits": {
+    "dev": {
+      "file": "data/splits/dev.jsonl",
+      "count": 215,
+      "sha256": "fcea6e779e426a3e13ac672834d6d3a8838fcdc9c97efed3169937336e116d31"
+    },
+    "test": {
+      "file": "data/splits/test.jsonl",
+      "count": 116,
+      "sha256": "5ed20b911742075f59f4ef84843b87c0e9af5148a5c30b455adfac4776f1d095",
+      "frozen": true
+    }
+  },
+  "description": "Synthetic Iraqi Arabic support ticket dataset for Agentic AI Challenge Iraq Topic 06"
+}

@@ -1,0 +1,26 @@
+# Category to Operational Team Routing Table
+# Enforces deterministic lookup in code per Rule 3.
+
+routes:
+  failed_transfer: "Payments & Transfers"
+  wrong_recipient: "Payments & Transfers"
+  bill_payment_failure: "Payments & Transfers"
+  refund_status: "Payments & Transfers"
+
+  login_problem: "Technical/App"
+  app_bug: "Technical/App"
+
+  agent_dispute: "Agent Network"
+
+  card_issue: "Cards"
+
+  account_blocked: "Account/KYC"
+  kyc_document_issue: "Account/KYC"
+
+  fraud_report: "Security/Fraud"
+
+  balance_or_statement_inquiry: "General/Customer Care"
+  general_inquiry: "General/Customer Care"
+
+  # Special escalation category: does not route to standard queue; routed to escalation review
+  unclear_or_incomplete: "Escalations"

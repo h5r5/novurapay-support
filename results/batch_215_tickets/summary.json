@@ -1,0 +1,48 @@
+{
+  "total_tickets": 215,
+  "processed_at": "2026-09-22T01:55:40.278357+00:00",
+  "category_counts": {
+    "unclear_or_incomplete": 41,
+    "fraud_report": 12,
+    "refund_status": 7,
+    "failed_transfer": 33,
+    "kyc_document_issue": 12,
+    "card_issue": 23,
+    "general_inquiry": 8,
+    "login_problem": 7,
+    "wrong_recipient": 16,
+    "agent_dispute": 19,
+    "account_blocked": 8,
+    "app_bug": 8,
+    "bill_payment_failure": 11,
+    "balance_or_statement_inquiry": 10
+  },
+  "priority_counts": {
+    "low": 67,
+    "high": 69,
+    "medium": 79
+  },
+  "team_counts": {
+    "Escalations": 41,
+    "Security/Fraud": 12,
+    "Payments & Transfers": 67,
+    "Account/KYC": 20,
+    "Cards": 23,
+    "General/Customer Care": 18,
+    "Technical/App": 15,
+    "Agent Network": 19
+  },
+  "escalated_count": 61,
+  "escalation_rate_pct": 28.37,
+  "escalation_reasons": {
+    "Ticket is ambiguous, vague, or incomplete; manual agent triage required | Low category confidence (0.45 < threshold 0.65) | Low priority confidence (0.55 < threshold 0.60)": 38,
+    "Extraction incomplete: Missing transaction reference required for category 'wrong_recipient' | Extraction incomplete: Missing transaction amount required for category 'wrong_recipient'": 6,
+    "Extraction incomplete: Missing transaction reference required for category 'failed_transfer' | Extraction incomplete: Missing transaction amount required for category 'failed_transfer'": 11,
+    "Extraction incomplete: Missing transaction reference required for category 'refund_status'": 1,
+    "Ticket is ambiguous, vague, or incomplete; manual agent triage required | Low category confidence (0.35 < threshold 0.65) | Low priority confidence (0.50 < threshold 0.60)": 3,
+    "Extraction incomplete: Missing transaction amount required for category 'failed_transfer'": 1,
+    "Extraction incomplete: Missing transaction amount required for category 'wrong_recipient'": 1
+  },
+  "avg_latency_ms": 0.05,
+  "total_wall_clock_ms": 12.01
+}

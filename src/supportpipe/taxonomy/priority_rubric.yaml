@@ -1,0 +1,37 @@
+# Priority Rubric Definitions
+# Guidelines for mapping customer issues to High, Medium, or Low priority.
+
+priorities:
+  high:
+    level: high
+    name_ar: عاجل / أولوية قصوى
+    criteria_ar: >
+      أموال المستخدم معلقة أو معرضة للخطر المباشر، أو الحساب محظور بالكامل، أو بلاغ احتيال نشط يتطلب تدخلاً سريعاً لمنع تسريب الرصيد.
+    typical_categories:
+      - fraud_report
+      - account_blocked
+      - failed_transfer (مع مبالغ مرتفعة)
+      - wrong_recipient
+
+  medium:
+    level: medium
+    name_ar: متوسط
+    criteria_ar: >
+      مشكلة في عملية محددة أو خدمة معينة لا تمنع استخدام المحفظة بالكامل، مثل فشل تسديد فاتورة، تأخر استرجاع، مشاكل البطاقة، أو نزاع مع وكيل.
+    typical_categories:
+      - bill_payment_failure
+      - refund_status
+      - card_issue
+      - agent_dispute
+      - login_problem
+
+  low:
+    level: low
+    name_ar: منخفض
+    criteria_ar: >
+      استفسارات عامة، أسئلة حول الرسوم أو حدود الحساب، مشاكل تم حلها مسبقاً، أو أخطاء شكلية في واجهة التطبيق.
+    typical_categories:
+      - general_inquiry
+      - balance_or_statement_inquiry
+      - app_bug
+      - unclear_or_incomplete
