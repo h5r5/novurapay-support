@@ -1,0 +1,15 @@
+﻿,failed_transfer,wrong_recipient,login_problem,agent_dispute,card_issue,balance_or_statement_inquiry,bill_payment_failure,account_blocked,kyc_document_issue,fraud_report,refund_status,app_bug,general_inquiry,unclear_or_incomplete
+failed_transfer,7,0,0,0,0,0,0,0,0,0,0,0,6,1
+wrong_recipient,0,4,0,0,0,0,0,0,0,0,0,0,0,3
+login_problem,0,0,4,0,0,0,0,0,0,2,0,4,0,4
+agent_dispute,0,0,0,7,0,0,0,0,0,0,0,0,0,0
+card_issue,1,0,0,0,6,0,0,0,0,0,0,0,0,0
+balance_or_statement_inquiry,4,0,0,0,0,5,0,0,0,0,0,0,0,0
+bill_payment_failure,0,0,0,0,0,2,8,0,0,0,0,0,0,0
+account_blocked,0,0,0,0,0,0,0,5,0,0,0,0,0,3
+kyc_document_issue,0,0,0,0,3,0,0,0,2,0,0,0,0,0
+fraud_report,0,0,0,0,0,0,0,0,0,7,0,0,0,2
+refund_status,0,0,0,0,0,0,0,0,0,0,1,0,0,4
+app_bug,0,0,0,0,0,0,0,0,0,0,0,2,0,6
+general_inquiry,0,0,0,3,0,0,0,0,2,0,0,0,2,0
+unclear_or_incomplete,0,0,0,0,0,0,0,0,0,0,0,0,1,5
