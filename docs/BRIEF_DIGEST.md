@@ -85,4 +85,4 @@
 | **EVAL-04** | Draft response quality & grounding rate | `src/supportpipe/draft/validate.py` | 100% grounding check (no invented numbers/promises) | `VERIFIED_COMPLETE` |
 | **EVAL-05** | Human rubric scoring of sample drafts | `docs/sample_drafts_for_review.md` | 10 sample drafts exported for owner review | `VERIFIED_COMPLETE` |
 | **EVAL-06** | Throughput & latency metrics | `results/eval_test_20260922_015545/metrics.json` | 11,051 tickets/sec, 0.05 ms avg latency | `VERIFIED_COMPLETE` |
-| **STRETCH-01**| Weekly pattern report (root cause clustering) | `src/supportpipe/patterns/` | Clusters recurring issues/entities over time window | `DEFERRED_STRETCH` |
+| **STRETCH-01**| Weekly pattern report (root cause clustering) | `src/supportpipe/patterns/report.py` | `supportpipe patterns` command detects velocity & systemic incidents | `VERIFIED_COMPLETE` |

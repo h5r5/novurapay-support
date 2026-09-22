@@ -4,7 +4,6 @@ from pathlib import Path
 
 import yaml
 
-from supportpipe.config import settings
 from supportpipe.draft.validate import validate_draft_response
 from supportpipe.schemas import ExtractedFields
 

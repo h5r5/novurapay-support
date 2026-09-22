@@ -2,10 +2,11 @@
 
 import json
 import time
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 from typing import Any
+
 import pandas as pd
+
 from supportpipe.config import settings
 from supportpipe.datagen.splits import compute_sha256
 from supportpipe.evaluation.metrics import (
@@ -25,7 +26,7 @@ def load_split(split_name: str) -> tuple[list[LabeledTicket], str]:
     if not manifest_path.exists():
         raise FileNotFoundError(f"Manifest not found: {manifest_path}. Run splits.py first.")
 
-    with open(manifest_path, "r", encoding="utf-8") as f:
+    with open(manifest_path, encoding="utf-8") as f:
         manifest = json.load(f)
 
     split_meta = manifest.get("splits", {}).get(split_name)
@@ -48,7 +49,7 @@ def load_split(split_name: str) -> tuple[list[LabeledTicket], str]:
         )
 
     tickets: list[LabeledTicket] = []
-    with open(split_file, "r", encoding="utf-8") as f:
+    with open(split_file, encoding="utf-8") as f:
         for line in f:
             if line.strip():
                 tickets.append(LabeledTicket.model_validate_json(line))
@@ -60,7 +61,7 @@ def execute_evaluation(split: str = "test", provider_name: str | None = None) ->
     """Run full evaluation suite on the designated split."""
     labeled_tickets, dataset_hash = load_split(split)
 
-    run_id = f"eval_{split}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+    run_id = f"eval_{split}_{datetime.now(UTC).strftime('%Y%m%d_%H%M%S')}"
     run_dir = settings.results_dir / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
 
@@ -105,7 +106,9 @@ def execute_evaluation(split: str = "test", provider_name: str | None = None) ->
     throughput_metrics = {
         "total_tickets": len(results),
         "wall_clock_seconds": round(total_eval_time, 3),
-        "tickets_per_second": round(len(results) / total_eval_time, 1) if total_eval_time > 0 else 0.0,
+        "tickets_per_second": round(len(results) / total_eval_time, 1)
+        if total_eval_time > 0
+        else 0.0,
         "avg_latency_ms": round(float(pd.Series(latencies).mean()), 2),
         "p95_latency_ms": round(float(pd.Series(latencies).quantile(0.95)), 2),
     }
@@ -114,7 +117,7 @@ def execute_evaluation(split: str = "test", provider_name: str | None = None) ->
     consolidated_metrics = {
         "run_id": run_id,
         "split": split,
-        "evaluated_at": datetime.now(timezone.utc).isoformat(),
+        "evaluated_at": datetime.now(UTC).isoformat(),
         "baseline": {
             "majority_class_category": most_common_cat,
             "majority_class_accuracy": round(baseline_acc, 4),
@@ -152,23 +155,25 @@ def execute_evaluation(split: str = "test", provider_name: str | None = None) ->
     # Write per-ticket CSV
     per_ticket_rows = []
     for item, res in zip(labeled_tickets, results, strict=False):
-        per_ticket_rows.append({
-            "ticket_id": item.ticket.ticket_id,
-            "raw_text": item.ticket.raw_text,
-            "true_category": item.label.category,
-            "pred_category": res.category,
-            "category_correct": item.label.category == res.category,
-            "category_confidence": res.category_confidence,
-            "true_priority": item.label.priority,
-            "pred_priority": res.priority,
-            "priority_correct": item.label.priority == res.priority,
-            "priority_confidence": res.priority_confidence,
-            "team": res.team,
-            "escalated": res.escalated,
-            "escalation_reason": res.escalation_reason,
-            "edge_case": item.label.edge_case,
-            "latency_ms": res.latency_ms,
-        })
+        per_ticket_rows.append(
+            {
+                "ticket_id": item.ticket.ticket_id,
+                "raw_text": item.ticket.raw_text,
+                "true_category": item.label.category,
+                "pred_category": res.category,
+                "category_correct": item.label.category == res.category,
+                "category_confidence": res.category_confidence,
+                "true_priority": item.label.priority,
+                "pred_priority": res.priority,
+                "priority_correct": item.label.priority == res.priority,
+                "priority_confidence": res.priority_confidence,
+                "team": res.team,
+                "escalated": res.escalated,
+                "escalation_reason": res.escalation_reason,
+                "edge_case": item.label.edge_case,
+                "latency_ms": res.latency_ms,
+            }
+        )
     per_ticket_df = pd.DataFrame(per_ticket_rows)
     per_ticket_path = run_dir / "per_ticket.csv"
     per_ticket_df.to_csv(per_ticket_path, index=False, encoding="utf-8-sig")
@@ -176,7 +181,7 @@ def execute_evaluation(split: str = "test", provider_name: str | None = None) ->
     # Write run_meta.json
     run_meta = RunManifest(
         run_id=run_id,
-        created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=datetime.now(UTC).isoformat(),
         git_commit="HEAD",
         split=split,
         dataset_hash=dataset_hash,

@@ -1,14 +1,25 @@
-"""Command-line interface for SupportPipe."""
-
 import json
+import sys
 from pathlib import Path
+
 import click
+
 from supportpipe import __version__
 from supportpipe.config import settings
 from supportpipe.evaluation.run_eval import execute_evaluation
 from supportpipe.logging_store import ReviewQueueStore
 from supportpipe.pipeline import run_batch
-from supportpipe.schemas import LabeledTicket, Ticket
+from supportpipe.schemas import Ticket
+
+# Enforce UTF-8 console output on Windows
+if sys.platform == "win32":
+    try:
+        if sys.stdout and hasattr(sys.stdout, "reconfigure"):
+            sys.stdout.reconfigure(encoding="utf-8")
+        if sys.stderr and hasattr(sys.stderr, "reconfigure"):
+            sys.stderr.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
 
 
 @click.group()
@@ -51,7 +62,7 @@ def run(input_path: Path, output_dir: Path | None) -> None:
 
     # Detect JSON or JSONL
     if input_path.suffix == ".jsonl":
-        with open(input_path, "r", encoding="utf-8") as f:
+        with open(input_path, encoding="utf-8") as f:
             for line in f:
                 if line.strip():
                     raw = json.loads(line)
@@ -59,7 +70,7 @@ def run(input_path: Path, output_dir: Path | None) -> None:
                     t_data = raw.get("ticket", raw)
                     tickets.append(Ticket.model_validate(t_data))
     else:
-        with open(input_path, "r", encoding="utf-8") as f:
+        with open(input_path, encoding="utf-8") as f:
             data = json.load(f)
             if isinstance(data, list):
                 for item in data:
@@ -77,7 +88,9 @@ def run(input_path: Path, output_dir: Path | None) -> None:
 
     click.echo("Batch processing complete!")
     click.echo(f"  Total Tickets:    {summary.total_tickets}")
-    click.echo(f"  Escalated Count:  {summary.escalated_count} ({summary.escalation_rate_pct:.1f}%)")
+    click.echo(
+        f"  Escalated Count:  {summary.escalated_count} ({summary.escalation_rate_pct:.1f}%)"
+    )
     click.echo(f"  Avg Latency:      {summary.avg_latency_ms:.2f} ms")
     click.echo(f"  Results saved in: {saved_folder}")
 
@@ -97,21 +110,64 @@ def eval(split: str) -> None:
         click.echo("=" * 60)
         click.echo(f"EVALUATION RESULTS (Split: {split.upper()})")
         click.echo(f"  Run ID:                {metrics['run_id']}")
-        click.echo(f"  Overall Accuracy:      {metrics['classification']['overall_accuracy'] * 100:.2f}%")
-        click.echo(f"  Priority Accuracy:     {metrics['classification']['priority_accuracy'] * 100:.2f}%")
+        click.echo(
+            f"  Overall Accuracy:      {metrics['classification']['overall_accuracy'] * 100:.2f}%"
+        )
+        click.echo(
+            f"  Priority Accuracy:     {metrics['classification']['priority_accuracy'] * 100:.2f}%"
+        )
         click.echo(f"  Macro Avg F1:          {metrics['classification']['macro_avg_f1']:.4f}")
-        click.echo(f"  Baseline (Majority):   {metrics['baseline']['majority_class_accuracy'] * 100:.2f}%")
-        click.echo(f"  Auto-Handled Accuracy: {metrics['escalation']['auto_handled_accuracy'] * 100:.2f}%")
+        click.echo(
+            f"  Baseline (Majority):   {metrics['baseline']['majority_class_accuracy'] * 100:.2f}%"
+        )
+        click.echo(
+            f"  Auto-Handled Accuracy: {metrics['escalation']['auto_handled_accuracy'] * 100:.2f}%"
+        )
         click.echo(f"  Escalation Rate:       {metrics['escalation']['escalation_rate_pct']:.1f}%")
-        click.echo(f"  Ref Exact Match:       {metrics['extraction']['ref_exact_match_rate'] * 100:.1f}%")
-        click.echo(f"  Amount Exact Match:    {metrics['extraction']['amt_exact_match_rate'] * 100:.1f}%")
-        click.echo(f"  Date Match Rate:       {metrics['extraction']['date_match_rate'] * 100:.1f}%")
-        click.echo(f"  Throughput:            {metrics['throughput']['tickets_per_second']:.1f} tickets/sec")
+        click.echo(
+            f"  Ref Exact Match:       {metrics['extraction']['ref_exact_match_rate'] * 100:.1f}%"
+        )
+        click.echo(
+            f"  Amount Exact Match:    {metrics['extraction']['amt_exact_match_rate'] * 100:.1f}%"
+        )
+        click.echo(
+            f"  Date Match Rate:       {metrics['extraction']['date_match_rate'] * 100:.1f}%"
+        )
+        click.echo(
+            f"  Throughput:            {metrics['throughput']['tickets_per_second']:.1f} tickets/sec"
+        )
         click.echo("=" * 60)
         click.echo(f"Detailed artifacts written to results/{metrics['run_id']}/")
     except Exception as e:
         click.echo(f"Evaluation failed: {e}", err=True)
-        raise click.Abort()
+        raise click.Abort() from e
+
+
+@main.command()
+@click.option(
+    "--input",
+    "input_path",
+    type=click.Path(exists=True, path_type=Path),
+    required=True,
+    help="Path to JSON or JSONL batch of tickets to analyze.",
+)
+def patterns(input_path: Path) -> None:
+    """Generate weekly pattern report detecting rising issues and systemic incidents."""
+    from supportpipe.patterns.report import analyze_ticket_patterns, format_markdown_pattern_report
+
+    click.echo(f"Analyzing ticket patterns from: {input_path}")
+    tickets: list[Ticket] = []
+    with open(input_path, encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                raw = json.loads(line)
+                t_data = raw.get("ticket", raw)
+                tickets.append(Ticket.model_validate(t_data))
+
+    results, _ = run_batch(tickets)
+    pattern_data = analyze_ticket_patterns(results, tickets)
+    report_md = format_markdown_pattern_report(pattern_data)
+    click.echo(report_md)
 
 
 if __name__ == "__main__":

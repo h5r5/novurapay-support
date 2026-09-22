@@ -3,9 +3,9 @@
 import hashlib
 import json
 from pathlib import Path
+
 from supportpipe.config import settings
 from supportpipe.datagen.generate import generate_synthetic_dataset
-from supportpipe.schemas import LabeledTicket
 
 
 def compute_sha256(filepath: Path) -> str:

@@ -1,9 +1,11 @@
 """Evaluation metrics computation for classification, extraction, escalation, and calibration."""
 
 from typing import Any
+
 import numpy as np
 import pandas as pd
 from sklearn.metrics import classification_report, confusion_matrix
+
 from supportpipe.schemas import LabeledTicket, PipelineResult
 
 
@@ -74,9 +76,13 @@ def compute_extraction_metrics(
                 date_matches += 1
 
     return {
-        "ref_exact_match_rate": round(ref_matches / ref_applicable, 4) if ref_applicable > 0 else 1.0,
+        "ref_exact_match_rate": round(ref_matches / ref_applicable, 4)
+        if ref_applicable > 0
+        else 1.0,
         "ref_evaluated_count": ref_applicable,
-        "amt_exact_match_rate": round(amt_matches / amt_applicable, 4) if amt_applicable > 0 else 1.0,
+        "amt_exact_match_rate": round(amt_matches / amt_applicable, 4)
+        if amt_applicable > 0
+        else 1.0,
         "amt_evaluated_count": amt_applicable,
         "date_match_rate": round(date_matches / date_applicable, 4) if date_applicable > 0 else 1.0,
         "date_evaluated_count": date_applicable,
@@ -97,27 +103,32 @@ def compute_calibration_buckets(
     for i in range(n_buckets):
         low, high = bins[i], bins[i + 1]
         indices = [
-            j for j, c in enumerate(confidences)
+            j
+            for j, c in enumerate(confidences)
             if (low <= c < high) or (i == n_buckets - 1 and low <= c <= high)
         ]
         if not indices:
-            bucket_data.append({
-                "range": f"{low:.1f}-{high:.1f}",
-                "count": 0,
-                "avg_confidence": round((low + high) / 2.0, 2),
-                "accuracy": 0.0,
-            })
+            bucket_data.append(
+                {
+                    "range": f"{low:.1f}-{high:.1f}",
+                    "count": 0,
+                    "avg_confidence": round((low + high) / 2.0, 2),
+                    "accuracy": 0.0,
+                }
+            )
             continue
 
         bucket_confs = [confidences[idx] for idx in indices]
         bucket_acc = [correctness[idx] for idx in indices]
 
-        bucket_data.append({
-            "range": f"{low:.1f}-{high:.1f}",
-            "count": len(indices),
-            "avg_confidence": round(float(np.mean(bucket_confs)), 3),
-            "accuracy": round(float(np.mean(bucket_acc)), 3),
-        })
+        bucket_data.append(
+            {
+                "range": f"{low:.1f}-{high:.1f}",
+                "count": len(indices),
+                "avg_confidence": round(float(np.mean(bucket_confs)), 3),
+                "accuracy": round(float(np.mean(bucket_acc)), 3),
+            }
+        )
 
     return bucket_data
 
@@ -133,7 +144,7 @@ def compute_escalation_slice_metrics(
     escalated_count = 0
 
     for item, res in zip(labeled_tickets, pipeline_results, strict=False):
-        is_correct = (item.label.category == res.category)
+        is_correct = item.label.category == res.category
         if is_correct:
             overall_correct += 1
 

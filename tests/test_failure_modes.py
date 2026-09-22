@@ -1,6 +1,5 @@
 """Automated tests proving graceful handling of the 5 documented failure modes (Gate 4)."""
 
-import pytest
 from supportpipe.classify.classify import classify_ticket
 from supportpipe.draft.draft import draft_manager
 from supportpipe.pipeline import process_ticket
@@ -72,9 +71,7 @@ def test_failure_mode_missing_required_reference() -> None:
 
 def test_failure_mode_ungrounded_draft_rejected() -> None:
     """FM-05: Verify hallucinated promises and ungrounded numbers are rejected in drafts."""
-    hallucinated_candidate = (
-        "أهلاً بك، تم استلام طلبك ونضمن لك استرجاع مبلغ 999999 دينار ورقم عملية TXN-00000000 مضمونة 100%."
-    )
+    hallucinated_candidate = "أهلاً بك، تم استلام طلبك ونضمن لك استرجاع مبلغ 999999 دينار ورقم عملية TXN-00000000 مضمونة 100%."
     ticket_text = "حولت فلوس وما وصلت"
     extracted = ExtractedFields(transaction_ref=None, amount_iqd=None)
 

@@ -1,6 +1,5 @@
 """Validation gates for synthetic ticket data generation."""
 
-from supportpipe.extract.normalize import parse_iqd_amount
 from supportpipe.schemas import LabeledTicket
 from supportpipe.taxonomy.loader import taxonomy
 
