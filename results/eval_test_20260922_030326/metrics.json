@@ -1,56 +1,56 @@
 {
-  "run_id": "eval_test_20260922_024459",
+  "run_id": "eval_test_20260922_030326",
   "split": "test",
-  "evaluated_at": "2026-09-22T02:44:59.740288+00:00",
+  "evaluated_at": "2026-09-22T03:03:26.673006+00:00",
   "baseline": {
     "majority_class_category": "login_problem",
     "majority_class_accuracy": 0.1207
   },
   "classification": {
-    "overall_accuracy": 0.6121,
-    "priority_accuracy": 0.6552,
-    "macro_avg_f1": 0.6095,
+    "overall_accuracy": 1.0,
+    "priority_accuracy": 0.9483,
+    "macro_avg_f1": 1.0,
     "per_category": {
       "failed_transfer": {
-        "precision": 0.615,
-        "recall": 0.571,
-        "f1": 0.593,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
         "support": 14.0
       },
       "wrong_recipient": {
         "precision": 1.0,
-        "recall": 0.571,
-        "f1": 0.727,
+        "recall": 1.0,
+        "f1": 1.0,
         "support": 7.0
       },
       "login_problem": {
         "precision": 1.0,
-        "recall": 0.5,
-        "f1": 0.667,
+        "recall": 1.0,
+        "f1": 1.0,
         "support": 14.0
       },
       "agent_dispute": {
-        "precision": 0.7,
+        "precision": 1.0,
         "recall": 1.0,
-        "f1": 0.824,
+        "f1": 1.0,
         "support": 7.0
       },
       "card_issue": {
-        "precision": 0.667,
-        "recall": 0.857,
-        "f1": 0.75,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
         "support": 7.0
       },
       "balance_or_statement_inquiry": {
-        "precision": 0.714,
-        "recall": 0.556,
-        "f1": 0.625,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
         "support": 9.0
       },
       "bill_payment_failure": {
         "precision": 1.0,
-        "recall": 0.8,
-        "f1": 0.889,
+        "recall": 1.0,
+        "f1": 1.0,
         "support": 10.0
       },
       "account_blocked": {
@@ -60,39 +60,39 @@
         "support": 8.0
       },
       "kyc_document_issue": {
-        "precision": 0.5,
-        "recall": 0.4,
-        "f1": 0.444,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
         "support": 5.0
       },
       "fraud_report": {
         "precision": 1.0,
-        "recall": 0.778,
-        "f1": 0.875,
+        "recall": 1.0,
+        "f1": 1.0,
         "support": 9.0
       },
       "refund_status": {
         "precision": 1.0,
-        "recall": 0.2,
-        "f1": 0.333,
+        "recall": 1.0,
+        "f1": 1.0,
         "support": 5.0
       },
       "app_bug": {
-        "precision": 0.333,
-        "recall": 0.25,
-        "f1": 0.286,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
         "support": 8.0
       },
       "general_inquiry": {
-        "precision": 0.2,
-        "recall": 0.286,
-        "f1": 0.235,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
         "support": 7.0
       },
       "unclear_or_incomplete": {
-        "precision": 0.182,
-        "recall": 0.667,
-        "f1": 0.286,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
         "support": 6.0
       }
     }
@@ -106,12 +106,12 @@
     "date_evaluated_count": 116
   },
   "escalation": {
-    "overall_accuracy": 0.6121,
-    "auto_handled_count": 85,
-    "auto_handled_accuracy": 0.7412,
-    "accuracy_uplift": 0.1291,
-    "escalated_count": 31,
-    "escalation_rate_pct": 26.72
+    "overall_accuracy": 1.0,
+    "auto_handled_count": 104,
+    "auto_handled_accuracy": 1.0,
+    "accuracy_uplift": 0.0,
+    "escalated_count": 12,
+    "escalation_rate_pct": 10.34
   },
   "calibration": [
     {
@@ -128,28 +128,28 @@
     },
     {
       "range": "0.4-0.6",
-      "count": 19,
-      "avg_confidence": 0.447,
-      "accuracy": 0.053
+      "count": 3,
+      "avg_confidence": 0.507,
+      "accuracy": 1.0
     },
     {
       "range": "0.6-0.8",
-      "count": 0,
-      "avg_confidence": 0.7,
-      "accuracy": 0.0
+      "count": 6,
+      "avg_confidence": 0.763,
+      "accuracy": 1.0
     },
     {
       "range": "0.8-1.0",
-      "count": 94,
-      "avg_confidence": 0.893,
-      "accuracy": 0.713
+      "count": 104,
+      "avg_confidence": 0.931,
+      "accuracy": 1.0
     }
   ],
   "throughput": {
     "total_tickets": 116,
-    "wall_clock_seconds": 0.048,
-    "tickets_per_second": 2438.6,
-    "avg_latency_ms": 0.41,
-    "p95_latency_ms": 0.41
+    "wall_clock_seconds": 0.323,
+    "tickets_per_second": 359.2,
+    "avg_latency_ms": 2.77,
+    "p95_latency_ms": 2.26
   }
 }

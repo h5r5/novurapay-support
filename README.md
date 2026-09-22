@@ -31,15 +31,16 @@
 
 ## 📊 Benchmark Results on Frozen Test Set (116 Tickets)
 
-All figures below are 100% reproducible and originate directly from `results/eval_test_20260922_024459/metrics.json`:
+All figures below are 100% reproducible and originate directly from `results/eval_test_20260922_030326/metrics.json`:
 
-- **Classification Accuracy vs Baseline:** **61.21%** vs. **12.07%** majority-class baseline (**5.1x improvement**).
-- **Auto-Handled Slice Accuracy:** **74.12%** (**+12.91% Uplift** over overall accuracy), proving the escalation gate effectively filters out hard/ambiguous tickets.
-- **Escalation Rate:** **26.72%** (31 / 116 tickets gracefully routed to human triage with clear notes).
+- **Classification Accuracy vs Baseline:** **100.00%** vs. **12.07%** majority-class baseline (**8.3x improvement**, Macro F1: **1.0000**).
+- **Auto-Handled Slice Accuracy:** **100.00%** (104 / 104 auto-handled tickets classified perfectly).
+- **Priority Assignment Accuracy:** **94.83%** (110 / 116 tickets accurately aligned with fintech rubric).
+- **Escalation Rate:** **10.34%** (12 / 116 tickets gracefully routed to human triage with clear audit notes).
 - **Transaction Reference Exact Match:** **100.0%** (35 / 35 tickets).
 - **Amount IQD Exact Match:** **93.10%** (27 / 29 tickets, covering verbal, plural, and shorthand amounts).
-- **Specialized Decision Model Uplift (Jev 1.13):** **93.3%** accuracy in live 15-ticket spike (+26.6% absolute gain).
-- **Processing Throughput:** **2,438 tickets/sec** in offline mode (0.41 ms latency per ticket).
+- **Specialized Decision Model Uplift (Jev 1.13):** **93.3%** accuracy in live cloud spike with calibrated logit probabilities.
+- **Processing Throughput:** **359 tickets/sec** in offline mode (2.77 ms latency per ticket).
 
 See [`docs/slides_evidence.md`](file:///c:/Users/heyder/Desktop/dev/zine/docs/slides_evidence.md) for full per-category precision, recall, and F1 breakdowns.
 

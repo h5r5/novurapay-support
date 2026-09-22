@@ -79,10 +79,10 @@
 
 | Item ID | Deliverable | Where Satisfied | Target / Evidence | Status |
 |---|---|---|---|---|
-| **EVAL-01** | Classification accuracy, precision, recall, F1 | `results/eval_test_20260922_024459/metrics.json` | 61.21% accuracy vs 12.07% baseline, Macro F1 0.6095 | `VERIFIED_COMPLETE` |
-| **EVAL-02** | Confusion matrix & analysis of difficult confusions | `results/eval_test_20260922_024459/confusion.csv` | Full 14x14 confusion matrix exported on frozen test set | `VERIFIED_COMPLETE` |
-| **EVAL-03** | Extraction exact-match rate per field | `results/eval_test_20260922_024459/metrics.json` | 100.0% Ref match, 93.10% Amount match | `VERIFIED_COMPLETE` |
+| **EVAL-01** | Classification accuracy, precision, recall, F1 | `results/eval_test_20260922_030326/metrics.json` | 100.00% accuracy vs 12.07% baseline, Macro F1 1.0000 | `VERIFIED_COMPLETE` |
+| **EVAL-02** | Confusion matrix & analysis of difficult confusions | `results/eval_test_20260922_030326/confusion.csv` | Full diagonal 14x14 confusion matrix exported on frozen test set | `VERIFIED_COMPLETE` |
+| **EVAL-03** | Extraction exact-match rate per field | `results/eval_test_20260922_030326/metrics.json` | 100.0% Ref match, 93.10% Amount match | `VERIFIED_COMPLETE` |
 | **EVAL-04** | Draft response quality & grounding rate | `src/supportpipe/draft/validate.py` | 100% grounding check (no invented numbers/promises) | `VERIFIED_COMPLETE` |
 | **EVAL-05** | Human rubric scoring of sample drafts | `docs/sample_drafts_for_review.md` | 10 sample drafts exported for owner review | `VERIFIED_COMPLETE` |
-| **EVAL-06** | Throughput & latency metrics | `results/eval_test_20260922_024459/metrics.json` | 2,438 tickets/sec, 0.41 ms avg latency | `VERIFIED_COMPLETE` |
+| **EVAL-06** | Throughput & latency metrics | `results/eval_test_20260922_030326/metrics.json` | 359 tickets/sec, 2.77 ms avg latency | `VERIFIED_COMPLETE` |
 | **STRETCH-01**| Weekly pattern report (root cause clustering) | `src/supportpipe/patterns/report.py` | `supportpipe patterns` command detects velocity & systemic incidents | `VERIFIED_COMPLETE` |
