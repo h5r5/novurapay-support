@@ -128,6 +128,21 @@ ARABIZI_EN_MAPPINGS: dict[str, str] = {
     "خمس تالاف": "5000",
     "ميت الف": "100000",
     "مية الف": "100000",
+    # Operational & provincial fintech slang
+    "علكت": "معلقة عطل",
+    "علكت الحوالة": "حوالة معلقة عطل",
+    "جلبت الفلوس": "حوالة معلقة عطل",
+    "جلبت": "معلقة عطل",
+    "شمرت": "حولت رصيد",
+    "شمرت فلوس": "حولت رصيد",
+    "قفلت المحفظة": "حظر المحفظة والحساب",
+    "انقفل حسابي": "حظر المحفظة والحساب",
+    "ما يفتح": "عطل تسجيل الدخول",
+    "الصراف بلع": "سحب بطاقة ماستركارد",
+    "بلعته الصرافة": "سحب بطاقة ماستركارد",
+    "انشفط الرصيد": "سرقة رصيد احتيال",
+    "شفطوا فلوسي": "سرقة رصيد احتيال",
+    "نهبوني": "سرقوني احتيال",
 }
 
 
@@ -307,3 +322,48 @@ def resolve_event_date(date_text: str | None, submitted_at_iso: str) -> str | No
             return target_dt.strftime("%Y-%m-%d")
 
     return None
+
+
+def normalize_phone_number(raw_phone: str | None) -> tuple[str | None, bool]:
+    """Normalize local Iraqi or international phone numbers.
+
+    Returns:
+        tuple (canonical_phone, is_international):
+        - Local Iraqi canonical format: '07xxxxxxxxx', is_international=False
+        - Foreign international canonical format: '+[CountryCode][Number]', is_international=True
+    """
+    if not raw_phone:
+        return None, False
+
+    clean = normalize_digits(raw_phone.strip())
+    # Remove separators: spaces, dashes, parentheses, dots
+    clean = re.sub(r"[\s\-\(\)\.]", "", clean)
+
+    # 1. Local Iraqi mobile / wallet number (078x, 077x, 075x, 079x, 074x)
+    # Accepts +9647xxxxxxxx, 009647xxxxxxxx, 9647xxxxxxxx, or 07xxxxxxxx
+    iq_match = re.match(r"^(?:\+964|00964|964)?0?(7[3-9]\d{8})$", clean)
+    if iq_match:
+        return f"0{iq_match.group(1)}", False
+
+    # 2. Foreign international phone numbers (E.164 with country code, 9-15 digits total)
+    int_match = re.match(r"^(?:\+|00)?([1-9]\d{8,14})$", clean)
+    if int_match:
+        digits = int_match.group(1)
+        # Verify if it was Iraqi without the leading 0
+        if digits.startswith("9647") and len(digits) == 12:
+            return f"0{digits[3:]}", False
+        return f"+{digits}", True
+
+    return None, False
+
+
+def mask_phone_number(phone: str | None) -> str | None:
+    """Mask central digits of phone number for PII privacy protection."""
+    if not phone:
+        return None
+    if len(phone) >= 10:
+        prefix = phone[:4]
+        suffix = phone[-3:]
+        return f"{prefix}****{suffix}"
+    return f"{phone[:2]}****"
+

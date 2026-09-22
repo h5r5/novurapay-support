@@ -9,6 +9,7 @@ import pandas as pd
 import streamlit as st
 
 from supportpipe.config import settings
+from supportpipe.extract.normalize import mask_phone_number
 from supportpipe.pipeline import process_ticket, run_batch
 from supportpipe.schemas import Ticket
 
@@ -277,6 +278,39 @@ if view_mode == "⚡ فحص تذكرة حية (Live Interactive)":
         )
         st.rerun()
 
+    # Second row of presets for dialect, sentiment, and phone testing
+    pcol7, pcol8, pcol9, pcol10, pcol11, pcol12 = st.columns(6)
+    if pcol7.button("🤬 غضب وسرقة (باكوني)"):
+        st.session_state["live_ticket_input_area"] = (
+            "باكوني الرميال اريدك كلش ضايج انعل ابوكم يابو الخلفكم اوت البارحه انبكت عشرتالاف دينار !!"
+        )
+        st.rerun()
+    elif pcol8.button("📞 تحويل خاطئ (محفظة)"):
+        st.session_state["live_ticket_input_area"] = (
+            "غلطت برقم المحفظة وحولت 50 الف للرقم 07801234567 بدال اخوي وما اعرف شلون ارجعها"
+        )
+        st.rerun()
+    elif pcol9.button("🏥 طوارئ مستشفى"):
+        st.session_state["live_ticket_input_area"] = (
+            "فدوه هسة هسة واكف بالمستشفى ولازم ادفع الفاتورة والفلوس معلكة دخيلكم استعجلوا"
+        )
+        st.rerun()
+    elif pcol10.button("🙏 شكر خالص"):
+        st.session_state["live_ticket_input_area"] = (
+            "شكرا حليتوا المشكلة بسرعة وعاشت ايدكم يا ابطال ما قصرتوا ممنون منكم"
+        )
+        st.rerun()
+    elif pcol11.button("⏳ شكر بس استعجلوا"):
+        st.session_state["live_ticket_input_area"] = (
+            "شكرا بس فدوة ممكن تستعجلون بحل الموضوع لأن محتاج الفلوس ضروري"
+        )
+        st.rerun()
+    elif pcol12.button("🌍 تحويل دولي (+971)"):
+        st.session_state["live_ticket_input_area"] = (
+            "حولت رصيد لرقم بالامارات +971501234567 بمبلغ 25 الف وما وصل للحساب"
+        )
+        st.rerun()
+
     # Input Controls (Direct, no resetting form)
     channel_input = st.selectbox(
         "قناة الاستلام (Channel):", ["app", "whatsapp", "sms"], index=0
@@ -382,12 +416,39 @@ if view_mode == "⚡ فحص تذكرة حية (Live Interactive)":
         # Common Extraction & Draft Response Panel
         # -----------------------------------------------------------------
         st.divider()
+
+        # Sentiment & Dialect Badges
+        if primary_res.sentiment_tags:
+            badge_html = "<div style='margin-bottom:14px; display:flex; gap:8px; flex-wrap:wrap;'>"
+            for tag in primary_res.sentiment_tags:
+                if tag in ["hostile_vulgar", "angry"]:
+                    badge_html += "<span class='pill-badge' style='background:rgba(239,68,68,0.2); border:1px solid #ef4444; color:#fca5a5;'>🤬 عميل غاضب / حاد</span>"
+                elif tag == "urgent_emergency":
+                    badge_html += "<span class='pill-badge' style='background:rgba(245,158,11,0.2); border:1px solid #f59e0b; color:#fcd34d;'>⚡ استعجال فائق / حالة طارئة</span>"
+                elif tag == "polite_urgency":
+                    badge_html += "<span class='pill-badge' style='background:rgba(245,158,11,0.15); border:1px solid #f59e0b; color:#fde68a;'>⏳ استعجال بلباقة</span>"
+                elif tag == "pure_gratitude":
+                    badge_html += "<span class='pill-badge' style='background:rgba(16,185,129,0.2); border:1px solid #10b981; color:#6ee7b7;'>🙏 شكر وامتنان خالص</span>"
+                elif tag == "theft_scam":
+                    badge_html += "<span class='pill-badge' style='background:rgba(225,29,72,0.2); border:1px solid #e11d48; color:#fda4af;'>🛡️ بلاغ سرقة / احتيال</span>"
+                elif tag == "hostile_injection":
+                    badge_html += "<span class='pill-badge' style='background:rgba(139,92,246,0.2); border:1px solid #8b5cf6; color:#c4b5fd;'>🛑 هجوم حقن أوامر</span>"
+            badge_html += "</div>"
+            st.markdown(badge_html, unsafe_allow_html=True)
+
         c_left, c_right = st.columns(2)
 
         with c_left:
             st.markdown("#### 🧩 الكيانات المستخرجة (Extracted Entities)")
+            phone_val = mask_phone_number(primary_res.extracted_fields.phone_number)
+            phone_type = None
+            if primary_res.extracted_fields.phone_number:
+                phone_type = "🌍 رقم دولي خارجي" if primary_res.extracted_fields.is_international_phone else "🇮🇶 محفظة / هاتف عراقي"
+
             st.json(
                 {
+                    "رقم الهاتف / المحفظة (Phone / Wallet)": phone_val,
+                    "نوع شبكة الهاتف": phone_type,
                     "رقم المرجع (Transaction Ref)": primary_res.extracted_fields.transaction_ref,
                     "المبلغ المستخرج (Amount IQD)": primary_res.extracted_fields.amount_iqd,
                     "التاريخ المحسوب (Event Date)": primary_res.extracted_fields.event_date_resolved,

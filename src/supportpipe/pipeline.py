@@ -70,6 +70,22 @@ def process_ticket(ticket: Ticket, provider_override: str | None = None) -> Pipe
 
     total_latency_ms = (time.perf_counter() - start_time) * 1000.0
 
+    urgency = "normal"
+    if (
+        "urgent_emergency" in classification.sentiment_tags
+        or "theft_scam" in classification.sentiment_tags
+        or "hostile_vulgar" in classification.sentiment_tags
+    ):
+        urgency = "critical"
+    elif (
+        "polite_urgency" in classification.sentiment_tags
+        or "angry" in classification.sentiment_tags
+        or classification.priority == "high"
+    ):
+        urgency = "high"
+    elif "pure_gratitude" in classification.sentiment_tags:
+        urgency = "low"
+
     return PipelineResult(
         ticket_id=ticket.ticket_id,
         category=classification.category,
@@ -84,6 +100,8 @@ def process_ticket(ticket: Ticket, provider_override: str | None = None) -> Pipe
         provider_path=f"{provider_tag}+{draft_source}",
         reasoning_summary=classification.reasoning_summary,
         latency_ms=round(total_latency_ms, 2),
+        sentiment_tags=classification.sentiment_tags,
+        urgency_level=urgency,
     )
 
 

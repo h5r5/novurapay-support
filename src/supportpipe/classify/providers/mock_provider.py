@@ -15,6 +15,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 
 from supportpipe.classify.providers.base import BaseClassifierProvider
+from supportpipe.classify.sentiment import analyze_iraqi_sentiment_and_intent
 from supportpipe.extract.normalize import normalize_arabizi_and_slang, normalize_digits
 from supportpipe.schemas import ClassificationResult
 
@@ -104,6 +105,7 @@ class MockClassifierProvider(BaseClassifierProvider):
         raw = ticket_text.strip()
         text = normalize_digits(raw)
         norm = normalize_arabizi_and_slang(text)
+        sentiment = analyze_iraqi_sentiment_and_intent(raw)
 
         # 0. Prompt Injection / Hostile Instruction Override (Bilingual Arabic + English)
         if re.search(
@@ -119,6 +121,7 @@ class MockClassifierProvider(BaseClassifierProvider):
                 priority="low",
                 priority_confidence=0.50,
                 reasoning_summary="Hostile prompt injection or malformed instruction override detected",
+                sentiment_tags=["hostile_injection"],
             )
 
         # 1. Edge case: Empty, whitespace, or brief greeting without actionable complaint
@@ -133,46 +136,35 @@ class MockClassifierProvider(BaseClassifierProvider):
                 priority="low",
                 priority_confidence=0.85,
                 reasoning_summary="Ticket contains vague greeting or insufficient content for automated routing",
+                sentiment_tags=["vague_greeting"],
             )
 
-        # 2. Courtesy / Appreciation / Compliment without technical dispute
-        clean_words = [w for w in re.sub(r"[^\w\s]", "", norm).split() if len(w) > 1]
-        is_pure_gratitude = (
-            re.search(r"(عاشت ايدكم|اتشكر منكم|مشكورين ما قصرتوا)", norm) is not None
-            or (len(clean_words) <= 4 and all(w in ["شكرا", "اخي", "حسنا", "تسلم", "مشكور", "ممنون", "ثانكيو", "برو"] for w in clean_words))
-        )
-        if is_pure_gratitude:
+        # 2. Courtesy / Appreciation / Compliment without technical dispute (Pure Gratitude)
+        if sentiment.is_pure_gratitude:
             return ClassificationResult(
                 category="general_inquiry",
-                category_confidence=0.88,
+                category_confidence=0.92,
                 priority="low",
-                priority_confidence=0.90,
-                reasoning_summary="Customer compliment or courtesy appreciation without reported technical issue",
+                priority_confidence=0.92,
+                reasoning_summary="Customer appreciation or courtesy praise without reported technical dispute",
+                sentiment_tags=sentiment.sentiment_tags,
             )
 
         # 2.5 Urgent Theft, Fraud, Scam & Social Engineering Report (High Priority)
         # Captures authentic Iraqi street slang: باكوني, انبكت, باكوا, يبوكون, قفاصة, طيروا فلوسي
-        if re.search(
-            r"(باكوني|باكونه|باكون|باكوا|باكني|باك|انبكت|انباكت|انبكنه|يبوكون|يبوك|"
-            r"انسرقت|سرقوا|سرقني|سرقة|احتيال|نصب|نصابين|قفاصة|قفاص|طيروا\s*فلوسي|"
-            r"طارت\s*فلوسي|اخذوا\s*فلوسي|هكر|hack|scam|phishing|فيشنك|صفحة\s*وهمية)",
-            raw,
-            re.IGNORECASE,
-        ) or re.search(r"(احتيال|سرقة|سرقوني)", norm):
-            is_angry = bool(re.search(
-                r"(كلش\s*ضايج|معصب|انعل|حرامية|قشامر|كذابين|ما\s*تستحون|طايح\s*حظكم|لحكولي|الفلوس\s*طارت)",
-                raw,
-                re.IGNORECASE,
-            ))
+        if sentiment.is_theft_scam:
             reason = "Customer reports unauthorized theft (باكوني/انبكت) or fraud"
-            if is_angry:
+            if sentiment.is_angry:
                 reason += " with severe customer frustration/anger; prioritized for expedited fraud triage"
+            elif sentiment.is_urgent:
+                reason += " with urgent emergency pressure; prioritized for expedited fraud triage"
             return ClassificationResult(
                 category="fraud_report",
                 category_confidence=0.96,
                 priority="high",
                 priority_confidence=0.96,
                 reasoning_summary=reason,
+                sentiment_tags=sentiment.sentiment_tags,
             )
 
         # 3. Hybrid ML Model Inference (if dev data trained successfully)
@@ -198,10 +190,13 @@ class MockClassifierProvider(BaseClassifierProvider):
             prio_probs = self.prio_pipe.predict_proba([norm])[0]
             prio_conf = round(min(0.95, max(0.60, float(prio_probs.max()))), 2)
 
-            # High priority safety overrides based on financial / account risk
+            # High priority safety overrides based on financial / account risk or urgent sentiment
             if best_category in ["fraud_report", "account_blocked"]:
                 pred_priority = "high"
                 prio_conf = max(prio_conf, 0.92)
+            elif sentiment.is_angry or sentiment.is_hostile_vulgar or sentiment.is_urgent:
+                pred_priority = "high"
+                prio_conf = max(prio_conf, 0.95)
             elif best_category in ["failed_transfer", "wrong_recipient"]:
                 if re.search(r"(100,?000|250,?000|500,?000|1,?000,?000|مليون|نص مليون|[5-9]\d{4,})", text):
                     pred_priority = "high"
@@ -210,15 +205,20 @@ class MockClassifierProvider(BaseClassifierProvider):
             # Ensure priority type conforms to Literal["high", "medium", "low"]
             prio_val: Any = pred_priority if pred_priority in ["high", "medium", "low"] else "low"
 
+            reason_text = (
+                f"Classified as '{best_category}' ({calibrated_conf:.0%}) and priority '{pred_priority}' "
+                f"via in-domain Iraqi dialect ML model"
+            )
+            if sentiment.sentiment_tags:
+                reason_text += f" | Sentiment: {','.join(sentiment.sentiment_tags)}"
+
             return ClassificationResult(
                 category=best_category,
                 category_confidence=calibrated_conf,
                 priority=prio_val,
                 priority_confidence=prio_conf,
-                reasoning_summary=(
-                    f"Classified as '{best_category}' ({calibrated_conf:.0%}) and priority '{pred_priority}' "
-                    f"via in-domain Iraqi dialect ML model with calibrated logit probabilities"
-                ),
+                reasoning_summary=reason_text[:300],
+                sentiment_tags=sentiment.sentiment_tags,
             )
 
         # 4. Deterministic Heuristic Fallback (Safety net if ML pipelines are unavailable)

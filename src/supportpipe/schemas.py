@@ -43,6 +43,7 @@ class ExpectedFields(BaseModel):
     transaction_ref: str | None = None
     amount_iqd: int | None = None
     event_date: str | None = None  # Expected resolved ISO date YYYY-MM-DD
+    phone_number: str | None = None
 
 
 class TicketLabel(BaseModel):
@@ -73,6 +74,7 @@ class ClassificationResult(BaseModel):
     priority: PriorityType
     priority_confidence: float = Field(..., ge=0.0, le=1.0)
     reasoning_summary: str = Field(..., max_length=300)
+    sentiment_tags: list[str] = Field(default_factory=list)
 
 
 class ExtractedFields(BaseModel):
@@ -82,6 +84,8 @@ class ExtractedFields(BaseModel):
     amount_iqd: int | None = None
     event_date_text: str | None = None  # Original phrase (e.g., 'امس العصر')
     event_date_resolved: str | None = None  # ISO date (e.g., '2026-09-21') computed by code
+    phone_number: str | None = None  # Iraqi wallet or international phone
+    is_international_phone: bool = False
     extraction_confidence: float = Field(default=1.0, ge=0.0, le=1.0)
 
 
@@ -101,6 +105,8 @@ class PipelineResult(BaseModel):
     provider_path: str  # e.g., 'jev', 'gemini', 'groq', 'template', 'offline_mock'
     reasoning_summary: str = ""
     latency_ms: float = 0.0
+    sentiment_tags: list[str] = Field(default_factory=list)
+    urgency_level: str = "normal"  # 'critical', 'high', 'normal'
 
 
 class BatchSummary(BaseModel):

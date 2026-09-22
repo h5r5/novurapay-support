@@ -31,8 +31,13 @@ class DraftManager:
         )
         amt_str = f"{extracted.amount_iqd:,}" if extracted.amount_iqd is not None else "المحدد"
         ref_str = extracted.transaction_ref or "المذكور"
+        phone_str = extracted.phone_number or "المذكور"
 
-        rendered = raw_tmpl.replace("{amount_iqd}", amt_str).replace("{transaction_ref}", ref_str)
+        rendered = (
+            raw_tmpl.replace("{amount_iqd}", amt_str)
+            .replace("{transaction_ref}", ref_str)
+            .replace("{phone_number}", phone_str)
+        )
         return rendered.strip()
 
     def generate_draft(
