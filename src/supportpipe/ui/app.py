@@ -518,6 +518,7 @@ st.sidebar.markdown(
 # 4. Helper Functions for Real Data Access (Clean Scenario Names)
 # -----------------------------------------------------------------------------
 PRESET_SCENARIOS = {
+    "لهجة عراقية معقدة ومبالغ مركبة": "اني البارحه قبل اولت البارحه حولت ملييونين وربعع وماتحول الفلوس شلقصه ؟",
     "حوالة معلقة (50k)": "سلام عليكم، حولت 50 الف لصاحبي برقم TXN-99887766 وخصموا الرصيد بس ما وصلت امس بالليل",
     "عربيزي ومصطلحات شات": "برو سويت ترانسفير 50k ورقم الحوالة 8877665544 وصار كراش ولاگ قوي وما وصل المبلغ",
     "تجميد الحساب والمحفظة": "محفظتي صار بيها بلوك ومجمدة بدون اي سبب وعندي فلوس محتاجها فدوة حلوها",
@@ -592,11 +593,12 @@ st.markdown(
 # -----------------------------------------------------------------------------
 # 6. Main Application Horizontal Tabs (Clean No-Emoji Titles)
 # -----------------------------------------------------------------------------
-tab_ai, tab_queue, tab_metrics, tab_outage = st.tabs([
+tab_ai, tab_queue, tab_metrics, tab_outage, tab_learning = st.tabs([
     "مركز الفحص الذكي وتجربة النماذج",
     "طابور المراجعة والاعتماد البشري",
     "مراقبة النماذج وأدلة التقييم",
     "ذكاء الأعطال والأنماط النظامية",
+    "حلقة التعلم والتدقيق الذاتي (Active Learning)",
 ])
 
 
@@ -696,7 +698,8 @@ with tab_ai:
             engine_choice = st.selectbox(
                 "المحرك المعتمد:",
                 [
-                    "نموذج الأوفلاين (2.77ms)",
+                    "الهجين الثلاثي (System 1 + Jev + Gemini)",
+                    "نموذج الأوفلاين السريع (0.5ms)",
                     "سحابة Jev 1.13 API",
                     "مبارزة ثنائية (وجهاً لوجه)",
                 ],
@@ -772,8 +775,13 @@ with tab_ai:
             st.session_state["live_duel"] = (res_j, res_o)
             st.session_state["live_active_res"] = res_o
         else:
-            p_key = "mock" if "الأوفلاين" in engine_choice else "jev"
-            with st.spinner("جاري فحص التذكرة واتخاذ القرار..."):
+            if "الهجين" in engine_choice:
+                p_key = "hybrid"
+            elif "الأوفلاين" in engine_choice:
+                p_key = "mock"
+            else:
+                p_key = "jev"
+            with st.spinner("جاري تشغيل المعمارية الهجينة واتخاذ القرار..."):
                 active_res = process_ticket(live_obj, provider_override=p_key)
             st.session_state["live_duel"] = None
             st.session_state["live_active_res"] = active_res
@@ -841,6 +849,17 @@ with tab_ai:
 
         # Entity Extraction & Grounded Draft Panel
         st.divider()
+        if active_res.audit_status:
+            if active_res.audit_status == "verified":
+                st.markdown(
+                    '<span class="telemetry-tag tag-auto" style="margin-bottom:10px; display:inline-block;">✓ تدقيق Gemini 3.6 Flash: الكيانات المستخرجة مؤرضة ومطابقة 100%</span>',
+                    unsafe_allow_html=True,
+                )
+            elif active_res.audit_status == "discrepancy_detected":
+                st.markdown(
+                    '<span class="telemetry-tag tag-escalate" style="margin-bottom:10px; display:inline-block;">⚠ رصد تضارب في الاستخراج: قام نموذج التدقيق بتصحيح القيمة وحفظها في حلقة التعلم</span>',
+                    unsafe_allow_html=True,
+                )
         col_ent, col_draft = st.columns(2)
         with col_ent:
             st.markdown("##### الكيانات المستخرجة (Extracted Entities):")
@@ -1197,3 +1216,51 @@ with tab_outage:
             mime="text/markdown",
             use_container_width=True,
         )
+
+
+# =============================================================================
+# TAB 5: Active Learning & Discrepancies Store
+# =============================================================================
+with tab_learning:
+    st.subheader("حلقة التعلم والتدقيق الذاتي (Active Learning & Discrepancy Store)")
+    st.caption("سجل الفروقات المكتشفة بين المحرك المحلي السريع والمحركات السحابية لتطوير القواعد تلقائياً بدون تسريب PII.")
+
+    from supportpipe.learning_store import discrepancy_store
+    disc_stats = discrepancy_store.get_summary_stats()
+    recent_discs = discrepancy_store.load_discrepancies(limit=50)
+
+    l1, l2, l3, l4 = st.columns(4)
+    l1.metric("إجمالي التضاربات المسجلة", disc_stats["total_discrepancies"])
+    l2.metric("تضاربات المبالغ المالية", disc_stats.get("by_type", {}).get("extraction_amount", 0) + disc_stats.get("by_type", {}).get("amount", 0))
+    l3.metric("تضاربات التواريخ", disc_stats.get("by_type", {}).get("extraction_date", 0) + disc_stats.get("by_type", {}).get("event_date", 0))
+    l4.metric("تضاربات التصنيف", disc_stats.get("by_type", {}).get("classification_conflict", 0))
+
+    st.divider()
+
+    st.markdown("#### مقترحات تطوير قواعد الاستخراج الأوفلاين (Suggested Offline Rules):")
+    if disc_stats.get("top_suggestions"):
+        for sugg in disc_stats["top_suggestions"]:
+            st.info(f"💡 {sugg}")
+    else:
+        st.success("كافة الاستخراجات الحالية متطابقة مع التدقيق السحابي ولا توجد ثغرات استخراج جديدة!")
+
+    st.divider()
+    st.markdown("#### سجل التدقيق التفصيلي (Discrepancy Audit Log):")
+    if recent_discs:
+        df_disc = pd.DataFrame([
+            {
+                "المعرف": d.record_id,
+                "التوقيت": d.timestamp[:19].replace("T", " "),
+                "الحقل": d.field_name,
+                "القيمة المحلية (Offline)": str(d.offline_value),
+                "قيمة التدقيق (Cloud)": str(d.llm_value),
+                "الإجراء": d.resolution_applied,
+                "سبب التضارب": d.discrepancy_reason or "—",
+                "نص التذكرة المنقح (PII Masked)": d.raw_text_masked,
+            }
+            for d in recent_discs
+        ])
+        st.dataframe(df_disc, use_container_width=True)
+    else:
+        st.caption("لا توجد سجلات تضارب مسجلة حتى الآن.")
+

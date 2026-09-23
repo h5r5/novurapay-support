@@ -9,10 +9,10 @@ Evaluates:
 """
 
 import time
-import numpy as np
-import pytest
 
-from supportpipe.pipeline import process_ticket, run_batch
+import numpy as np
+
+from supportpipe.pipeline import run_batch
 from supportpipe.schemas import Ticket
 
 

@@ -9,7 +9,6 @@
 """
 
 from unittest.mock import patch
-import pytest
 
 from supportpipe.classify.providers.mock_provider import MockClassifierProvider
 from supportpipe.extract.extract import extract_entities_offline

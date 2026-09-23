@@ -5,8 +5,8 @@ import re
 from supportpipe.extract.normalize import (
     normalize_digits,
     normalize_phone_number,
+    normalize_repeated_characters,
     parse_currency_amount,
-    parse_iqd_amount,
     resolve_event_date,
 )
 from supportpipe.schemas import ExtractedFields
@@ -18,26 +18,31 @@ def extract_entities_offline(
     category: str,
 ) -> ExtractedFields:
     """Deterministic entity extractor for offline mode and offline testing."""
-    text = normalize_digits(ticket_raw_text)
+    text = normalize_repeated_characters(normalize_digits(ticket_raw_text))
 
     # 1. Relative or explicit date phrase (Extracted FIRST to protect years like '2026' from amount extraction)
     # Long and specific patterns are evaluated before short sub-patterns
-    date_phrase_match = re.search(
-        r"\b(اولت\s*البارح[ةه]|اوت\s*البارح[ةه]|اول\s*البارح[ةه]|أول\s*البارح[ةه]|اولت\s*امس|اول\s*امس|أول\s*أمس|"
-        r"قبل\s*يومين(?:\s*الظهر)?|قبل\s*\d+\s*(?:ايام?|أيام|يوم)|قبل\s*اسبوعين|قبل\s*اسبوع|"
-        r"اليوم\s*(?:الصبح|الصبحيات|الظهر|العصر|المغرب|بالليل|مسيان|الغبشة)?|"
-        r"امس\s*(?:بالليل|العصر|المغرب|الصبحيات|مسيان)?|"
-        r"البارح[ةه]\s*(?:بالليل|العصر|المغرب|الظهر|الصبحيات|الضحى|مسيان)?|"
-        r"قبل\s*(?:ساعة|ساعتين|\d+\s*(?:ساعات?|دقايق|دقائق|دقيقة)|شوية|قليل)|هسة|توة|تووني|"
-        r"دوێنێ|دۆێنێ|دوینی|پێری|پێرێ|ئەمڕۆ|ئەمرو|"
-        r"پێش\s*(?:کەمێک|کاتژمێرێک|دوو\s*ڕۆژ|دوو\s*کاتژمێر|\d+\s*(?:ڕۆژ|خولەک|کاتژمێر)|هەفتەیەک)|"
-        r"duh|do|pêr|îro|"
-        r"berî\s*(?:bîstekê|saetekê|du\s*rojan|du\s*saetan|\d+\s*(?:rojan|roj|deqeyan|saetan)|hefteyekê)|"
-        r"(?:يوم\s*)?(?:الجمعة|السبت|الاحد|الأحد|الاثنين|الإثنين|الثلاثاء|الاربعاء|الأربعاء|الخميس)\s*(?:الفاتت|الفات|الماضي|الماضية|الراحت|الراح)?|"
-        r"\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}[-/]\d{1,2}[-/]\d{4})\b",
-        text,
-        re.IGNORECASE,
+    date_matches = list(
+        re.finditer(
+            r"\b(قبل\s*اول[تة]?\s*(?:البارح[ةه]|امس)|"
+            r"اولت\s*البارح[ةه]|اوت\s*البارح[ةه]|اول\s*البارح[ةه]|أول\s*البارح[ةه]|اولت\s*امس|اول\s*امس|أول\s*أمس|"
+            r"قبل\s*يومين(?:\s*الظهر)?|قبل\s*\d+\s*(?:ايام?|أيام|يوم)|قبل\s*اسبوعين|قبل\s*اسبوع|"
+            r"اليوم\s*(?:الصبح|الصبحيات|الظهر|العصر|المغرب|بالليل|مسيان|الغبشة)?|"
+            r"امس\s*(?:بالليل|العصر|المغرب|الصبحيات|مسيان)?|"
+            r"البارح[ةه]\s*(?:بالليل|العصر|المغرب|الظهر|الصبحيات|الضحى|مسيان)?|"
+            r"قبل\s*(?:ساعة|ساعتين|\d+\s*(?:ساعات?|دقايق|دقائق|دقيقة)|شوية|قليل)|هسة|توة|تووني|"
+            r"دوێنێ|دۆێنێ|دوینی|پێری|پێرێ|ئەمڕۆ|ئەمرو|"
+            r"پێش\s*پێر[ێی]|berî\s*pêr|"
+            r"پێش\s*(?:کەمێک|کاتژمێرێک|دوو\s*ڕۆژ|دوو\s*کاتژمێر|\d+\s*(?:ڕۆژ|خولەک|کاتژمێر)|هەفتەیەک)|"
+            r"duh|do|pêr|îro|"
+            r"berî\s*(?:bîstekê|saetekê|du\s*rojan|du\s*saetan|\d+\s*(?:rojan|roj|deqeyan|saetan)|hefteyekê)|"
+            r"(?:يوم\s*)?(?:الجمعة|السبت|الاحد|الأحد|الاثنين|الإثنين|الثلاثاء|الاربعاء|الأربعاء|الخميس)\s*(?:الفاتت|الفات|الماضي|الماضية|الراحت|الراح)?|"
+            r"\d{4}[-/]\d{1,2}[-/]\d{1,2}|\d{1,2}[-/]\d{1,2}[-/]\d{4})\b",
+            text,
+            re.IGNORECASE,
+        )
     )
+    date_phrase_match = max(date_matches, key=lambda m: len(m.group(0).strip())) if date_matches else None
     date_text = date_phrase_match.group(0).strip() if date_phrase_match else None
     resolved_date = resolve_event_date(date_text, submitted_at_iso) if date_text else None
 
@@ -154,7 +159,7 @@ def extract_entities_offline(
         r"(?:مبلغ\s*|بڕی\s*)?("
         r"\$\s*\d{1,6}(?:,\d{3})*(?:\.\d+)?|\bUSD\s*\d{1,6}(?:,\d{3})*(?:\.\d+)?\b|"
         r"\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?\s*[km]|\b\d+(?:\.\d+)?\s*(?:الاف|آلاف|ألف|الف|ملايين|مليون|ملیۆن|هەزار|hezar|milyon)|"
-        r"\bنص\s*مليون|\bربع\s*مليون|\bمليونين\s*ونص|\bمليون\s*ونص|\bمليون|\bملیۆن|"
+        r"\bنص\s*مليون|\bربع\s*مليون|\bمليونين\s*و\s*ربع|\bمليون\s*و\s*ربع|\bمليونين\s*ونص|\bمليون\s*ونص|\bمليونين|\bمليون|\bملیۆن|"
         r"\b(?:عشرتالاف|خمستالاف|اربعتالاف|تلتالاف|ستالاف|سبعتالاف|ثمانتالاف|تسعتالاف|الفين|ميت\s*الف|مية\s*الف|ميتين\s*الف)|"
         r"\b(?:ورقة\s*ونص|ورقه\s*ونص|ورقة\s*وربع|ورقه\s*وربع|نص\s*ورقة|نصف\s*ورقة|ورقتين\s*ونص|ورقتين|3\s*ورقات|ثلاث\s*ورقات|خمس\s*ورقات|عشر\s*ورقات|ورقة|ورقه)|"
         r"\b(?:گەڵا\s*و\s*نیو|گەڵاو\s*نیو|دوو\s*گەڵا|سێ\s*گەڵا|چوار\s*گەڵا|پێنج\s*گەڵا|دە\s*گەڵا|نیو\s*گەڵا|گەڵایەک|گەڵا)|"

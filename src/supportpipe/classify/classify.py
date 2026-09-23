@@ -1,33 +1,53 @@
-"""Classification entrypoint with provider fallback and caching."""
+"""Classification entrypoint with provider fallback, hybrid routing, and caching."""
+
+from __future__ import annotations
 
 import logging
+from typing import Any
 
 from supportpipe.classify.providers.base import BaseClassifierProvider
 from supportpipe.classify.providers.gemini_provider import GeminiClassifierProvider
+from supportpipe.classify.providers.hybrid_provider import HybridClassifierProvider
 from supportpipe.classify.providers.jev_provider import JevClassifierProvider
 from supportpipe.classify.providers.mock_provider import MockClassifierProvider
 from supportpipe.config import settings
-from supportpipe.schemas import ClassificationResult
+from supportpipe.schemas import ClassificationResult, ExtractedFields
 
 logger = logging.getLogger(__name__)
 
 
 def get_classifier_provider(provider_name: str | None = None) -> BaseClassifierProvider:
     """Instantiate classifier provider based on settings and availability."""
-    if settings.llm_mode == "offline":
+    if settings.llm_mode == "offline" and provider_name != "hybrid":
         return MockClassifierProvider()
 
     has_jev = bool(settings.jev_api_key or settings.typesafe_api_key)
-    name = (provider_name or ("jev" if has_jev else "gemini")).lower()
+    has_gemini = bool(settings.gemini_api_key)
 
-    if name == "jev" and has_jev:
+    # Determine default provider
+    default_name = "mock"
+    if settings.llm_mode == "hybrid" or (has_jev and has_gemini):
+        default_name = "hybrid"
+    elif has_jev:
+        default_name = "jev"
+    elif has_gemini:
+        default_name = "gemini"
+
+    name = (provider_name or default_name).lower()
+
+    if name in ["hybrid", "tri_engine", "tri"]:
+        return HybridClassifierProvider()
+    elif name == "jev" and has_jev:
         return JevClassifierProvider()
-    elif name == "gemini" and settings.gemini_api_key:
+    elif name == "gemini" and has_gemini:
         return GeminiClassifierProvider()
+    elif name == "mock":
+        return MockClassifierProvider()
 
     # Fallback to deterministic mock
     logger.warning(
-        "No live API keys configured or offline mode active; using MockClassifierProvider"
+        "Requested provider '%s' not fully configured or offline mode active; falling back to MockClassifierProvider",
+        name,
     )
     return MockClassifierProvider()
 
@@ -36,6 +56,8 @@ def classify_ticket(
     ticket_text: str,
     channel: str = "app",
     provider_name: str | None = None,
+    fast_extracted: ExtractedFields | dict[str, Any] | None = None,
+    ticket_id: str = "TKT-LIVE",
 ) -> tuple[ClassificationResult, str]:
     """Classify a support ticket into category, priority, and confidences.
 
@@ -46,9 +68,14 @@ def classify_ticket(
     provider_name_tag = provider.__class__.__name__.replace("ClassifierProvider", "").lower()
 
     try:
-        result = provider.classify(ticket_text=ticket_text, channel=channel)
+        result = provider.classify(
+            ticket_text=ticket_text,
+            channel=channel,
+            fast_extracted=fast_extracted,
+            ticket_id=ticket_id,
+        )
         return result, provider_name_tag
     except Exception as e:
-        logger.error(f"Classification failed via {provider_name_tag}: {e}. Falling back to Mock.")
+        logger.error("Classification failed via %s: %s. Falling back to Mock.", provider_name_tag, e)
         fallback = MockClassifierProvider().classify(ticket_text=ticket_text, channel=channel)
         return fallback, f"{provider_name_tag}_fallback_mock"

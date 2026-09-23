@@ -57,28 +57,41 @@ tests/test_pipeline_empty_batch PASSED [100%]
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.14.4, pytest-9.1.1, pluggy-1.6.0
-collected 76 items
+collected 84 items
 
-tests\test_audit_vulnerabilities_regression.py ........                  [ 10%]
-tests\test_capacity_and_stress.py ..                                     [ 13%]
-tests\test_dialect_sentiment.py ......                                   [ 21%]
-tests\test_escalation.py .....                                           [ 27%]
-tests\test_failure_modes.py .......                                      [ 36%]
-tests\test_iraq_nationwide_scenarios.py ........                         [ 47%]
-tests\test_kurdish_nationwide_scenarios.py ........                      [ 57%]
-tests\test_normalizers.py ......                                         [ 65%]
-tests\test_patterns.py .                                                 [ 67%]
-tests\test_pipeline_integration.py ....                                  [ 72%]
-tests\test_remediation_regressions.py .............                      [ 89%]
-tests\test_scaffold.py ...                                               [ 93%]
-tests\test_taxonomy.py .....                                             [100%]
+tests\test_audit_vulnerabilities_regression.py ........                  [  9%]
+tests\test_capacity_and_stress.py ..                                     [ 11%]
+tests\test_dialect_sentiment.py ......                                   [ 19%]
+tests\test_escalation.py .....                                           [ 25%]
+tests\test_failure_modes.py .......                                      [ 33%]
+tests\test_iraq_nationwide_scenarios.py ........                         [ 42%]
+tests\test_kurdish_nationwide_scenarios.py ........                      [ 52%]
+tests\test_normalizers.py ......                                         [ 59%]
+tests\test_patterns.py .                                                 [ 60%]
+tests\test_pipeline_integration.py ....                                  [ 65%]
+tests\test_remediation_regressions.py .............                      [ 80%]
+tests\test_scaffold.py ...                                               [ 84%]
+tests\test_taxonomy.py .....                                             [ 90%]
+tests\test_tri_engine_hybrid_architecture.py ........                    [100%]
 
-============================= 76 passed in 2.88s ==============================
+============================= 84 passed in 2.70s ==============================
 ```
 
 ---
 
-## 4. الحالة المعمارية العامة ومطابقة الشروط (Compliance Status)
+## 4. المعمارية الهجينة الثلاثية وحلقة التعلم (Tri-Engine Hybrid Architecture)
+تم تدشين المعمارية الثلاثية المتكاملة مع حلقة التعلم النشط وتطبيع الحروف المكررة:
+1. **System 1 (Local Fast Extractor & Heuristics)**: استخراج الكيانات المباشر (<1ms) مع ضغط الحروف المكررة (`وربعععع` $\rightarrow$ `وربع`)، دعم الكسور المليونية (`مليونين وربع` = 2,250,000 د.ع)، وحساب التواريخ النسبية المركبة (`قبل اولت البارحة` = 3 أيام طرحاً).
+2. **System 1.5 (TypeSafe AI Jev 1.13)**: محرك الاختيارات المقيدة لحساب مصفوفة الاحتمالات المعايرة وخطر التصعيد Noul.
+3. **System 2 (Google Gemini 3.6 Flash)**: تدقيق الكيانات المستخرجة مسبقاً (Auditor) وتوليد مسودة الرد المؤرضة.
+4. **حلقة التعلم وسجل التضاربات (Active Learning Discrepancy Store)**:
+   - حفظ أي تضارب بين المحرك المحلي والسحابي في `data/audit_learning/discrepancies.jsonl`.
+   - تنظيف وتشفير البيانات الشخصية تلقائياً (**Strict PII Masking**).
+   - توفير مقترحات لتطوير القواعد تلقائياً في واجهة التحكم (Tab 5).
+
+---
+
+## 5. الحالة المعمارية العامة ومطابقة الشروط (Compliance Status)
 * **Rule 03 (Deterministic Routing)**: محققة وثابتة 100% (جميع مسارات التوجيه مبنية على مصفوفة صارمة دون تدخل احتمالي من النموذج اللغوي).
 * **Must-Have 05 (No Auto-Send)**: لا توجد أي أدوات إرسال خارجي تلقائي؛ جميع المسودات تتجه لطابور المراجعة والاعتماد البشري.
 * **UI Dynamic Telemetry**: جميع المؤشرات في واجهة Streamlit ديناميكية بالكامل وترتبط مباشرة بملفات التقييم الحقيقية في `results/` دون نصوص ثابتة مضللة.

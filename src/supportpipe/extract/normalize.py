@@ -10,6 +10,14 @@ ARABIC_DIGITS_TRANS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", 
 
 # Iraqi dialect relative date offsets in days
 RELATIVE_DATE_PATTERNS = [
+    # 3 days ago (checked before 2 days: 'قبل اولت البارحة' / 'قبل اولت امس' / 'پێش پێرێ')
+    (
+        re.compile(
+            r"\b(قبل\s*اول[تة]?\s*(?:البارح[ةه]|امس)|پێش\s*پێر[ێی]|berî\s*pêr)\b",
+            re.IGNORECASE,
+        ),
+        3,
+    ),
     # 2 days ago (checked before 1 day to prevent 'اول البارحة' from prematurely matching 'البارحة')
     (
         re.compile(
@@ -192,7 +200,6 @@ ARABIZI_EN_MAPPINGS: dict[str, str] = {
     "ذبني برة": "تسجيل خروج مفاجئ",
     "شمرتلة": "حولت له",
     "شمرتله": "حولت له",
-    "شمرت": "حولت رصيد",
     "كص مني": "اقتطع عمولة",
     "گص مني": "اقتطع عمولة",
     "كص": "اقتطع عمولة",
@@ -263,6 +270,26 @@ def strip_arabic_diacritics_and_tatweel(text: str) -> str:
     # Strip unicode bidirectional markers (RTL/LTR overrides)
     cleaned = re.sub(r"[\u200E\u200F\u202A-\u202E]", "", cleaned)
     return cleaned
+
+
+def normalize_repeated_characters(text: str) -> str:
+    """Deduplicate repeated characters caused by dialect elongation, typos, or emphasis.
+
+    Examples:
+    - 3+ identical characters: 'وربعععع' -> 'وربع', 'فلوسسس' -> 'فلوس', 'شلقصههه' -> 'شلقصه'
+    - Targeted dialect elongations: 'ملييونين' -> 'مليونين', 'ملييووون' -> 'مليون'
+    - Word-final double consonants: 'وربعع' -> 'وربع', 'حبيبيي' -> 'حبيبي'
+    """
+    if not text:
+        return text
+    # 1. Any alphabetic letter repeated 3 or more times is collapsed to 1 (digits are preserved)
+    res = re.sub(r"([^\W\d_])\1{2,}", r"\1", text)
+    # 2. Targeted dialect vowel / glide elongation for fintech terms
+    res = re.sub(r"ملي+و+ن", "مليون", res)
+    # 3. Trailing doubled letters on words with >= 2 preceding letters (where doubled final letter is colloquial emphasis)
+    res = re.sub(r"\b([^\W\d_]{2,})([عفهصضطظكحخجشسيوا])\2\b", r"\1\2", res)
+    return res
+
 
 
 def normalize_arabizi_and_slang(text: str) -> str:
@@ -427,10 +454,36 @@ def parse_currency_amount(amount_input: int | str | None) -> tuple[int | None, i
         "طابوكه": 25_000_000,
         "باكة": 2_500_000,
         "باكه": 2_500_000,
-        "مليون ونص": 1_500_000,
-        "مليون ونصف": 1_500_000,
+        "مليونين وربع": 2_250_000,
+        "مليونين و ربع": 2_250_000,
+        "مليون وربع": 1_250_000,
+        "مليون و ربع": 1_250_000,
         "مليونين ونص": 2_500_000,
         "مليونين ونصف": 2_500_000,
+        "مليون ونص": 1_500_000,
+        "مليون ونصف": 1_500_000,
+        "مليونين وثلاث ارباع": 2_750_000,
+        "مليونين وثلاثة ارباع": 2_750_000,
+        "مليون وثلاث ارباع": 1_750_000,
+        "مليون وثلاثة ارباع": 1_750_000,
+        "ثلاث ملايين وربع": 3_250_000,
+        "ثلاث ملايين ونص": 3_500_000,
+        "ثلاث ملايين ونصف": 3_500_000,
+        "اربع ملايين ونص": 4_500_000,
+        "اربع ملايين ونصف": 4_500_000,
+        "خمس ملايين ونص": 5_500_000,
+        "خمس ملايين ونصف": 5_500_000,
+        "ربع مليون": 250_000,
+        "نص مليون": 500_000,
+        "نصف مليون": 500_000,
+        "ثلاث ارباع المليون": 750_000,
+        "ثلاثة ارباع المليون": 750_000,
+        "ميتين وخمسين الف": 250_000,
+        "ميتين وخمسين ألف": 250_000,
+        "خمسمية الف": 500_000,
+        "خمسمائة الف": 500_000,
+        "سبعمية وخمسين الف": 750_000,
+        "سبعمائة وخمسين الف": 750_000,
         "عشرتالاف": 10_000,
         "عشر تالاف": 10_000,
         "عشرة الاف": 10_000,

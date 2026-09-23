@@ -7,14 +7,8 @@ Comprehensive coverage across all major geographic regions of Iraq:
 4. Southern Sector (البصرة، العمارة، الناصرية - چا شني، مسيان، الغبشة، تمييز الهواتف).
 """
 
-from supportpipe.extract.normalize import (
-    parse_currency_amount,
-    parse_iqd_amount,
-    resolve_event_date,
-)
 from supportpipe.pipeline import process_ticket
 from supportpipe.schemas import Ticket
-
 
 # =============================================================================
 # 1. Northern Sector (الموصل، كركوك، إقليم كوردستان)

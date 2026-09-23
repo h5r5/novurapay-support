@@ -112,7 +112,13 @@ class MockClassifierProvider(BaseClassifierProvider):
     def __init__(self) -> None:
         self.cat_pipe, self.prio_pipe = _init_offline_pipelines()
 
-    def classify(self, ticket_text: str, channel: str = "app") -> ClassificationResult:
+    def classify(
+        self,
+        ticket_text: str,
+        channel: str = "app",
+        fast_extracted: Any = None,
+        **kwargs: Any,
+    ) -> ClassificationResult:
         raw = ticket_text.strip()
         text = normalize_digits(raw)
         norm = normalize_arabizi_and_slang(text)

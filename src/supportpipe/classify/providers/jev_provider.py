@@ -6,7 +6,7 @@ import httpx
 
 from supportpipe.classify.providers.base import BaseClassifierProvider
 from supportpipe.config import settings
-from supportpipe.schemas import ClassificationResult, PriorityType
+from supportpipe.schemas import ClassificationResult, ExtractedFields, PriorityType
 from supportpipe.taxonomy.loader import taxonomy
 
 
@@ -28,7 +28,13 @@ class JevClassifierProvider(BaseClassifierProvider):
         self.model = model or settings.jev_model or "jev-latest"
         self.timeout = httpx.Timeout(12.0, connect=5.0)
 
-    def classify(self, ticket_text: str, channel: str = "app") -> ClassificationResult:
+    def classify(
+        self,
+        ticket_text: str,
+        channel: str = "app",
+        fast_extracted: ExtractedFields | dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> ClassificationResult:
         if not self.api_key:
             raise ValueError(
                 "Neither JEV_API_KEY nor TYPESAFE_API_KEY is configured in environment"
@@ -45,9 +51,34 @@ class JevClassifierProvider(BaseClassifierProvider):
             cat_id: meta.get("description_ar", "") for cat_id, meta in taxonomy.categories.items()
         }
 
+        facts_summary: list[str] = []
+        if fast_extracted:
+            if hasattr(fast_extracted, "model_dump"):
+                f_dict = fast_extracted.model_dump()
+            elif isinstance(fast_extracted, dict):
+                f_dict = fast_extracted
+            else:
+                f_dict = {}
+
+            amt = f_dict.get("amount_iqd") or f_dict.get("amount_usd")
+            curr = f_dict.get("currency", "IQD")
+            ref = f_dict.get("transaction_ref")
+            dt = f_dict.get("event_date_resolved")
+            phone = f_dict.get("phone_number")
+            if amt:
+                facts_summary.append(f"المبلغ: {amt} {curr}")
+            if ref:
+                facts_summary.append(f"المرجع: {ref}")
+            if dt:
+                facts_summary.append(f"التاريخ: {dt}")
+            if phone:
+                facts_summary.append(f"الهاتف: {phone}")
+
+        facts_clause = f"\nالحقائق المالية المستخرجة: {' | '.join(facts_summary)}" if facts_summary else ""
+
         payload: dict[str, Any] = {
             "model": self.model,
-            "state": f"القناة: {channel}\nنص التذكرة: {ticket_text}",
+            "state": f"القناة: {channel}\nنص التذكرة: {ticket_text}{facts_clause}",
             "questions": {
                 "category": {
                     "type": "choice",

@@ -10,13 +10,8 @@ Covers:
 - Kurdish draft response generation with templates_ku.yaml.
 """
 
-from datetime import datetime, timezone
-import pytest
 
 from supportpipe.classify.sentiment import analyze_iraqi_sentiment_and_intent
-from supportpipe.draft.draft import DraftManager
-from supportpipe.draft.validate import check_arabic_script_ratio, validate_draft_response
-from supportpipe.extract.extract import extract_entities_offline
 from supportpipe.extract.language import detect_ticket_language
 from supportpipe.extract.normalize import (
     parse_currency_amount,

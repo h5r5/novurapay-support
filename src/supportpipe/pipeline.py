@@ -31,19 +31,44 @@ def process_ticket(
     """Process a single ticket through the complete typed pipeline."""
     start_time = time.perf_counter()
 
-    # 1. Classification
+    # 1. Structured Fast Extraction (System 1 Local Extractor)
+    extracted = extract_ticket_details(
+        ticket_raw_text=ticket.raw_text,
+        submitted_at_iso=ticket.submitted_at,
+        category="unknown",
+    )
+
+    # 2. Multi-Engine Consensus Classification & Entity Auditing
     classification, provider_tag = classify_ticket(
         ticket_text=ticket.raw_text,
         channel=ticket.channel,
         provider_name=provider_override,
+        fast_extracted=extracted,
+        ticket_id=ticket.ticket_id,
     )
 
-    # 2. Structured Extraction & Code Normalization
-    extracted = extract_ticket_details(
-        ticket_raw_text=ticket.raw_text,
-        submitted_at_iso=ticket.submitted_at,
-        category=classification.category,
-    )
+    # 2.5 Process Cloud Auditor Corrections if Discrepancy Detected
+    audit_status = None
+    audit_discrepancy = None
+    if classification.audit_details:
+        audit_status = classification.audit_details.get("audit_status")
+        audit_discrepancy = classification.audit_details.get("discrepancy_details")
+        if audit_status == "discrepancy_detected" and isinstance(audit_discrepancy, dict):
+            field_name = audit_discrepancy.get("field")
+            corrected_val = audit_discrepancy.get("corrected_value")
+            if field_name == "amount" and corrected_val is not None:
+                try:
+                    c_amt = int(corrected_val)
+                    if c_amt > 0:
+                        extracted.amount_iqd = c_amt
+                except (ValueError, TypeError):
+                    pass
+            elif field_name == "event_date" and corrected_val:
+                extracted.event_date_resolved = str(corrected_val)
+            elif field_name == "reference" and corrected_val:
+                extracted.transaction_ref = str(corrected_val)
+            elif field_name == "phone" and corrected_val:
+                extracted.phone_number = str(corrected_val)
 
     # 3. Extraction Validation against Business Rules
     ext_valid, ext_reasons = validate_extraction_for_category(
@@ -77,7 +102,9 @@ def process_ticket(
     draft_reply: str | None = None
     if not escalated:
         candidate_draft = None
-        if settings.llm_mode != "offline":
+        if classification.audit_details and classification.audit_details.get("draft_reply"):
+            candidate_draft = classification.audit_details.get("draft_reply")
+        elif settings.llm_mode != "offline":
             try:
                 from supportpipe.draft.generator import generate_candidate_draft
 
@@ -136,6 +163,8 @@ def process_ticket(
         latency_ms=round(total_latency_ms, 2),
         sentiment_tags=classification.sentiment_tags,
         urgency_level=urgency,
+        audit_status=audit_status,
+        audit_discrepancy_details=audit_discrepancy,
     )
 
 
