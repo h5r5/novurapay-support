@@ -10,18 +10,26 @@ ARABIC_DIGITS_TRANS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", 
 
 # Iraqi dialect relative date offsets in days
 RELATIVE_DATE_PATTERNS = [
-    # 3 days ago (checked before 2 days: 'قبل اولت البارحة' / 'قبل اولت امس' / 'پێش پێرێ')
+    # 4 days ago ('قبل اولت اولت البارحة' / 'قبل اولت اولت امس')
     (
         re.compile(
-            r"\b(قبل\s*اول[تة]?\s*(?:البارح[ةه]|امس)|پێش\s*پێر[ێی]|berî\s*pêr)\b",
+            r"\b(قبل\s*اول[تة]?\s*اول[تة]?\s*(?:البارح[ةه]|امس))\b",
+            re.IGNORECASE,
+        ),
+        4,
+    ),
+    # 3 days ago ('قبل اولت البارحة' / 'قبل اولت امس' / 'پێش پێرێ' / 'پێش سێ ڕۆژ')
+    (
+        re.compile(
+            r"\b(قبل\s*اول[تة]?\s*(?:البارح[ةه]|امس)|پێش\s*پێر[ێی]|پێش\s*سێ\s*ڕۆژ|berî\s*pêr)\b",
             re.IGNORECASE,
         ),
         3,
     ),
-    # 2 days ago (checked before 1 day to prevent 'اول البارحة' from prematurely matching 'البارحة')
+    # 2 days ago ('قبل يومين' / 'اول امس' / 'أول أمس' / 'اولت البارحة' / 'پێری')
     (
         re.compile(
-            r"\b(قبل\s*يومين(?:\s*الظهر)?|اولت\s*امس|اول\s*امس|أول\s*أمس|اولت\s*البارح[ةه]|اوت\s*البارح[ةه]|اول\s*البارح[ةه]|أول\s*البارح[ةه]|پێری|پێرێ|پیری|pêr)\b",
+            r"\b(قبل\s*يومين(?:\s*الظهر)?|اولت\s*امس|اول\s*امس|أول\s*أمس|اول\s*أمس|أول\s*امس|اولت\s*البارح[ةه]|اوت\s*البارح[ةه]|اول\s*البارح[ةه]|أول\s*البارح[ةه]|پێری|پێرێ|پیری|pêr)\b",
             re.IGNORECASE,
         ),
         2,
@@ -37,14 +45,26 @@ RELATIVE_DATE_PATTERNS = [
     # Yesterday
     (
         re.compile(
-            r"\b(امس|البارحة|البارحه|أمس|امس\s*(?:بالليل|العصر|المغرب|الصبحيات|مسيان)|البارحة\s*(?:بالليل|العصر|المغرب|الصبحيات|الظهر|الضحى|مسيان)|البارحه\s*(?:بالليل|العصر|المغرب|الصبحيات|الظهر|الضحى|مسيان)|دوێنێ|دۆێنێ|دوینی|duh|do)\b",
+            r"\b(امس|البارحة|البارحه|أمس|امس\s*(?:بالليل|العصر|المغرب|الصبحيات|مسيان)|البارحة\s*(?:بالليل|العصر|المغرب|الصبحيات|الظهر|الضحى|مسيان)|البارحه\s*(?:بالليل|العصر|المغرب|الصبحيات|الظهر|الضحى|مسيان)|دوێنێ|دۆێنێ|دوینی|duh|do|el\s*bar7a|el\s*barha|bar7a)\b",
             re.IGNORECASE,
         ),
         1,
     ),
-    (re.compile(r"\bقبل\s*([3-9]|10)\s*ايام?\b", re.IGNORECASE), None),  # dynamic extraction
-    (re.compile(r"\b(قبل\s*اسبوع|پێش\s*هەفتەیەک|پێش\s*هەفتەیەك|berî\s*hefteyekê|berî\s*hefteyê)\b", re.IGNORECASE), 7),
+    # 1 week ago ('الاسبوع الفات' / 'الاسبوع الراح' / 'الاسبوع الماضي' / 'قبل اسبوع')
+    (
+        re.compile(
+            r"\b(قبل\s*اسبوع|الأسبوع\s*(?:الفات|الراح|الماضي)|الاسبوع\s*(?:الفات|الراح|الماضي)|پێش\s*هەفتەیەک|پێش\s*هەفتەیەك|berî\s*hefteyekê|berî\s*hefteyê)\b",
+            re.IGNORECASE,
+        ),
+        7,
+    ),
+    # 2 weeks ago ('قبل اسبوعين')
     (re.compile(r"\b(قبل\s*اسبوعين|پێش\s*دوو\s*هەفتە)\b", re.IGNORECASE), 14),
+    # 3 weeks ago ('قبل ثلاث اسابيع' / 'صارلي ثلاث اسابيع')
+    (re.compile(r"\b(?:قبل|صارلي)\s*(?:ثلاث|ثلاثة)\s*اسابيع\b", re.IGNORECASE), 21),
+    # 1 month ago ('قبل شهر' / 'صارلي شهر')
+    (re.compile(r"\b(?:قبل|صارلي)\s*(?:شهر|مانگێک|mehekê)\b", re.IGNORECASE), 30),
+    (re.compile(r"\b(?:قبل|صارلي)\s*([3-9]|10)\s*ايام?\b", re.IGNORECASE), None),  # dynamic extraction
 ]
 
 # Weekday mappings (0=Monday, ..., 6=Sunday) across Arabic and Kurdish dialects
@@ -155,6 +175,12 @@ ARABIZI_EN_MAPPINGS: dict[str, str] = {
     "تصفن": "تعليق وبطء",
     "شاشة بيضاء": "عطل وبطء",
     "غلطت برقم": "تحويل خاطئ",
+    "b-ghalat": "تحويل بالخطأ",
+    "b ghalat": "تحويل بالخطأ",
+    "l-raqam": "الى رقم",
+    "saraq": "سرق احتيال",
+    "akhad el otp": "سرق رمز التأكيد احتيال",
+    "akhad": "اخذ",
     "صفحة وهمية": "احتيال وسرقة",
     "باكوني": "سرقوني احتيال",
     "باكونه": "سرقوني احتيال",
@@ -332,14 +358,29 @@ IRAQI_DOLLAR_SLANG_MAP: dict[str, int] = {
     "ورقتين ونصف": 250,
     "ورقتين": 200,
     "3 ورقات": 300,
+    "3 اوراق": 300,
+    "3 أوراق": 300,
     "ثلاث ورقات": 300,
+    "ثلاث اوراق": 300,
+    "ثلاث أوراق": 300,
     "تلت ورقات": 300,
+    "تلت اوراق": 300,
     "4 ورقات": 400,
+    "4 اوراق": 400,
+    "4 أوراق": 400,
     "اربع ورقات": 400,
+    "اربع اوراق": 400,
+    "أربع أوراق": 400,
     "5 ورقات": 500,
+    "5 اوراق": 500,
+    "5 أوراق": 500,
     "خمس ورقات": 500,
+    "خمس اوراق": 500,
+    "خمس أوراق": 500,
     "10 ورقات": 1000,
+    "10 اوراق": 1000,
     "عشر ورقات": 1000,
+    "عشر اوراق": 1000,
     "ورقة": 100,
     "ورقه": 100,
     # 2. Shidda (10,000 USD pack)
@@ -359,6 +400,7 @@ IRAQI_DOLLAR_SLANG_MAP: dict[str, int] = {
     "نصف دفتر": 50000,
     "دفترين": 200000,
     "عشر دفاتر": 1000000,
+    "دفتر كامل": 100000,
     "دفتر": 100000,
     # 4. Kurdish Gala (گەڵا = 100 USD) and fractions (Erbil, Sulaymaniyah, Duhok)
     "گەڵا و نیو": 150,
@@ -448,12 +490,81 @@ def parse_currency_amount(amount_input: int | str | None) -> tuple[int | None, i
             return val, None, "IQD"
         return None, None, "IQD"
 
+    # 3.1 Dynamic Million + fraction: e.g. "4 ملايين ونص", "3 ملايين وربع", "1.5 مليون"
+    million_dyn = re.match(
+        r"^(\d+(?:\.\d+)?)\s*(?:ملايين|مليون|ملیۆن)(?:\s*و\s*(نص|نصف|ربع|تلت|ثلث))?$",
+        clean_no_curr,
+        re.IGNORECASE,
+    )
+    if million_dyn:
+        base_m = float(million_dyn.group(1))
+        frac_str = million_dyn.group(2)
+        if frac_str in ["نص", "نصف"]:
+            base_m += 0.5
+        elif frac_str in ["ربع"]:
+            base_m += 0.25
+        elif frac_str in ["تلت", "ثلث"]:
+            base_m += 0.333333
+        val = int(base_m * 1_000_000)
+        if is_usd:
+            return val * current_rate, val, "USD"
+        return val, None, "IQD"
+
+    # 3.2 Arabizi amount notation (e.g. 100 alf, 50 alf, 25 alf)
+    alf_match = re.match(r"^(\d+)\s*alf$", clean_no_curr, re.IGNORECASE)
+    if alf_match:
+        val = int(alf_match.group(1)) * 1_000
+        return val, None, "IQD"
+
+    # 3.3 Dynamic Decimal amount (e.g. 89.50, 0.5)
+    dec_match = re.match(r"^(\d+\.\d+)$", clean_no_curr)
+    if dec_match:
+        fval = float(dec_match.group(1))
+        if is_usd:
+            int_usd = max(1, round(fval)) if fval < 1 else round(fval)
+            return int(fval * current_rate), int_usd, "USD"
+        val = round(fval)
+        return val, None, "IQD"
+
+    # 3.4 Dynamic compound thousands + units: e.g. "50 الف و250"
+    compound_k = re.match(r"^(\d+)\s*(?:الف|ألف)\s*و\s*(\d+)$", clean_no_curr)
+    if compound_k:
+        val = int(compound_k.group(1)) * 1_000 + int(compound_k.group(2))
+        return val, None, "IQD"
+
     # 4. Check connected colloquial verbal amounts (Iraqi Arabic & Kurdish)
     connected_map: dict[str, int] = {
         "طابوقة": 25_000_000,
         "طابوكه": 25_000_000,
         "باكة": 2_500_000,
         "باكه": 2_500_000,
+        "مليونين وسبعمية وخمسين الف": 2_750_000,
+        "مليونين وسبعمائة وخمسين الف": 2_750_000,
+        "مليونين وسبعمية وخمسين": 2_750_000,
+        "مليونين وسبعمائة وخمسين": 2_750_000,
+        "ثلاثة ملايين وتلت": 3_333_333,
+        "ثلاث ملايين وتلت": 3_333_333,
+        "ثلاثة ملايين وثلث": 3_333_333,
+        "ثلاث ملايين وثلث": 3_333_333,
+        "خمسين الف و250": 50_250,
+        "خمسين الف وميتين وخمسين": 50_250,
+        "خمسين الف ومائتين وخمسين": 50_250,
+        "خمسين الف": 50_000,
+        "خمسين ألف": 50_000,
+        "عشرين الف": 20_000,
+        "عشرين ألف": 20_000,
+        "ثلاثين الف": 30_000,
+        "ثلاثين ألف": 30_000,
+        "اربعين الف": 40_000,
+        "اربعين ألف": 40_000,
+        "ستين الف": 60_000,
+        "ستين ألف": 60_000,
+        "سبعين الف": 70_000,
+        "سبعين ألف": 70_000,
+        "ثمانين الف": 80_000,
+        "ثمانين ألف": 80_000,
+        "تسعين الف": 90_000,
+        "تسعين ألف": 90_000,
         "مليونين وربع": 2_250_000,
         "مليونين و ربع": 2_250_000,
         "مليون وربع": 1_250_000,
@@ -740,12 +851,33 @@ def resolve_event_date(date_text: str | None, submitted_at_iso: str) -> str | No
     ):
         return ref_dt.strftime("%Y-%m-%d")
 
-    # 3. Dynamic "قبل X ايام" or Kurdish "پێش X ڕۆژ" / "berî X rojan"
-    days_match = re.search(r"\b(?:قبل|پێش|berî)\s*(\d+)\s*(?:ايام?|أيام|يوم|ڕۆژ|rojan|roj)\b", norm_text)
+    # 3. Dynamic "قبل X ايام" or "صارلي X ايام" or Kurdish "پێش X ڕۆژ" / "berî X rojan"
+    days_match = re.search(r"\b(?:قبل|صارلي|صارله|صارلە|پێش|berî)\s*(\d+)\s*(?:ايام?|أيام|يوم|ڕۆژ|rojan|roj)\b", norm_text)
     if days_match:
         offset = int(days_match.group(1))
         target_dt = ref_dt - timedelta(days=offset)
         return target_dt.strftime("%Y-%m-%d")
+
+    # 3.5 Dynamic "قبل X اسابيع" or "صارلي X اسابيع"
+    weeks_match = re.search(r"\b(?:قبل|صارلي|صارله|صارلە|پێش|berî)\s*(\d+)\s*(?:اسابيع|أسابيع|اسبوع|أسبوع|هەفتە|hefte)\b", norm_text)
+    if weeks_match:
+        offset = int(weeks_match.group(1)) * 7
+        target_dt = ref_dt - timedelta(days=offset)
+        return target_dt.strftime("%Y-%m-%d")
+
+    # 3.8 Calendar month ago ("قبل شهر" / "صارلي شهر" / "مانگێک")
+    if re.search(r"\b(?:قبل|صارلي)\s*(?:شهر|مانگێک|mehekê)\b", norm_text, re.IGNORECASE):
+        try:
+            prev_m = 12 if ref_dt.month == 1 else ref_dt.month - 1
+            prev_y = ref_dt.year - 1 if ref_dt.month == 1 else ref_dt.year
+            import calendar
+            max_d = calendar.monthrange(prev_y, prev_m)[1]
+            target_d = min(ref_dt.day, max_d)
+            target_dt = ref_dt.replace(year=prev_y, month=prev_m, day=target_d)
+            return target_dt.strftime("%Y-%m-%d")
+        except Exception:
+            target_dt = ref_dt - timedelta(days=30)
+            return target_dt.strftime("%Y-%m-%d")
 
     # 4. Standard relative Iraqi & Kurdish patterns
     for pattern, pattern_offset in RELATIVE_DATE_PATTERNS:

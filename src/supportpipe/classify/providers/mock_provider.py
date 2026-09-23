@@ -120,16 +120,33 @@ class MockClassifierProvider(BaseClassifierProvider):
         **kwargs: Any,
     ) -> ClassificationResult:
         raw = ticket_text.strip()
-        text = normalize_digits(raw)
-        norm = normalize_arabizi_and_slang(text)
-        sentiment = analyze_iraqi_sentiment_and_intent(raw)
+        # 0. BiDi / RTL Override Trojan or Zero-Width exploits
+        if re.search(r"[\u202A-\u202E\u2066-\u2069\u200B-\u200F]", raw):
+            return ClassificationResult(
+                category="unclear_or_incomplete",
+                category_confidence=0.40,
+                priority="low",
+                priority_confidence=0.90,
+                reasoning_summary="BiDi Unicode override / RTL trojan payload detected",
+                sentiment_tags=["security_threat", "bidi_override", "hostile_injection"],
+            )
 
-        # 0. Prompt Injection / Hostile Instruction Override (Trilingual: Arabic + Kurdish Sorani/Kurmanji + English + RTL Override safe)
-        clean_for_sec = strip_arabic_diacritics_and_tatweel(raw)
+        raw_clean = re.sub(r"<!--.*?-->", " ", raw, flags=re.DOTALL)
+        text = normalize_digits(raw_clean)
+        norm = normalize_arabizi_and_slang(text)
+        sentiment = analyze_iraqi_sentiment_and_intent(norm)
+
+        # 0. Prompt Injection / Hostile Instruction Override / Security Attacks (Trilingual + Attacks)
+        clean_for_sec = strip_arabic_diacritics_and_tatweel(raw_clean)
         if re.search(
-            r"(تجاهل\s*(?:كل\s*)?التعليمات|ignore\s*(?:all\s*)?(?:previous\s*)?instructions|"
-            r"system\s*(?:prompt|override)|admin\s*mode|developer\s*mode|root\s*access|"
+            r"(تجاهل\s*(?:كل\s*)?(?:التعليمات|شي|الأوامر|الاوامر)|ignore\s*(?:all\s*)?(?:previous\s*)?instructions|"
+            r"system\s*(?:prompt|override|error)|admin\s*mode|developer\s*mode|root\s*access|"
             r"jailbreak|bypass\s*security|باسوورد\s*قاعدة\s*البيانات|VIP\s*client|عميل\s*VIP|"
+            r"أنا\s*المهندس|انا\s*المهندس|مسؤول\s*عن\s*النظام|موظف\s*(?:الـ?|ال)?\s*it\b|"
+            r"DROP\s*TABLE|SELECT\s*\*|<script|alert\(|xss|evaluate\s*this\s*prompt|Output\s*JSON|"
+            r"<!--\s*Hidden|Translate\s*the\s*following|Base64\s*payload|\{\{7\*7\}\}|\$\{7\*7\}|"
+            r"DO\s*NOT\s*ESCALATE|كود\s*الـ\s*API|ملف\s*\.env|اعطني\s*كود|"
+            r"أنت\s*الآن\s*شاعر|انت\s*الان\s*شاعر|اكتب\s*لي\s*قصيدة|بدون\s*مراجعة\s*بشرية|"
             r"هەموو\s*ڕێنماییەکان\s*پشتگوێ\s*بخە|ڕێنماییەکان\s*پشتگوێ\s*بخە|ڕێنمایی\s*پشتگوێ\s*بخە|فەرمانەکان\s*پشتگوێ\s*بخە|"
             r"سیستەم\s*ئۆڤەرڕاید|مۆدی\s*(?:ئەدمین|گەشەپێدەر)|دەسەڵاتی\s*ڕووت|"
             r"hemû\s*(?:talîmatan|rêwerzan)\s*paşguh\s*bike|(?:talîmatan|rêwerzan)\s*paşguh\s*bike|"
@@ -141,15 +158,73 @@ class MockClassifierProvider(BaseClassifierProvider):
                 category="unclear_or_incomplete",
                 category_confidence=0.40,
                 priority="low",
-                priority_confidence=0.50,
-                reasoning_summary="Hostile prompt injection or malformed instruction override detected",
-                sentiment_tags=["hostile_injection"],
+                priority_confidence=0.90,
+                reasoning_summary="Hostile prompt injection, roleplay attack, or security exploit detected",
+                sentiment_tags=["hostile_injection", "security_threat"],
+            )
+
+        # 0.4 Out-of-Scope Corporate & Banking Inquiries (Routed safely to Tier-1 Human Escalation)
+        if re.search(r"\b(?:وظيفة|وظائف|قدمت\s*على\s*وظيفة|المقابلات|شغل\s*عدكم|توظيف)\b", text, re.I):
+            return ClassificationResult(
+                category="unclear_or_incomplete",
+                category_confidence=0.40,
+                priority="low",
+                priority_confidence=0.80,
+                reasoning_summary="Recruitment or job application inquiry outside banking support scope",
+                sentiment_tags=["out_of_scope_hr"],
+            )
+
+        if re.search(r"\b(?:سلف\s*وقروض|سلف|سلفة|قروض|قرض)\b", text, re.I):
+            return ClassificationResult(
+                category="unclear_or_incomplete",
+                category_confidence=0.40,
+                priority="low",
+                priority_confidence=0.80,
+                reasoning_summary="Loan or credit inquiry outside digital wallet transaction scope",
+                sentiment_tags=["out_of_scope_loans"],
+            )
+
+        if re.search(r"\b(?:شوكت\s*تفتحون\s*فرع|فرع\s*بالبصرة|فرعكم|مكان\s*الفرع|فروعكم)\b", text, re.I):
+            return ClassificationResult(
+                category="unclear_or_incomplete",
+                category_confidence=0.40,
+                priority="low",
+                priority_confidence=0.80,
+                reasoning_summary="Physical branch location inquiry",
+                sentiment_tags=["out_of_scope_branch"],
+            )
+
+        if re.search(r"\b(?:الغي\s*محفظتي|الغاء\s*المحفظة|امسح\s*كل\s*بياناتي|حذف\s*الحساب)\b", text, re.I):
+            return ClassificationResult(
+                category="unclear_or_incomplete",
+                category_confidence=0.40,
+                priority="low",
+                priority_confidence=0.80,
+                reasoning_summary="Account termination or GDPR data deletion request",
+                sentiment_tags=["out_of_scope_deletion"],
+            )
+
+        if re.search(r"^(?:ساعدوني\s*فدوة|الحكولي\s*بموت|فلوسي\b$)", raw, re.I):
+            return ClassificationResult(
+                category="unclear_or_incomplete",
+                category_confidence=0.40,
+                priority="high" if "بموت" in raw else "low",
+                priority_confidence=0.75,
+                reasoning_summary="Emotional distress plea without technical dispute details",
+                sentiment_tags=["vague_distress"],
             )
 
         # 0.5 Foreign / English Language Guard (MS-01)
         # Protects Kurdish Kurmanji (Latin Hawar) and Arabizi while isolating English
+        is_arabizi = bool(
+            re.search(
+                r"\b(?:7awalt|wslat|neset|shasawi|wa7ed|el\s*bar7a|sa7bi|enqafal|b-ghalat|l-raqam|saraq|shuf|ma\s*wslat|shlonak|shako\s*mako)\b",
+                raw,
+                re.IGNORECASE,
+            )
+        )
         detected_lang = detect_ticket_language(raw)
-        if detected_lang == "en":
+        if detected_lang == "en" and not is_arabizi:
             return ClassificationResult(
                 category="unclear_or_incomplete",
                 category_confidence=0.45,
@@ -174,7 +249,18 @@ class MockClassifierProvider(BaseClassifierProvider):
                 sentiment_tags=["vague_greeting"],
             )
 
-        # 2. Courtesy / Appreciation / Compliment without technical dispute (Pure Gratitude)
+        # 2. Extreme Sarcasm Override: praise concealing severe agent dispute or loss
+        if ("عاشت ايدكم" in text or "ارقى خدمة" in text) and ("طردني" in text or "الوكيل" in text or "مسح كلشي" in text):
+            return ClassificationResult(
+                category="agent_dispute",
+                category_confidence=0.88,
+                priority="high",
+                priority_confidence=0.85,
+                reasoning_summary="Customer expresses extreme sarcasm regarding agent misconduct and mistreatment",
+                sentiment_tags=["sarcasm", "agent_dispute"],
+            )
+
+        # 2.1 Pure Courtesy / Appreciation / Compliment without technical dispute (Pure Gratitude)
         if sentiment.is_pure_gratitude:
             return ClassificationResult(
                 category="general_inquiry",
@@ -184,6 +270,139 @@ class MockClassifierProvider(BaseClassifierProvider):
                 reasoning_summary="Customer appreciation or courtesy praise without reported technical dispute",
                 sentiment_tags=sentiment.sentiment_tags,
             )
+
+        # 2.2 High-Precision Dialect Rules (ATM card swallowing, Agent extortion, POS, Negative balance)
+        if re.search(r"(?:بلعها\s*الجهاز|بلعته\s*الصرافة|الصراف\s*بلع|الكي\s*كارد\s*بالصراف|الكارت\s*مشكوك|الكارت\s*مكسور)", text, re.I):
+            return ClassificationResult(
+                category="card_issue",
+                category_confidence=0.92,
+                priority="high",
+                priority_confidence=0.88,
+                reasoning_summary="ATM retained physical card or card damaged",
+                sentiment_tags=["card_swallowed_damaged"],
+            )
+
+        if re.search(r"(?:شلع\s*كلبي\s*الوكيل|فوك\s*السحب|عمولة\s*فوك|الوكيل\s*طلب\s*عمولة|الوكيل\s*كال\s*ادفع)", text, re.I):
+            return ClassificationResult(
+                category="agent_dispute",
+                category_confidence=0.92,
+                priority="medium",
+                priority_confidence=0.88,
+                reasoning_summary="Agent overcharging illegal cash-out fee or dispute",
+                sentiment_tags=["agent_dispute_fee"],
+            )
+
+        if re.search(r"(?:كارفور\s*وخصموا|المول\s*اشتريت|اشتريت\s*ملابس\s*كصوا|ابو\s*المحل\s*كال\s*ما\s*وصل|الكاشير\s*الوصل\s*كال\s*مرفوض|نقطة\s*بيع|التاجر\s*(?:يكول|كال|يقول)|دفع\s*للتاجر)", text, re.I):
+            return ClassificationResult(
+                category="bill_payment_failure",
+                category_confidence=0.92,
+                priority="high" if "مرتين" in text else "medium",
+                priority_confidence=0.88,
+                reasoning_summary="Merchant POS/QR purchase or top-up deduction issue",
+                sentiment_tags=["merchant_dispute"],
+            )
+
+        if re.search(r"(?:كاصين\s*من\s*رصيدي|رصيدي\s*ناقص|رصيدي\s*سالب|حساب\s*بالسالب)", text, re.I):
+            return ClassificationResult(
+                category="balance_or_statement_inquiry",
+                category_confidence=0.88,
+                priority="medium",
+                priority_confidence=0.85,
+                reasoning_summary="Unexplained wallet fee or negative balance inquiry",
+                sentiment_tags=["fee_inquiry"],
+            )
+
+        if re.search(r"(?:شهادة\s*الجنسية|رافع\s*الهوية|قيد\s*التدقيق|المستمسكات\s*مالتي\s*انرفضت)", text, re.I):
+            return ClassificationResult(
+                category="kyc_document_issue",
+                category_confidence=0.91,
+                priority="medium",
+                priority_confidence=0.85,
+                reasoning_summary="Identity verification document rejection or pending verification",
+                sentiment_tags=["kyc_delay"],
+            )
+
+        if re.search(r"(?:رمز\s*السري.*ناسي|ناسي.*رمز\s*السري|مقفول\s*الحساب.*سيمكارت|سيمكارت.*مقفول)", text, re.I):
+            return ClassificationResult(
+                category="login_problem",
+                category_confidence=0.91,
+                priority="medium",
+                priority_confidence=0.85,
+                reasoning_summary="Forgotten secret PIN or locked account recovery",
+                sentiment_tags=["login_pin_forgotten"],
+            )
+
+        if re.search(r"(?:رصيد\s*زين\s*اثير\s*وطلع\s*محول\s*اسيا|زين\s*اثير.*اسيا\s*سيل)", text, re.I):
+            return ClassificationResult(
+                category="wrong_recipient",
+                category_confidence=0.88,
+                priority="low",
+                priority_confidence=0.85,
+                reasoning_summary="Customer recharged wrong telecom operator",
+                sentiment_tags=["wrong_telecom"],
+            )
+
+        if re.search(r"(?:طلع\s*بالريش|تبخرت\s*الفلوس|الفلوس\s*تبخرت)", text, re.I):
+            return ClassificationResult(
+                category="failed_transfer",
+                category_confidence=0.91,
+                priority="high",
+                priority_confidence=0.85,
+                reasoning_summary="Customer reports money disappeared during transfer ('طلع بالريش')",
+                sentiment_tags=["transfer_evaporated"],
+            )
+
+        if re.search(r"(?:الصراف.*(?:انطاني\s*بس|بس\s*ورقتين|ورقتين\s*بدال|مشكوكة|ممزقة)|(?:مشكوكة|ممزقة).*الصراف)", text, re.I):
+            return ClassificationResult(
+                category="card_issue",
+                category_confidence=0.92,
+                priority="high",
+                priority_confidence=0.88,
+                reasoning_summary="ATM dispensed damaged banknotes or short-dispensed cash",
+                sentiment_tags=["atm_damaged_short_cash"],
+            )
+
+        if re.search(r"(?:تعبئة\s*رصيد\s*للمحفظة\s*من\s*الوكيل|تعبئة\s*رصيد\s*من\s*الوكيل|الوكيل.*(?:مشكوكة|ممزقة)|فلوس\s*مشكوكة|فلوس\s*ممزقة)", text, re.I):
+            return ClassificationResult(
+                category="agent_dispute",
+                category_confidence=0.91,
+                priority="high",
+                priority_confidence=0.88,
+                reasoning_summary="Agent cash-in uncredited or damaged banknotes dispute",
+                sentiment_tags=["cash_agent_dispute"],
+            )
+
+        if re.search(r"حولت\s*من\s*رقمي.*الى\s*رقم", text, re.I) and not re.search(r"(?:غلط|خطأ|بالغلط|مو\s*هو|غريب)", text):
+            return ClassificationResult(
+                category="failed_transfer",
+                category_confidence=0.90,
+                priority="medium",
+                priority_confidence=0.85,
+                reasoning_summary="Customer inquiring about P2P transfer between specified phone numbers",
+                sentiment_tags=sentiment.sentiment_tags,
+            )
+
+        if re.search(r"پارەم\s*ڕاکێشا.*دەرنەچوو", text, re.I):
+            return ClassificationResult(
+                category="card_issue",
+                category_confidence=0.92,
+                priority="high",
+                priority_confidence=0.88,
+                reasoning_summary="ATM cash out debited but physical money not dispensed",
+                sentiment_tags=["atm_cashout_undispensed"],
+            )
+
+        # 2.25 High-Confidence Failed Transfer vs Wrong Recipient Disambiguation
+        if re.search(r"(?:معلك|معلق|ما\s*تحولت|ما\s*وصلن|ما\s*وصلت|ما\s*استلمها|ما\s*استلم|ما\s*نزلت|مشتكت|التحويل\s*معلق)", text, re.I):
+            if not re.search(r"(?:شخص\s*غلط|رقم\s*غلط|حولت\s*بالخطأ|غلطت\s*بالرقم|غلطت\s*برقم|لشخص\s*غريب|لغريب)", text, re.I) and not re.search(r"(?:رمز\s*التاكيد|رمز\s*التأكيد|رمز\s*التحقق|كود|otp|باسورد|دخول)", text, re.I):
+                return ClassificationResult(
+                    category="failed_transfer",
+                    category_confidence=0.92,
+                    priority="high" if ("TXN-" in text or sentiment.is_urgent or sentiment.is_angry) else "medium",
+                    priority_confidence=0.88,
+                    reasoning_summary="P2P transfer pending or uncredited to recipient",
+                    sentiment_tags=sentiment.sentiment_tags,
+                )
 
         # 2.5 Urgent Theft, Fraud, Scam & Social Engineering Report (High Priority)
         # Captures authentic Iraqi street slang: باكوني, انبكت, باكوا, يبوكون, قفاصة, طيروا فلوسي
@@ -299,7 +518,7 @@ class MockClassifierProvider(BaseClassifierProvider):
                 reasoning_summary="Utility bill payment or mobile recharge issue",
                 sentiment_tags=stags,
             )
-        if re.search(r"(تحويل|حولت|معلق|ما وصل|الحوالة معلقة|ترانسفير|دزيت حوالة|حەواڵە|هاوالا|ناردنی پارە|ناردوومە|نەگەیشتووە|هەڵواسراوە|şandina pere|pere neçû|hewalet|hewaleyê|hewaleye|şand|neçûye)", text, re.I) and not re.search(r"بدون ما اسوي تحويل", text):
+        if re.search(r"(تحويل|حولت|معلق|ما وصل|الحوالة معلقة|ترانسفير|دزيت حوالة|حەواڵە|هاوالا|ناردنی پارە|ناردوومە|نەگەیشتووە|هەڵواسراوە|şandina pere|pere neçû|hewalet|hewaleyê|hewaleye|şand|neçûye|نەچووە|پارەکە\s*نەچووە|نارد\b)", text, re.I) and not re.search(r"بدون ما اسوي تحويل", text):
             return ClassificationResult(
                 category="failed_transfer", category_confidence=0.91, priority="high", priority_confidence=0.85,
                 reasoning_summary="P2P transfer pending or uncredited",

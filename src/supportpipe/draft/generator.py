@@ -50,7 +50,8 @@ def generate_candidate_draft(
         f"اكتب الرد المقترح:"
     )
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={settings.gemini_api_key}"
+    model = settings.gemini_model or "gemini-1.5-flash"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={settings.gemini_api_key}"
     payload: dict[str, Any] = {
         "contents": [
             {
