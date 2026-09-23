@@ -69,7 +69,7 @@ def execute_evaluation(split: str = "test", provider_name: str | None = None) ->
     start_eval_time = time.perf_counter()
 
     for item in labeled_tickets:
-        res = process_ticket(item.ticket)
+        res = process_ticket(item.ticket, provider_override=provider_name)
         results.append(res)
 
     total_eval_time = time.perf_counter() - start_eval_time

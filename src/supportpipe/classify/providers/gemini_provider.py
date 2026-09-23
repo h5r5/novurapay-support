@@ -1,6 +1,7 @@
 """Google Gemini classifier provider using structured outputs and untrusted data quarantine."""
 
 import json
+from typing import Any
 
 import httpx
 
@@ -73,10 +74,14 @@ class GeminiClassifierProvider(BaseClassifierProvider):
             if cat not in taxonomy.get_valid_category_ids():
                 cat = "unclear_or_incomplete"
 
+            raw_prio = str(parsed.get("priority", "medium")).strip().lower()
+            prio: Any = raw_prio if raw_prio in ["high", "medium", "low"] else "medium"
+            reasoning = str(parsed.get("reasoning_summary", "Classified via Gemini"))[:300]
+
             return ClassificationResult(
                 category=cat,
-                category_confidence=float(parsed.get("category_confidence", 0.5)),
-                priority=parsed.get("priority", "medium"),
-                priority_confidence=float(parsed.get("priority_confidence", 0.5)),
-                reasoning_summary=str(parsed.get("reasoning_summary", "Classified via Gemini")),
+                category_confidence=min(1.0, max(0.0, float(parsed.get("category_confidence", 0.5)))),
+                priority=prio,
+                priority_confidence=min(1.0, max(0.0, float(parsed.get("priority_confidence", 0.5)))),
+                reasoning_summary=reasoning,
             )

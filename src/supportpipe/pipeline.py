@@ -1,22 +1,33 @@
 """Core batch pipeline orchestrator for SupportPipe."""
 
+import logging
+import re
 import time
 from datetime import UTC, datetime
 
 from supportpipe.classify.classify import classify_ticket
+from supportpipe.config import settings
 from supportpipe.draft.draft import draft_manager
 from supportpipe.extract.extract import extract_ticket_details
 from supportpipe.extract.validate import validate_extraction_for_category
 from supportpipe.routing.escalation import should_escalate
+from supportpipe.routing.multi_issue import detect_multi_issue
 from supportpipe.routing.route import resolve_team
 from supportpipe.schemas import (
     BatchSummary,
+    ExtractedFields,
     PipelineResult,
     Ticket,
 )
 
+logger = logging.getLogger(__name__)
 
-def process_ticket(ticket: Ticket, provider_override: str | None = None) -> PipelineResult:
+
+def process_ticket(
+    ticket: Ticket,
+    provider_override: str | None = None,
+    is_duplicate: bool = False,
+) -> PipelineResult:
     """Process a single ticket through the complete typed pipeline."""
     start_time = time.perf_counter()
 
@@ -40,10 +51,15 @@ def process_ticket(ticket: Ticket, provider_override: str | None = None) -> Pipe
         transaction_ref=extracted.transaction_ref,
         amount_iqd=extracted.amount_iqd,
         event_date_resolved=extracted.event_date_resolved,
+        amount_usd=extracted.amount_usd,
+        currency=extracted.currency,
     )
 
     # 4. Deterministic Routing (Rule 3)
     team = resolve_team(classification.category)
+
+    # 4.5 Multi-Issue Detection (Rule 03 / MS-02)
+    is_multi, multi_reason = detect_multi_issue(ticket.raw_text)
 
     # 5. Deterministic Escalation Evaluation
     escalated, escalation_reason = should_escalate(
@@ -53,16 +69,34 @@ def process_ticket(ticket: Ticket, provider_override: str | None = None) -> Pipe
         priority_confidence=classification.priority_confidence,
         extraction_valid=ext_valid,
         extraction_reasons=ext_reasons,
+        is_multi_issue=is_multi,
+        is_duplicate=is_duplicate,
     )
 
     # 6. Response Drafting (Only for non-escalated tickets; human approves before send)
     draft_reply: str | None = None
     if not escalated:
+        candidate_draft = None
+        if settings.llm_mode != "offline":
+            try:
+                from supportpipe.draft.generator import generate_candidate_draft
+
+                candidate_draft = generate_candidate_draft(
+                    ticket_raw_text=ticket.raw_text,
+                    category=classification.category,
+                    priority=classification.priority,
+                    extracted=extracted,
+                )
+            except Exception as draft_err:
+                logger.warning("Failed generating candidate LLM draft: %s", draft_err)
+                candidate_draft = None
+
         draft_reply, _, _, draft_source = draft_manager.generate_draft(
             ticket_raw_text=ticket.raw_text,
             category=classification.category,
             priority=classification.priority,
             extracted=extracted,
+            llm_draft_candidate=candidate_draft,
         )
     else:
         draft_reply = f"[تذكرة مصعدة للمراجعة اليدوية]: {escalation_reason}"
@@ -120,8 +154,58 @@ def run_batch(
     escalated_count = 0
     total_latency = 0.0
 
+    seen_user_requests: set[tuple[str, str]] = set()
+    seen_refs: set[str] = set()
+
     for ticket in tickets:
-        res = process_ticket(ticket, provider_override=provider_override)
+        clean_text_key = " ".join(ticket.raw_text.strip().split())
+        u_id = ticket.synthetic_user_id or "anonymous"
+        user_req_key = (u_id, clean_text_key)
+
+        ref_match = re.search(
+            r"\b(TXN-[A-Z0-9_-]{5,20}|REF-[A-Z0-9_-]{5,20}|ZAIN-[0-9]{5,15})\b",
+            ticket.raw_text,
+            re.IGNORECASE,
+        )
+        cand_ref = ref_match.group(1).upper() if ref_match else None
+
+        is_dup = False
+        if clean_text_key:
+            if user_req_key in seen_user_requests:
+                is_dup = True
+            elif cand_ref and cand_ref in seen_refs:
+                is_dup = True
+
+        if clean_text_key:
+            seen_user_requests.add(user_req_key)
+        if cand_ref:
+            seen_refs.add(cand_ref)
+
+        try:
+            res = process_ticket(
+                ticket,
+                provider_override=provider_override,
+                is_duplicate=is_dup,
+            )
+        except Exception as exc:
+            logger.exception("Fault isolation: Ticket %s crashed pipeline: %s", ticket.ticket_id, exc)
+            res = PipelineResult(
+                ticket_id=ticket.ticket_id,
+                category="unclear_or_incomplete",
+                category_confidence=0.0,
+                priority="high",
+                priority_confidence=0.0,
+                extracted_fields=ExtractedFields(),
+                team="General Customer Care",
+                escalated=True,
+                escalation_reason=f"Pipeline execution error: {exc}",
+                draft_reply="[تذكرة مصعدة للمراجعة اليدوية]: خطأ في المعالجة الآلية للبيانات",
+                provider_path="fault_fallback",
+                reasoning_summary=f"Unhandled exception during pipeline execution: {exc}",
+                latency_ms=0.0,
+                urgency_level="critical",
+            )
+
         results.append(res)
 
         total_latency += res.latency_ms

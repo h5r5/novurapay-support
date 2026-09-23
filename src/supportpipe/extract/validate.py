@@ -26,8 +26,12 @@ def validate_extraction_for_category(
     transaction_ref: str | None,
     amount_iqd: int | None,
     event_date_resolved: str | None,
+    amount_usd: int | None = None,
+    currency: str = "IQD",
 ) -> tuple[bool, list[str]]:
     """Validate whether the extracted fields fulfill the requirements of the chosen category.
+
+    Supports both IQD and USD transactions.
 
     Returns:
         (is_valid, list_of_failure_reasons)
@@ -40,7 +44,10 @@ def validate_extraction_for_category(
     elif transaction_ref and not is_valid_transaction_ref(transaction_ref):
         reasons.append(f"Invalid transaction reference format: '{transaction_ref}'")
 
-    if req_amt and amount_iqd is None:
+    has_amount = (amount_iqd is not None and amount_iqd > 0) or (
+        amount_usd is not None and amount_usd > 0
+    )
+    if req_amt and not has_amount:
         reasons.append(f"Missing transaction amount required for category '{category_id}'")
 
     is_valid = len(reasons) == 0

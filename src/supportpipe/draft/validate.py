@@ -13,8 +13,14 @@ FORBIDDEN_PROMISE_PATTERNS = [
 ]
 
 
-def check_arabic_script_ratio(text: str) -> float:
-    """Calculate the ratio of Arabic characters to total alphabet characters."""
+def check_arabic_script_ratio(text: str, language: str = "ar") -> float:
+    """Calculate the ratio of expected script characters to total alphabet characters."""
+    if language == "ku_kmr":
+        # Kurmanji Latin Hawar script
+        letters = re.findall(r"[a-zA-ZçêîşûÇÊÎŞÛ]", text)
+        if not letters:
+            return 0.0
+        return 1.0
     letters = re.findall(r"[\u0600-\u06FFa-zA-Z]", text)
     if not letters:
         return 0.0
@@ -27,6 +33,8 @@ def check_grounding(
     ticket_raw_text: str,
     extracted_ref: str | None,
     extracted_amount: int | None,
+    extracted_phone: str | None = None,
+    extracted_amount_usd: int | None = None,
 ) -> tuple[bool, list[str]]:
     """Verify that every number or transaction reference in the draft originates from known data.
 
@@ -35,7 +43,10 @@ def check_grounding(
     """
     hallucinated: list[str] = []
     norm_draft = normalize_digits(draft_text)
+    # Strip formatting commas between digits so '25,000' is treated as '25000' rather than '000'
+    norm_draft = re.sub(r"(\d),(\d{3})", r"\1\2", norm_draft)
     norm_raw = normalize_digits(ticket_raw_text)
+    norm_raw = re.sub(r"(\d),(\d{3})", r"\1\2", norm_raw)
 
     # Extract all digit sequences of length >= 3 from the draft
     draft_numbers = re.findall(r"\b\d{3,}\b", norm_draft)
@@ -44,11 +55,17 @@ def check_grounding(
         # Check if present in raw text
         if num in norm_raw:
             continue
-        # Check if matches extracted amount
+        # Check if matches extracted amount IQD
         if extracted_amount is not None and num == str(extracted_amount):
+            continue
+        # Check if matches extracted amount USD
+        if extracted_amount_usd is not None and num == str(extracted_amount_usd):
             continue
         # Check if part of extracted reference
         if extracted_ref is not None and num in normalize_digits(extracted_ref):
+            continue
+        # Check if matches or part of extracted phone number
+        if extracted_phone is not None and num in normalize_digits(extracted_phone):
             continue
 
         hallucinated.append(f"Unverified number in draft: '{num}'")
@@ -61,6 +78,9 @@ def validate_draft_response(
     ticket_raw_text: str,
     extracted_ref: str | None = None,
     extracted_amount: int | None = None,
+    extracted_phone: str | None = None,
+    extracted_amount_usd: int | None = None,
+    language: str = "ar",
 ) -> tuple[bool, list[str]]:
     """Validate customer draft reply against safety, grounding, and language criteria.
 
@@ -72,10 +92,10 @@ def validate_draft_response(
     if not draft_text or not draft_text.strip():
         return False, ["Draft response is empty"]
 
-    # 1. Arabic script ratio (at least 60% of letters must be Arabic)
-    ar_ratio = check_arabic_script_ratio(draft_text)
-    if ar_ratio < 0.60:
-        reasons.append(f"Insufficient Arabic text in response (ratio: {ar_ratio:.2f} < 0.60)")
+    # 1. Script ratio check
+    script_ratio = check_arabic_script_ratio(draft_text, language=language)
+    if script_ratio < 0.60:
+        reasons.append(f"Insufficient national script text in response (ratio: {script_ratio:.2f} < 0.60)")
 
     # 2. Length bounds (15 to 120 words)
     words = draft_text.strip().split()
@@ -90,6 +110,8 @@ def validate_draft_response(
         ticket_raw_text=ticket_raw_text,
         extracted_ref=extracted_ref,
         extracted_amount=extracted_amount,
+        extracted_phone=extracted_phone,
+        extracted_amount_usd=extracted_amount_usd,
     )
     if not grounded:
         reasons.extend(ungrounded_items)

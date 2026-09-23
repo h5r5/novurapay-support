@@ -18,6 +18,7 @@ class Settings(BaseSettings):
 
     # API Keys & Endpoints
     gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.6-flash"
     groq_api_key: str = ""
     jev_api_key: str = ""
     typesafe_api_key: str = ""
@@ -27,6 +28,9 @@ class Settings(BaseSettings):
     # Escalation Thresholds (Defaults tuned on dev split)
     category_confidence_threshold: float = 0.65
     priority_confidence_threshold: float = 0.60
+
+    # Currency Exchange Defaults (Iraqi Market Parallel Rate)
+    iqd_per_usd: int = 1500
 
     # Paths
     project_root: Path = Path(__file__).resolve().parent.parent.parent

@@ -164,12 +164,22 @@ def patterns(input_path: Path) -> None:
 
     click.echo(f"Analyzing ticket patterns from: {input_path}")
     tickets: list[Ticket] = []
-    with open(input_path, encoding="utf-8") as f:
-        for line in f:
-            if line.strip():
-                raw = json.loads(line)
-                t_data = raw.get("ticket", raw)
-                tickets.append(Ticket.model_validate(t_data))
+    if input_path.suffix == ".jsonl":
+        with open(input_path, encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    raw = json.loads(line)
+                    t_data = raw.get("ticket", raw)
+                    tickets.append(Ticket.model_validate(t_data))
+    else:
+        with open(input_path, encoding="utf-8") as f:
+            data = json.load(f)
+            if isinstance(data, list):
+                for item in data:
+                    t_data = item.get("ticket", item)
+                    tickets.append(Ticket.model_validate(t_data))
+            else:
+                tickets.append(Ticket.model_validate(data))
 
     results, _ = run_batch(tickets)
     pattern_data = analyze_ticket_patterns(results, tickets)

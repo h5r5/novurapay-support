@@ -262,8 +262,11 @@ def generate_ticket_record(
     sub_dt = base_date - timedelta(minutes=random_minute_offset)
     sub_iso = sub_dt.strftime("%Y-%m-%dT%H:%M:%S+03:00")
 
-    date_phrase = random.choice(DATE_PHRASES)
-    expected_resolved_date = resolve_event_date(date_phrase, sub_iso)
+    has_date_phrase = "{date_phrase}" in text_tmpl
+    date_phrase = random.choice(DATE_PHRASES) if has_date_phrase else ""
+    expected_resolved_date = (
+        resolve_event_date(date_phrase, sub_iso) if has_date_phrase else None
+    )
 
     ref_val = f"TXN-{random.randint(10000000, 99999999)}" if has_ref else None
     amt_val = random.choice(AMOUNTS) if has_amt else None
@@ -358,7 +361,7 @@ def generate_synthetic_dataset(total_count: int = 320, seed: int = 42) -> list[L
             expected_fields=ExpectedFields(
                 transaction_ref=ref_val if "{ref}" in text_tmpl else None,
                 amount_iqd=amt_val if "{amount}" in text_tmpl else None,
-                event_date="2026-09-22",
+                event_date=None,
             ),
             edge_case=edge_tag,
         )

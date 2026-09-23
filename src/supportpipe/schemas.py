@@ -23,9 +23,8 @@ class Ticket(BaseModel):
     @field_validator("raw_text")
     @classmethod
     def validate_non_empty_text(cls, v: str) -> str:
-        if not v or not v.strip():
-            raise ValueError("Ticket raw_text cannot be completely empty")
-        return v
+        # Permit empty or whitespace input so FM-02 can be handled gracefully inside the pipeline
+        return v if v is not None else ""
 
     @field_validator("submitted_at")
     @classmethod
@@ -42,6 +41,8 @@ class ExpectedFields(BaseModel):
 
     transaction_ref: str | None = None
     amount_iqd: int | None = None
+    amount_usd: int | None = None
+    currency: str | None = "IQD"
     event_date: str | None = None  # Expected resolved ISO date YYYY-MM-DD
     phone_number: str | None = None
 
@@ -76,12 +77,29 @@ class ClassificationResult(BaseModel):
     reasoning_summary: str = Field(..., max_length=300)
     sentiment_tags: list[str] = Field(default_factory=list)
 
+    @field_validator("priority", mode="before")
+    @classmethod
+    def sanitize_priority(cls, v: Any) -> str:
+        if isinstance(v, str):
+            clean = v.strip().lower()
+            if clean in ["high", "medium", "low"]:
+                return clean
+        return "medium"
+
+    @field_validator("reasoning_summary", mode="before")
+    @classmethod
+    def truncate_reasoning(cls, v: Any) -> str:
+        s = str(v) if v is not None else ""
+        return s[:300]
+
 
 class ExtractedFields(BaseModel):
     """Output from the structured extraction stage (Section 7.2)."""
 
     transaction_ref: str | None = None
     amount_iqd: int | None = None
+    amount_usd: int | None = None
+    currency: str = "IQD"
     event_date_text: str | None = None  # Original phrase (e.g., 'امس العصر')
     event_date_resolved: str | None = None  # ISO date (e.g., '2026-09-21') computed by code
     phone_number: str | None = None  # Iraqi wallet or international phone

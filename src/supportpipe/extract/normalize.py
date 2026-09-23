@@ -3,21 +3,45 @@
 import re
 from datetime import datetime, timedelta
 
-# Mapping Eastern Arabic numerals to standard Western digits
-ARABIC_DIGITS_TRANS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
+from supportpipe.config import settings
+
+# Mapping Eastern Arabic and Kurdish/Persian numerals (\u0660-\u0669 and \u06F0-\u06F9) to standard Western digits
+ARABIC_DIGITS_TRANS = str.maketrans("٠١٢٣٤٥٦٧٨٩۰۱۲۳۴۵۶۷۸۹", "01234567890123456789")
 
 # Iraqi dialect relative date offsets in days
 RELATIVE_DATE_PATTERNS = [
-    (re.compile(r"\b(اليوم|اليوم الصبح|اليوم العصر|اليوم بالليل)\b", re.IGNORECASE), 0),
-    (re.compile(r"\b(امس|البارحة|البارحه|امس بالليل|امس العصر|البارحة بالليل|البارحه بالليل)\b", re.IGNORECASE), 1),
-    (re.compile(r"\b(قبل يومين|اولت امس|اولت البارحة|اولت البارحه|اوت البارحة|اوت البارحه|قبل يومين الظهر)\b", re.IGNORECASE), 2),
+    # 2 days ago (checked before 1 day to prevent 'اول البارحة' from prematurely matching 'البارحة')
+    (
+        re.compile(
+            r"\b(قبل\s*يومين(?:\s*الظهر)?|اولت\s*امس|اول\s*امس|أول\s*أمس|اولت\s*البارح[ةه]|اوت\s*البارح[ةه]|اول\s*البارح[ةه]|أول\s*البارح[ةه]|پێری|پێرێ|پیری|pêr)\b",
+            re.IGNORECASE,
+        ),
+        2,
+    ),
+    # Today
+    (
+        re.compile(
+            r"\b(اليوم|اليوم\s*(?:الصبح|الصبحيات|الظهر|العصر|المغرب|بالليل|مسيان|الغبشة)|ئەمڕۆ|ئەمرو|îro)\b",
+            re.IGNORECASE,
+        ),
+        0,
+    ),
+    # Yesterday
+    (
+        re.compile(
+            r"\b(امس|البارحة|البارحه|أمس|امس\s*(?:بالليل|العصر|المغرب|الصبحيات|مسيان)|البارحة\s*(?:بالليل|العصر|المغرب|الصبحيات|الظهر|الضحى|مسيان)|البارحه\s*(?:بالليل|العصر|المغرب|الصبحيات|الظهر|الضحى|مسيان)|دوێنێ|دۆێنێ|دوینی|duh|do)\b",
+            re.IGNORECASE,
+        ),
+        1,
+    ),
     (re.compile(r"\bقبل\s*([3-9]|10)\s*ايام?\b", re.IGNORECASE), None),  # dynamic extraction
-    (re.compile(r"\bقبل\s*اسبوع\b", re.IGNORECASE), 7),
-    (re.compile(r"\bقبل\s*اسبوعين\b", re.IGNORECASE), 14),
+    (re.compile(r"\b(قبل\s*اسبوع|پێش\s*هەفتەیەک|پێش\s*هەفتەیەك|berî\s*hefteyekê|berî\s*hefteyê)\b", re.IGNORECASE), 7),
+    (re.compile(r"\b(قبل\s*اسبوعين|پێش\s*دوو\s*هەفتە)\b", re.IGNORECASE), 14),
 ]
 
-# Weekday mappings (0=Monday, ..., 6=Sunday)
+# Weekday mappings (0=Monday, ..., 6=Sunday) across Arabic and Kurdish dialects
 ARABIC_WEEKDAYS = {
+    # Standard Arabic & Dialect
     "الاثنين": 0,
     "الثلاثاء": 1,
     "الاربعاء": 2,
@@ -27,6 +51,22 @@ ARABIC_WEEKDAYS = {
     "السبت": 5,
     "الاحد": 6,
     "الأحد": 6,
+    # Kurdish Sorani
+    "دووشەممە": 0,
+    "سێشەممە": 1,
+    "چوارشەممە": 2,
+    "پێنجشەممە": 3,
+    "هەینی": 4,
+    "شەممە": 5,
+    "یەکشەممە": 6,
+    # Kurdish Kurmanji
+    "dûşem": 0,
+    "sêşem": 1,
+    "çarşem": 2,
+    "pêncşem": 3,
+    "în": 4,
+    "şemî": 5,
+    "yekşem": 6,
 }
 
 
@@ -143,7 +183,86 @@ ARABIZI_EN_MAPPINGS: dict[str, str] = {
     "انشفط الرصيد": "سرقة رصيد احتيال",
     "شفطوا فلوسي": "سرقة رصيد احتيال",
     "نهبوني": "سرقوني احتيال",
+    # Southern dialect and action slang
+    "مسيان": "مساء العصر",
+    "الغبشة": "الصباح الباكر",
+    "طفر التطبيق": "عطل مفاجئ وكراش",
+    "يطفر التطبيق": "عطل مفاجئ وكراش",
+    "تصفن الشاشة": "عطل وبطء وتعليق",
+    "ذبني برة": "تسجيل خروج مفاجئ",
+    "شمرتلة": "حولت له",
+    "شمرتله": "حولت له",
+    "شمرت": "حولت رصيد",
+    "كص مني": "اقتطع عمولة",
+    "گص مني": "اقتطع عمولة",
+    "كص": "اقتطع عمولة",
+    "گص": "اقتطع عمولة",
+    "غلس": "رفض وتجاهل",
+    "لوتي": "محتال ومستغل",
+    "طابوقة": "رزمة نقدية ضخمة",
+    "طابوكه": "رزمة نقدية ضخمة",
+    "باكة": "رزمة نقدية",
+    "باكه": "رزمة نقدية",
+    # Northern (Mosul, Kirkuk, Kurdistan code-switching) terms
+    "مصاغي": "اموال وفلوس",
+    "مصاري": "اموال وفلوس",
+    "غاح": "راح",
+    "غاحت": "راحت",
+    "اشقد": "كم المبلغ",
+    "اشكد": "كم المبلغ",
+    "الصبحيات": "الصباح",
+    "هكذ": "هكذا",
+    "اغيد": "اريد",
+    "أغيد": "اريد",
+    "فيساغ": "بسرعة عاجل",
+    "فيسا": "بسرعة عاجل",
+    "هاوالا": "حوالة",
+    "هاوالة": "حوالة",
+    "باري": "فلوس رصيد",
+    "ناهات": "لم تصل",
+    "كارتي": "بطاقتي",
+    # Western (Anbar, Fallujah, Ramadi) dialect terms
+    "دحك": "انظر وافحص",
+    "دحگ": "انظر وافحص",
+    "ادحگ": "انظر وافحص",
+    "غاد": "هناك",
+    "يالطيب": "اخي",
+    "ماني كادر": "لا استطيع",
+    "عجل": "اذن بسرعة",
+    "شنهي": "ما هذا",
 }
+
+
+# Pre-compiled Arabizi and loanword patterns for single-pass performance
+_MULTI_WORD_PATTERNS = [
+    (re.compile(rf"\b{re.escape(term)}\b", re.IGNORECASE), standard)
+    for term, standard in ARABIZI_EN_MAPPINGS.items()
+    if " " in term
+]
+_SINGLE_WORD_PATTERNS = [
+    (
+        re.compile(
+            rf"(?:^|[\s،,.\-_/])(?:و|ف|ب|ل|ال|بال|لل|وال|فال)?{re.escape(term)}(?=$|[\s،,.\-_/!?؛؟])",
+            re.IGNORECASE,
+        ),
+        standard,
+    )
+    for term, standard in ARABIZI_EN_MAPPINGS.items()
+    if " " not in term
+]
+
+
+def strip_arabic_diacritics_and_tatweel(text: str) -> str:
+    """Remove Arabic diacritics (harakat/tashkeel), tatweel (kashida), and bidirectional controls."""
+    if not text:
+        return text
+    # Strip tatweel \u0640
+    cleaned = text.replace("\u0640", "")
+    # Strip tashkeel/harakat: Fathatan, Dammatan, Kasratan, Fatha, Damma, Kasra, Shadda, Sukun
+    cleaned = re.sub(r"[\u064B-\u065F\u0670]", "", cleaned)
+    # Strip unicode bidirectional markers (RTL/LTR overrides)
+    cleaned = re.sub(r"[\u200E\u200F\u202A-\u202E]", "", cleaned)
+    return cleaned
 
 
 def normalize_arabizi_and_slang(text: str) -> str:
@@ -155,109 +274,368 @@ def normalize_arabizi_and_slang(text: str) -> str:
         return text
     result = text
     # 1. Multi-word phrases first
-    for term, standard in ARABIZI_EN_MAPPINGS.items():
-        if " " in term:
-            pattern = rf"\b{re.escape(term)}\b"
-            result = re.sub(pattern, f" {standard} ", result, flags=re.IGNORECASE)
+    for pattern, standard in _MULTI_WORD_PATTERNS:
+        result = pattern.sub(f" {standard} ", result)
 
-    # 2. Single-word terms with optional Arabic prefixes (و, ف, ب, ل, ال, بال, لل, وال, فال)
-    for term, standard in ARABIZI_EN_MAPPINGS.items():
-        if " " not in term:
-            pattern = rf"(?:^|[\s،,.\-_/])(?:و|ف|ب|ل|ال|بال|لل|وال|فال)?{re.escape(term)}(?=$|[\s،,.\-_/!?؛؟])"
-            result = re.sub(pattern, f" {standard} ", result, flags=re.IGNORECASE)
+    # 2. Single-word terms with optional Arabic prefixes
+    for pattern, standard in _SINGLE_WORD_PATTERNS:
+        result = pattern.sub(f" {standard} ", result)
 
     return " ".join(result.split())
+
+
+def get_iqd_per_usd() -> int:
+    """Return configured parallel exchange rate (IQD per 1 USD)."""
+    return getattr(settings, "iqd_per_usd", 1500)
+
+
+DEFAULT_IQD_PER_USD = get_iqd_per_usd()
+
+IRAQI_DOLLAR_SLANG_MAP: dict[str, int] = {
+    # 1. Warqa (100 USD note) and fractions (Baghdad, South, Central)
+    "ورقة ونص": 150,
+    "ورقه ونص": 150,
+    "ورقة وربع": 125,
+    "ورقه وربع": 125,
+    "نص ورقة": 50,
+    "نصف ورقة": 50,
+    "نص ورقه": 50,
+    "نصف ورقه": 50,
+    "ورقتين ونص": 250,
+    "ورقتين ونصف": 250,
+    "ورقتين": 200,
+    "3 ورقات": 300,
+    "ثلاث ورقات": 300,
+    "تلت ورقات": 300,
+    "4 ورقات": 400,
+    "اربع ورقات": 400,
+    "5 ورقات": 500,
+    "خمس ورقات": 500,
+    "10 ورقات": 1000,
+    "عشر ورقات": 1000,
+    "ورقة": 100,
+    "ورقه": 100,
+    # 2. Shidda (10,000 USD pack)
+    "نص شدة": 5000,
+    "نصف شدة": 5000,
+    "نص شده": 5000,
+    "نصف شده": 5000,
+    "شدتين": 20000,
+    "3 شدات": 30000,
+    "ثلاث شدات": 30000,
+    "5 شدات": 50000,
+    "خمس شدات": 50000,
+    "شدة": 10000,
+    "شده": 10000,
+    # 3. Daftar (100,000 USD book/bundle in Baghdad/Southern Arabic)
+    "نص دفتر": 50000,
+    "نصف دفتر": 50000,
+    "دفترين": 200000,
+    "عشر دفاتر": 1000000,
+    "دفتر": 100000,
+    # 4. Kurdish Gala (گەڵا = 100 USD) and fractions (Erbil, Sulaymaniyah, Duhok)
+    "گەڵا و نیو": 150,
+    "گەڵاو نیو": 150,
+    "گەڵاو نیڤ": 150,
+    "نیو گەڵا": 50,
+    "دوو گەڵا": 200,
+    "سێ گەڵا": 300,
+    "چوار گەڵا": 400,
+    "پێنج گەڵا": 500,
+    "شەش گەڵا": 600,
+    "حەوت گەڵا": 700,
+    "هەشت گەڵا": 800,
+    "نۆ گەڵا": 900,
+    "دە گەڵا": 1000,
+    "بیست گەڵا": 2000,
+    "پەنجا گەڵا": 5000,
+    "سەد گەڵا": 10000,
+    "گەڵایەک": 100,
+    "گەڵا": 100,
+    # 5. Kurdish Defter (دەفتەر = 10,000 USD in Kurdistan bazaar = 100 Gala)
+    "دەفتەر و نیو": 15000,
+    "دەفتەرو نیو": 15000,
+    "نیو دەفتەر": 5000,
+    "دوو دەفتەر": 20000,
+    "سێ دەفتەر": 30000,
+    "چوار دەفتەر": 40000,
+    "پێنج دەفتەر": 50000,
+    "دە دەفتەر": 100000,
+    "دەفتەرێک": 10000,
+    "دەفتەر": 10000,
+    # 6. Kurmanji Dollar slang
+    "sed dolar": 100,
+    "pêncî dolar": 50,
+    "du sed dolar": 200,
+    "hezar dolar": 1000,
+    "deh hezar dolar": 10000,
+    "defterek": 10000,
+}
+
+
+def parse_currency_amount(amount_input: int | str | None) -> tuple[int | None, int | None, str]:
+    """Parse amount string or number into (amount_iqd, amount_usd, currency).
+
+    Supports:
+    - Iraqi Dinar standard amounts (50,000, 25k, 1.5m, نص مليون, ربع مليون).
+    - Iraqi market USD slang (ورقة, ورقة ونص, شدة, دفتر).
+    - Kurdish market USD slang (گەڵا, گەڵا و نیو, دەفتەر).
+    - Explicit USD amounts ($150, 150 دولار, 10000 usd, sed dolar).
+    - Compound and verbal amounts in Iraqi Arabic and Kurdish.
+    """
+    if amount_input is None:
+        return None, None, "IQD"
+
+    if isinstance(amount_input, (int, float)):
+        val = int(amount_input)
+        if 500 <= val <= 100_000_000:
+            return val, None, "IQD"
+        return None, None, "IQD"
+
+    current_rate = get_iqd_per_usd()
+    raw_str = normalize_digits(str(amount_input).strip())
+    if raw_str.startswith("-"):
+        return None, None, "IQD"
+
+    clean = raw_str.replace(",", "").strip()
+
+    # 1. Check market Dollar Slang (ورقة، شدة، دفتر، گەڵا، دەفتەر) - longest matches first
+    for term, usd_val in sorted(IRAQI_DOLLAR_SLANG_MAP.items(), key=lambda x: len(x[0]), reverse=True):
+        if term in clean:
+            iqd_equiv = usd_val * current_rate
+            return iqd_equiv, usd_val, "USD"
+
+    # 2. Check explicit USD markers ($ or دولار or usd or dolar)
+    is_usd = bool(re.search(r"(?:\$|\b(?:دولار|usd|dolar)\b)", clean, re.IGNORECASE))
+    clean_no_curr = re.sub(r"(?:دينار|دینار|iqd|د\.ع|\$|دولار|usd|dolar)", "", clean, flags=re.IGNORECASE).strip()
+
+    # 3. Handle English k / m notation (e.g. 25k, 50k, 1.5m)
+    km_match = re.match(r"^(\d+(?:\.\d+)?)\s*([km])$", clean_no_curr, re.IGNORECASE)
+    if km_match:
+        num_val = float(km_match.group(1))
+        multiplier = 1_000_000 if km_match.group(2).lower() == "m" else 1_000
+        val = int(num_val * multiplier)
+        if is_usd:
+            return val * current_rate, val, "USD"
+        if 500 <= val <= 100_000_000:
+            return val, None, "IQD"
+        return None, None, "IQD"
+
+    # 4. Check connected colloquial verbal amounts (Iraqi Arabic & Kurdish)
+    connected_map: dict[str, int] = {
+        "طابوقة": 25_000_000,
+        "طابوكه": 25_000_000,
+        "باكة": 2_500_000,
+        "باكه": 2_500_000,
+        "مليون ونص": 1_500_000,
+        "مليون ونصف": 1_500_000,
+        "مليونين ونص": 2_500_000,
+        "مليونين ونصف": 2_500_000,
+        "عشرتالاف": 10_000,
+        "عشر تالاف": 10_000,
+        "عشرة الاف": 10_000,
+        "عشرة آلاف": 10_000,
+        "خمستالاف": 5_000,
+        "خمس تالاف": 5_000,
+        "خمسة الاف": 5_000,
+        "خمسة آلاف": 5_000,
+        "اربعتالاف": 4_000,
+        "اربع تالاف": 4_000,
+        "اربعة الاف": 4_000,
+        "تلتالاف": 3_000,
+        "تلت تالاف": 3_000,
+        "ثلاثتالاف": 3_000,
+        "ثلاث تالاف": 3_000,
+        "ثلاثة الاف": 3_000,
+        "ستالاف": 6_000,
+        "ست تالاف": 6_000,
+        "ستة الاف": 6_000,
+        "سبعتالاف": 7_000,
+        "سبع تالاف": 7_000,
+        "سبعة الاف": 7_000,
+        "ثمانتالاف": 8_000,
+        "ثمان تالاف": 8_000,
+        "ثمانية الاف": 8_000,
+        "تسعتالاف": 9_000,
+        "تسع تالاف": 9_000,
+        "تسعة الاف": 9_000,
+        "الفين": 2_000,
+        "ميت الف": 100_000,
+        "مية الف": 100_000,
+        "ميتين الف": 200_000,
+        "مليونين": 2_000_000,
+        # Kurdish verbal amounts (Sorani)
+        "هەزار": 1_000,
+        "هەزار دینار": 1_000,
+        "دوو هەزار": 2_000,
+        "سێ هەزار": 3_000,
+        "چوار هەزار": 4_000,
+        "پێنج هەزار": 5_000,
+        "شەش هەزار": 6_000,
+        "حەوت هەزار": 7_000,
+        "هەشت هەزار": 8_000,
+        "نۆ هەزار": 9_000,
+        "دە هەزار": 10_000,
+        "یازدە هەزار": 11_000,
+        "دوازدە هەزار": 12_000,
+        "پازدە هەزار": 15_000,
+        "شازدە هەزار": 16_000,
+        "حەڤدە هەزار": 17_000,
+        "هەژدە هەزار": 18_000,
+        "نۆزدە هەزار": 19_000,
+        "بیست هەزار": 20_000,
+        "بیست و پێنج هەزار": 25_000,
+        "بیست وپێنج هەزار": 25_000,
+        "سی هەزار": 30_000,
+        "چل هەزار": 40_000,
+        "پەنجا هەزار": 50_000,
+        "شەست هەزار": 60_000,
+        "حەفتا هەزار": 70_000,
+        "هەشتا هەزار": 80_000,
+        "نەوەد هەزار": 90_000,
+        "سەد هەزار": 100_000,
+        "دووسەد هەزار": 200_000,
+        "دوو سەد هەزار": 200_000,
+        "پێنج سەد هەزار": 500_000,
+        "ملیۆنێک": 1_000_000,
+        "ملیۆن": 1_000_000,
+        "ملیۆن و نیو": 1_500_000,
+        "ملیۆنو نیو": 1_500_000,
+        "دوو ملیۆن": 2_000_000,
+        "سێ ملیۆن": 3_000_000,
+        "پێنج ملیۆن": 5_000_000,
+        "دە ملیۆن": 10_000_000,
+        # Kurmanji verbal amounts
+        "hezar": 1_000,
+        "du hezar": 2_000,
+        "sê hezar": 3_000,
+        "çar hezar": 4_000,
+        "pênc hezar": 5_000,
+        "deh hezar": 10_000,
+        "bîst hezar": 20_000,
+        "bîst û pênc hezar": 25_000,
+        "pêncî hezar": 50_000,
+        "sed hezar": 100_000,
+        "milyon": 1_000_000,
+        "milyonek": 1_000_000,
+        "du milyon": 2_000_000,
+    }
+
+    # Compound fractions like تلتالاف وخمس مية (3,500)
+    compound_fractions = [
+        (re.compile(r"\b(?:تلتالاف|ثلاثتالاف|ثلاثة\s*الاف|تلت\s*تالاف)\s*و(?:خمس\s*مية|خمسمية|نص)\b"), 3500),
+        (re.compile(r"\b(?:الفين|ألفين)\s*و(?:خمس\s*مية|خمسمية|نص)\b"), 2500),
+        (re.compile(r"\b(?:اربعتالاف|اربعة\s*الاف)\s*و(?:خمس\s*مية|خمسمية|نص)\b"), 4500),
+        (re.compile(r"\b(?:خمستالاف|خمسة\s*الاف)\s*و(?:خمس\s*مية|خمسمية|نص)\b"), 5500),
+        (re.compile(r"\b(?:عشرتالاف|عشرة\s*الاف)\s*و(?:خمس\s*مية|خمسمية|نص)\b"), 10500),
+        (re.compile(r"\b(?:عشرين\s*الف)\s*ونص\b"), 20500),
+        (re.compile(r"\b(?:ثلاثين\s*الف|تلاثين\s*الف)\s*ونص\b"), 30500),
+        (re.compile(r"\b(?:خمسين\s*الف)\s*ونص\b"), 50500),
+    ]
+    for c_pattern, c_val in compound_fractions:
+        if c_pattern.search(clean_no_curr):
+            return c_val, None, "IQD"
+
+    for c_term, c_val in sorted(connected_map.items(), key=lambda x: len(x[0]), reverse=True):
+        if c_term in clean_no_curr:
+            return c_val, None, "IQD"
+
+    # 5. Handle plural millions (ملايين) and singular millions (مليون / ملیۆن / milyon)
+    if any(m_word in clean_no_curr for m_word in ["ملايين", "مليون", "ملیۆن", "milyon"]):
+        norm_millions = (
+            clean_no_curr.replace("ملايين", "مليون")
+            .replace("ملیۆن", "مليون")
+            .replace("milyon", "مليون")
+        )
+        # Handle word numbers before million
+        word_millions = {
+            "ثلاث": 3, "تلت": 3, "ثلاثة": 3, "سێ": 3, "sê": 3,
+            "اربع": 4, "اربعة": 4, "چوار": 4, "çar": 4,
+            "خمس": 5, "خمسة": 5, "پێنج": 5, "pênc": 5,
+            "ست": 6, "ستة": 6, "شەش": 6, "şeş": 6,
+            "سبع": 7, "سبعة": 7, "حەوت": 7, "heft": 7,
+            "ثمان": 8, "ثمانية": 8, "هەشت": 8, "heşt": 8,
+            "تسع": 9, "تسعة": 9, "نۆ": 9, "neh": 9,
+            "عشر": 10, "عشرة": 10, "دە": 10, "deh": 10,
+            "دوو": 2, "du": 2,
+        }
+        for w_name, w_num in word_millions.items():
+            if norm_millions.startswith(w_name) or f" {w_name} " in f" {norm_millions} ":
+                val = w_num * 1_000_000
+                if is_usd:
+                    return val * current_rate, val, "USD"
+                return val, None, "IQD"
+
+        prefix = norm_millions.replace("مليون", "").strip()
+        if not prefix:
+            val = 1_000_000
+        elif prefix in ["نص", "نصف", "ونص", "ونصف", "نیو", "نیڤ"]:
+            val = 500_000
+        elif prefix in ["ربع", "وربع"]:
+            val = 250_000
+        else:
+            try:
+                val = int(float(prefix) * 1_000_000)
+            except ValueError:
+                return None, None, "IQD"
+
+        if is_usd:
+            return val * current_rate, val, "USD"
+        if 500 <= val <= 100_000_000:
+            return val, None, "IQD"
+        return None, None, "IQD"
+
+    # 6. Handle thousands (الاف / آلاف / الف / ألف / هەزار / hezar)
+    elif any(word in clean_no_curr for word in ["الاف", "آلاف", "الف", "ألف", "هەزار", "hezar"]):
+        prefix = clean_no_curr
+        for word in ["الاف", "آلاف", "ألف", "الف", "هەزار", "hezar"]:
+            prefix = prefix.replace(word, "")
+        prefix = prefix.strip()
+        if not prefix:
+            val = 1_000
+        elif prefix in ["نص", "نصف", "ونص", "ونصف", "نیو", "نیڤ"]:
+            val = 500
+        elif prefix in ["ربع", "وربع"]:
+            val = 250
+        else:
+            try:
+                val = int(float(prefix) * 1_000)
+            except ValueError:
+                return None, None, "IQD"
+
+        if is_usd:
+            return val * current_rate, val, "USD"
+        if 500 <= val <= 100_000_000:
+            return val, None, "IQD"
+        return None, None, "IQD"
+
+    # 7. Pure digits
+    clean_no_dot = clean_no_curr.replace(".", "")
+    digits_only = re.sub(r"[^\d]", "", clean_no_dot)
+    if not digits_only:
+        return None, None, "IQD"
+
+    try:
+        val = int(digits_only)
+    except ValueError:
+        return None, None, "IQD"
+
+    if is_usd:
+        if 1 <= val <= 1_000_000:
+            return val * current_rate, val, "USD"
+        return None, None, "IQD"
+    if 500 <= val <= 100_000_000:
+        return val, None, "IQD"
+    return None, None, "IQD"
 
 
 def parse_iqd_amount(amount_input: int | str | None) -> int | None:
     """Parse and validate amounts in Iraqi Dinars (IQD).
 
-    Handles strings with commas, Eastern Arabic numerals, plural thousands (الاف/آلاف),
-    and common Iraqi dialect and English shorthand (e.g. 10k, 50k, 1m).
-    Validates range (500 IQD to 100,000,000 IQD).
+    Backwards-compatible wrapper around parse_currency_amount.
     """
-    if amount_input is None:
-        return None
-
-    if isinstance(amount_input, int):
-        val = amount_input
-    elif isinstance(amount_input, float):
-        val = int(amount_input)
-    elif isinstance(amount_input, str):
-        clean = normalize_digits(amount_input.strip())
-        clean = clean.replace(",", "").replace("دينار", "").replace("iqd", "").strip()
-
-        # Handle English k / m notation (e.g., 25k, 50k, 1.5m) before stripping decimal dot
-        km_match = re.match(r"^(\d+(?:\.\d+)?)\s*([km])$", clean, re.IGNORECASE)
-        if km_match:
-            num_val = float(km_match.group(1))
-            multiplier = 1_000_000 if km_match.group(2).lower() == "m" else 1_000
-            val = int(num_val * multiplier)
-        else:
-            clean = clean.replace(".", "")
-            # First check direct compound Iraqi verbal amounts
-            connected_map = {
-                "عشرتالاف": 10_000, "عشر تالاف": 10_000, "عشرة الاف": 10_000, "عشرة آلاف": 10_000,
-                "خمستالاف": 5_000, "خمس تالاف": 5_000, "خمسة الاف": 5_000, "خمسة آلاف": 5_000,
-                "اربعتالاف": 4_000, "اربع تالاف": 4_000, "اربعة الاف": 4_000,
-                "تلتالاف": 3_000, "تلت تالاف": 3_000, "ثلاثتالاف": 3_000, "ثلاث تالاف": 3_000, "ثلاثة الاف": 3_000,
-                "ستالاف": 6_000, "ست تالاف": 6_000, "ستة الاف": 6_000,
-                "سبعتالاف": 7_000, "سبع تالاف": 7_000, "سبعة الاف": 7_000,
-                "ثمانتالاف": 8_000, "ثمان تالاف": 8_000, "ثمانية الاف": 8_000,
-                "تسعتالاف": 9_000, "تسع تالاف": 9_000, "تسعة الاف": 9_000,
-                "الفين": 2_000,
-                "ميت الف": 100_000, "مية الف": 100_000, "ميتين الف": 200_000,
-                "مليونين": 2_000_000,
-            }
-            for c_term, c_val in connected_map.items():
-                if c_term in clean:
-                    return c_val
-
-            # Handle Iraqi verbal shorthand
-            if "مليون" in clean:
-                prefix = clean.replace("مليون", "").strip()
-                if not prefix:
-                    val = 1_000_000
-                elif prefix in ["نص", "نصف"]:
-                    val = 500_000
-                elif prefix in ["ربع"]:
-                    val = 250_000
-                else:
-                    try:
-                        val = int(float(prefix) * 1_000_000)
-                    except ValueError:
-                        return None
-            elif any(word in clean for word in ["الاف", "آلاف", "الف", "ألف"]):
-                prefix = clean
-                for word in ["الاف", "آلاف", "ألف", "الف"]:
-                    prefix = prefix.replace(word, "")
-                prefix = prefix.strip()
-                if not prefix:
-                    val = 1_000
-                elif prefix in ["نص", "نصف"]:
-                    val = 500
-                elif prefix in ["ربع"]:
-                    val = 250
-                else:
-                    try:
-                        val = int(float(prefix) * 1_000)
-                    except ValueError:
-                        return None
-            else:
-                digits_only = re.sub(r"[^\d]", "", clean)
-                if not digits_only:
-                    return None
-                try:
-                    val = int(digits_only)
-                except ValueError:
-                    return None
-    else:
-        return None
-
-    # Plausibility check for Iraqi Dinars
-    if 500 <= val <= 100_000_000:
-        return val
-    return None
+    amt_iqd, _, _ = parse_currency_amount(amount_input)
+    return amt_iqd
 
 
 def resolve_event_date(date_text: str | None, submitted_at_iso: str) -> str | None:
@@ -298,26 +676,44 @@ def resolve_event_date(date_text: str | None, submitted_at_iso: str) -> str | No
         except ValueError:
             return None
 
-    # 3. Dynamic "قبل X ايام"
-    days_match = re.search(r"\bقبل\s*(\d+)\s*ايام?\b", norm_text)
+    # 2.5 Intra-day / recent time phrases (minutes, hours, just now) across Arabic & Kurdish -> resolves to today
+    if re.search(
+        r"\b(?:قبل\s*(?:ساعة|ساعتين|\d+\s*(?:ساعات?|دقايق|دقائق|دقيقة)|شوية|قليل)|"
+        r"هسة|توة|تووني|"
+        r"پێش\s*(?:کەمێک|کاتژمێرێک|دوو\s*کاتژمێر|\d+\s*(?:خولەک|کاتژمێر))|"
+        r"berî\s*(?:bîstekê|saetekê|du\s*saetan|\d+\s*(?:deqeyan|saetan)))\b",
+        norm_text,
+        re.IGNORECASE,
+    ):
+        return ref_dt.strftime("%Y-%m-%d")
+
+    # 3. Dynamic "قبل X ايام" or Kurdish "پێش X ڕۆژ" / "berî X rojan"
+    days_match = re.search(r"\b(?:قبل|پێش|berî)\s*(\d+)\s*(?:ايام?|أيام|يوم|ڕۆژ|rojan|roj)\b", norm_text)
     if days_match:
         offset = int(days_match.group(1))
         target_dt = ref_dt - timedelta(days=offset)
         return target_dt.strftime("%Y-%m-%d")
 
-    # 4. Standard relative Iraqi patterns
+    # 4. Standard relative Iraqi & Kurdish patterns
     for pattern, pattern_offset in RELATIVE_DATE_PATTERNS:
         if pattern_offset is not None and pattern.search(norm_text):
             target_dt = ref_dt - timedelta(days=pattern_offset)
             return target_dt.strftime("%Y-%m-%d")
 
-    # 5. Day of the week (e.g., 'يوم الجمعة', 'الجمعة الفاتت')
+    # 5. Day of the week (e.g., 'يوم الجمعة', 'الجمعة الفاتت', 'هەینی پێشوو', 'înê borî')
     for day_name, target_weekday in ARABIC_WEEKDAYS.items():
-        if day_name in norm_text:
+        if re.search(rf"(?:يوم\s*|roja\s*)?{re.escape(day_name)}\b", norm_text, re.IGNORECASE):
             current_weekday = ref_dt.weekday()
             days_behind = (current_weekday - target_weekday) % 7
             if days_behind == 0:
-                days_behind = 7  # Refers to previous week's day
+                has_past_marker = bool(
+                    re.search(
+                        r"(?:الفاتت|الفات|الماضي|الماضية|الراحت|الراح|السابق|السابقة|پێشوو|ڕابردوو|borî)\b",
+                        norm_text,
+                        re.IGNORECASE,
+                    )
+                )
+                days_behind = 7 if has_past_marker else 0
             target_dt = ref_dt - timedelta(days=days_behind)
             return target_dt.strftime("%Y-%m-%d")
 

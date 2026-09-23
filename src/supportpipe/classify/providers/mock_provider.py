@@ -7,6 +7,7 @@ with deterministic security safeguards (bilingual prompt injection) and Arabizi 
 import json
 import logging
 import re
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +17,12 @@ from sklearn.pipeline import Pipeline
 
 from supportpipe.classify.providers.base import BaseClassifierProvider
 from supportpipe.classify.sentiment import analyze_iraqi_sentiment_and_intent
-from supportpipe.extract.normalize import normalize_arabizi_and_slang, normalize_digits
+from supportpipe.extract.language import detect_ticket_language
+from supportpipe.extract.normalize import (
+    normalize_arabizi_and_slang,
+    normalize_digits,
+    strip_arabic_diacritics_and_tatweel,
+)
 from supportpipe.schemas import ClassificationResult
 
 logger = logging.getLogger(__name__)
@@ -25,6 +31,7 @@ logger = logging.getLogger(__name__)
 _CAT_PIPE: Pipeline | None = None
 _PRIO_PIPE: Pipeline | None = None
 _INIT_ATTEMPTED = False
+_INIT_LOCK = threading.Lock()
 
 
 def _init_offline_pipelines() -> tuple[Pipeline | None, Pipeline | None]:
@@ -37,7 +44,11 @@ def _init_offline_pipelines() -> tuple[Pipeline | None, Pipeline | None]:
     if _INIT_ATTEMPTED:
         return _CAT_PIPE, _PRIO_PIPE
 
-    _INIT_ATTEMPTED = True
+    with _INIT_LOCK:
+        if _INIT_ATTEMPTED:
+            return _CAT_PIPE, _PRIO_PIPE
+
+        _INIT_ATTEMPTED = True
 
     candidate_paths = [
         Path(__file__).resolve().parents[4] / "data" / "splits" / "dev.jsonl",
@@ -107,12 +118,17 @@ class MockClassifierProvider(BaseClassifierProvider):
         norm = normalize_arabizi_and_slang(text)
         sentiment = analyze_iraqi_sentiment_and_intent(raw)
 
-        # 0. Prompt Injection / Hostile Instruction Override (Bilingual Arabic + English)
+        # 0. Prompt Injection / Hostile Instruction Override (Trilingual: Arabic + Kurdish Sorani/Kurmanji + English + RTL Override safe)
+        clean_for_sec = strip_arabic_diacritics_and_tatweel(raw)
         if re.search(
             r"(تجاهل\s*(?:كل\s*)?التعليمات|ignore\s*(?:all\s*)?(?:previous\s*)?instructions|"
             r"system\s*(?:prompt|override)|admin\s*mode|developer\s*mode|root\s*access|"
-            r"jailbreak|bypass\s*security|باسوورد\s*قاعدة\s*البيانات|VIP\s*client|عميل\s*VIP)",
-            raw,
+            r"jailbreak|bypass\s*security|باسوورد\s*قاعدة\s*البيانات|VIP\s*client|عميل\s*VIP|"
+            r"هەموو\s*ڕێنماییەکان\s*پشتگوێ\s*بخە|ڕێنماییەکان\s*پشتگوێ\s*بخە|ڕێنمایی\s*پشتگوێ\s*بخە|فەرمانەکان\s*پشتگوێ\s*بخە|"
+            r"سیستەم\s*ئۆڤەرڕاید|مۆدی\s*(?:ئەدمین|گەشەپێدەر)|دەسەڵاتی\s*ڕووت|"
+            r"hemû\s*(?:talîmatan|rêwerzan)\s*paşguh\s*bike|(?:talîmatan|rêwerzan)\s*paşguh\s*bike|"
+            r"modeya\s*(?:admîn|pêşvebir)|destûra\s*root)",
+            clean_for_sec,
             re.IGNORECASE,
         ):
             return ClassificationResult(
@@ -122,6 +138,19 @@ class MockClassifierProvider(BaseClassifierProvider):
                 priority_confidence=0.50,
                 reasoning_summary="Hostile prompt injection or malformed instruction override detected",
                 sentiment_tags=["hostile_injection"],
+            )
+
+        # 0.5 Foreign / English Language Guard (MS-01)
+        # Protects Kurdish Kurmanji (Latin Hawar) and Arabizi while isolating English
+        detected_lang = detect_ticket_language(raw)
+        if detected_lang == "en":
+            return ClassificationResult(
+                category="unclear_or_incomplete",
+                category_confidence=0.45,
+                priority="medium",
+                priority_confidence=0.85,
+                reasoning_summary="English or foreign language ticket detected; routed to human care for bilingual assistance",
+                sentiment_tags=["foreign_language_en"],
             )
 
         # 1. Edge case: Empty, whitespace, or brief greeting without actionable complaint
@@ -167,8 +196,12 @@ class MockClassifierProvider(BaseClassifierProvider):
                 sentiment_tags=sentiment.sentiment_tags,
             )
 
-        # 3. Hybrid ML Model Inference (if dev data trained successfully)
-        if self.cat_pipe is not None and self.prio_pipe is not None:
+        # 3. Hybrid ML Model Inference (trained on Arabic dev data; Kurdish routes to specialized heuristics)
+        if (
+            detected_lang not in ["ku_ckb", "ku_kmr"]
+            and self.cat_pipe is not None
+            and self.prio_pipe is not None
+        ):
             probs = self.cat_pipe.predict_proba([norm])[0]
             classes = self.cat_pipe.classes_
             best_idx = int(probs.argmax())
@@ -230,79 +263,79 @@ class MockClassifierProvider(BaseClassifierProvider):
         """Rule-based fallback if ML pipeline is unavailable."""
         stags = sentiment.sentiment_tags if sentiment else []
 
-        if re.search(r"(انسرقت|احتيال|نصب|هكر|hack|scam|phishing|فيشنك|سرقوا|صفحة وهمية)", text, re.I):
+        if re.search(r"(انسرقت|احتيال|نصب|هكر|hack|scam|phishing|فيشنك|سرقوا|صفحة وهمية|دزراوە|دزراوه|دزین|هاککراوە|هاککرا|فێڵ|دزییان|hate dizîn|xapandin)", text, re.I):
             return ClassificationResult(
                 category="fraud_report", category_confidence=0.94, priority="high", priority_confidence=0.92,
                 reasoning_summary="Customer reports unauthorized transaction or suspected social engineering scam",
                 sentiment_tags=stags,
             )
-        if re.search(r"(محظور|مجمد|تجميد|مقفل|راجع الادارة|موقوف|بلوك|باند|block|blocked)", text, re.I):
+        if re.search(r"(محظور|مجمد|تجميد|مقفل|راجع الادارة|موقوف|بلوك|باند|block|blocked|بلۆک|بلوک|داخراوە|ڕاگیراوە|سڕدراوەتەوە|hejmard hate girtin|hatiye girtin|hate blokkirin)", text, re.I):
             return ClassificationResult(
                 category="account_blocked", category_confidence=0.93, priority="high", priority_confidence=0.91,
                 reasoning_summary="Customer account is suspended or blocked from operations",
                 sentiment_tags=stags,
             )
-        if re.search(r"(شخص غلط|رقم غلط|حولت بالخطأ|غلطت بالرقم|غلطت برقم|لشخص غريب)", text, re.I):
+        if re.search(r"(شخص غلط|رقم غلط|حولت بالخطأ|غلطت بالرقم|غلطت برقم|لشخص غريب|ژمارەی هەڵە|بە هەڵە ناردوومە|بۆ کەسێکی تر|ژمارە هەڵە|bi xeletî|bo hejmareke xelet|kesekî din)", text, re.I):
             return ClassificationResult(
                 category="wrong_recipient", category_confidence=0.92, priority="high", priority_confidence=0.88,
                 reasoning_summary="User accidentally transferred money to an unintended recipient",
                 sentiment_tags=stags,
             )
-        if re.search(r"(تسجيل\s*دخول|رمز\s*الدخول|باسورد|password|login|لوجن|رمز\s*التحقق|OTP|البصمة)", text, re.I):
+        if re.search(r"(تسجيل\s*دخول|رمز\s*الدخول|باسورد|password|login|لوجن|رمز\s*التحقق|OTP|البصمة|چوونەژوورەوە|وشەی نهێنی|تێپەڕەوشە|کۆدی دڵنیابوونەوە|ناتوانم بچمە|derbasbûn|şîfre|koda piştrastkirinê)", text, re.I):
             return ClassificationResult(
                 category="login_problem", category_confidence=0.91, priority="medium", priority_confidence=0.85,
                 reasoning_summary="Authentication or login credentials issue",
                 sentiment_tags=stags,
             )
-        if re.search(r"(فاتورة|كهرباء|ماء|شحن رصيد|شحنت رصيد|كارت شحن|تسديد|اشتراك)", text, re.I):
+        if re.search(r"(فاتورة|كهرباء|ماء|شحن رصيد|شحنت رصيد|كارت شحن|تسديد|اشتراك|کارەبا|ئاو|باڵانس\s*پڕکردنەوە|پڕکردنەوەی\s*باڵانس|شحنی\s*باڵانس|فاتوورە|karta barkirinê|fatura|av|elektrîk)", text, re.I):
             return ClassificationResult(
                 category="bill_payment_failure", category_confidence=0.89, priority="medium", priority_confidence=0.86,
                 reasoning_summary="Utility bill payment or mobile recharge issue",
                 sentiment_tags=stags,
             )
-        if re.search(r"(تحويل|حولت|معلق|ما وصل|الحوالة معلقة|ترانسفير|دزيت حوالة)", text, re.I) and not re.search(r"بدون ما اسوي تحويل", text):
+        if re.search(r"(تحويل|حولت|معلق|ما وصل|الحوالة معلقة|ترانسفير|دزيت حوالة|حەواڵە|هاوالا|ناردنی پارە|ناردوومە|نەگەیشتووە|هەڵواسراوە|şandina pere|pere neçû|hewalet|hewaleyê|hewaleye|şand|neçûye)", text, re.I) and not re.search(r"بدون ما اسوي تحويل", text):
             return ClassificationResult(
                 category="failed_transfer", category_confidence=0.91, priority="high", priority_confidence=0.85,
                 reasoning_summary="P2P transfer pending or uncredited",
                 sentiment_tags=stags,
             )
-        if re.search(r"(كارت|بطاقة مصرفية|ماستركارد|فيزا|الصراف|ATM|POS)", text, re.I) and not re.search(r"(بطاقة موحدة|بطاقة وطنية)", text):
+        if re.search(r"(كارت|بطاقة مصرفية|ماستركارد|فيزا|الصراف|ATM|POS|کارت|ماستەرکارت|ڕاکێشان|ئامێری پارە|qert|kart|kişandina pere)", text, re.I) and not re.search(r"(بطاقة موحدة|بطاقة وطنية)", text):
             return ClassificationResult(
                 category="card_issue", category_confidence=0.90, priority="medium", priority_confidence=0.87,
                 reasoning_summary="Debit/prepaid card decline or ATM issue",
                 sentiment_tags=stags,
             )
-        if re.search(r"(هوية|مستمسكات|توثيق|بطاقة موحدة|بطاقة وطنية|جواز|سيلفي|kyc)", text, re.I):
+        if re.search(r"(هوية|مستمسكات|توثيق|بطاقة موحدة|بطاقة وطنية|جواز|سيلفي|kyc|بەڵگەنامە|پاسپۆرت|ناسنامە|پشتڕاستکردنەوە|belge|nasname|pasaport)", text, re.I):
             return ClassificationResult(
                 category="kyc_document_issue", category_confidence=0.90, priority="medium", priority_confidence=0.88,
                 reasoning_summary="Identity verification document rejection or delay",
                 sentiment_tags=stags,
             )
-        if re.search(r"(استرجاع|ريفاوند|refund|فلوس المتجر|لغيت طلب|رجعنا الفلوس)", text, re.I):
+        if re.search(r"(استرجاع|ريفاوند|refund|فلوس المتجر|لغيت طلب|رجعنا الفلوس|گەڕاندنەوەی پارە|زڤڕاندنا پارەی|vegerandina pere)", text, re.I):
             return ClassificationResult(
                 category="refund_status", category_confidence=0.87, priority="medium", priority_confidence=0.82,
                 reasoning_summary="Merchant purchase cancellation refund status",
                 sentiment_tags=stags,
             )
-        if re.search(r"(لاگ|لاك|كراش|تصفن|شاشة بيضاء|يعلك|عطل فني|التطبيق يسكر)", text, re.I):
+        if re.search(r"(لاگ|لاك|كراش|تصفن|شاشة بيضاء|يعلك|عطل فني|التطبيق يسكر|ئەپەکە کێشەی هەیە|ئەپ کار ناکات|xirabûna sepanê)", text, re.I):
             return ClassificationResult(
                 category="app_bug", category_confidence=0.85, priority="low", priority_confidence=0.80,
                 reasoning_summary="Cosmetic or client application bug",
                 sentiment_tags=stags,
             )
-        if re.search(r"(رصيدي|كشف حساب|الحركات|خصم|بدون ما اسوي تحويل|balance|statement)", text, re.I):
+        if re.search(r"(رصيدي|كشف حساب|الحركات|خصم|بدون ما اسوي تحويل|balance|statement|باڵانس|کەشف حساب|بڕی پارە|چەند ماوە|kêşana hesabê|bîlanso|çiqas maye)", text, re.I):
             return ClassificationResult(
                 category="balance_or_statement_inquiry", category_confidence=0.86, priority="low", priority_confidence=0.85,
                 reasoning_summary="Wallet balance, fee, or statement inquiry",
                 sentiment_tags=stags,
             )
-        if re.search(r"(وكيل|عمولة زايدة|رفض يسحب|مكتب|كاش اوت)", text, re.I) and not re.search(r"(وين اكدر|اقرب وكيل)", text):
+        if re.search(r"(وكيل|عمولة زايدة|رفض يسحب|مكتب|كاش اوت|بریکار|نوێنەر|نووسینگە|کاش|deste|wekîl|komîsyon|pere neda)", text, re.I) and not re.search(r"(وين اكدر|اقرب وكيل)", text):
             return ClassificationResult(
                 category="agent_dispute", category_confidence=0.88, priority="medium", priority_confidence=0.84,
                 reasoning_summary="Dispute with physical cash agent",
                 sentiment_tags=stags,
             )
-        if re.search(r"(وين|فروع|رسوم|حدود|خدمات|help|مساعدة|اقرب وكيل)", text, re.I):
+        if re.search(r"(وين|فروع|رسوم|حدود|خدمات|help|مساعدة|اقرب وكيل|پرسیار|چۆن|لەکوێ|سوپاس|دەستان خۆش|silav|çawa|li ku|spas)", text, re.I):
             return ClassificationResult(
                 category="general_inquiry", category_confidence=0.84, priority="low", priority_confidence=0.85,
                 reasoning_summary="General customer inquiry",

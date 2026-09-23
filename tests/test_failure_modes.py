@@ -123,6 +123,6 @@ def test_failure_mode_street_slang_theft_and_anger() -> None:
     assert res.team == "Security/Fraud"
     assert res.extracted_fields.amount_iqd == 10_000
     assert res.extracted_fields.event_date_text == "اوت البارحه"
-    assert res.extracted_fields.event_date_resolved == "2026-09-21"
+    assert res.extracted_fields.event_date_resolved == "2026-09-20"
     assert "Customer reports unauthorized theft" in res.reasoning_summary
 

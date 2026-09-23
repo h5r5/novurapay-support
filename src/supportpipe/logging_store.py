@@ -5,17 +5,22 @@ import re
 from pathlib import Path
 
 from supportpipe.config import settings
+from supportpipe.extract.normalize import normalize_digits
 from supportpipe.schemas import BatchSummary, PipelineResult
 
-# Regex for Iraqi mobile phones (07XX-XXX-XXXX, +9647XXXXXXXX)
-PHONE_REGEX = re.compile(r"(\+?964\s?|0)?7[3-9]\d{8}\b")
+# Regex for Iraqi mobile phones (07XX-XXX-XXXX, +964 7XX XXX XXXX, 07XXXXXXXX)
+PHONE_REGEX = re.compile(
+    r"(?:\+?964[\s\-]?|00964[\s\-]?|0)?7[3-9](?:[\s\-]?\d){8}\b",
+    re.IGNORECASE,
+)
 # Regex for National ID / Card numbers (12-16 digits)
 CARD_ID_REGEX = re.compile(r"\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b|\b\d{10,12}\b")
 
 
 def mask_pii(text: str) -> str:
     """Scrub potential PII (phone numbers, national IDs) before writing to logs/store."""
-    masked = PHONE_REGEX.sub("[PHONE_SCRUBBED]", text)
+    norm_text = normalize_digits(text)
+    masked = PHONE_REGEX.sub("[PHONE_SCRUBBED]", norm_text)
     masked = CARD_ID_REGEX.sub("[ID_SCRUBBED]", masked)
     return masked
 
