@@ -97,8 +97,10 @@ ZainCash-support-/
 ├── FAILURE_MODES.md               # Gate 4: 6 detailed failure modes and automated tests
 ├── pyproject.toml                 # uv package configuration and dependencies
 ├── docs/
+│   ├── ADVERSARIAL_BREAKING_POINTS.md # 100-ticket adversarial stress test & hardening report
 │   ├── ARCHITECTURE_MAP.md        # Master architectural roadmap & directory layout guide
 │   ├── BRIEF_DIGEST.md            # Master compliance tracking table
+│   ├── CODE_CRITIQUE_2026-09-22.md# Deep code audit & architectural evaluation
 │   ├── category_taxonomy.md       # Grounded taxonomy with evidence grades (A/B/C)
 │   ├── slides_evidence.md         # Verifiable evidence for Stage 2 presentation slides
 │   ├── sample_drafts_for_review.md# 10 sample pre-drafted Iraqi Arabic responses
@@ -111,20 +113,28 @@ ZainCash-support-/
 │   ├── logging_store.py           # Review queue storage with PII regex scrubbing
 │   ├── cli.py                     # CLI commands (health, run, eval, patterns)
 │   ├── taxonomy/                  # categories.yaml, routing_table.yaml, priority_rubric.yaml
-│   ├── classify/                  # Classifier providers (Jev 1.13, Gemini, Mock) and sentiment.py
-│   ├── extract/                   # Structured extraction (refs, amounts, dates, Iraqi/intl phones)
+│   ├── classify/                  # Classifier providers & sentiment.py
+│   │   └── providers/             # hybrid_provider.py (Tri-Engine consensus & active learning), mock, jev, gemini
+│   ├── extract/                   # Dialect extraction, character deduplication, currencies, and relative dates
 │   ├── draft/                     # Grounded response generator and reviewed Arabic templates
 │   ├── routing/                   # Deterministic routing and confidence escalation
-│   ├── datagen/                   # 331 synthetic tickets generator with edge cases
+│   ├── datagen/                   # Synthetic tickets generator with dialect edge cases
 │   ├── evaluation/                # Evaluation benchmark suite and confusion matrices
 │   ├── patterns/                  # Systemic outage and weekly pattern detection
-│   └── ui/                        # Streamlit review queue UI
+│   └── ui/                        # Streamlit review queue UI & Operations Cockpit
 ├── data/
 │   ├── manifest.json              # Frozen SHA-256 test set hashes
 │   ├── QA_NOTES.md                # 65-ticket manual inspection notes
-│   └── splits/                    # dev.jsonl (215 tickets) and test.jsonl (116 tickets)
-├── results/                       # Reproducible run outputs (metrics.json, confusion.csv)
-└── tests/                         # 37 unit, integration, failure mode, and dialect tests (100% pass)
+│   ├── splits/                    # dev.jsonl (215 tickets) and test.jsonl (116 tickets)
+│   ├── stress_test_100_adversarial.jsonl # 100 extreme adversarial stress-test tickets
+│   └── audit_learning/            # discrepancies.jsonl (Active Learning discrepancy store)
+├── scripts/                       # Adversarial generators, stress-test runners & report generators
+│   ├── generate_adversarial_100.py# 100 extreme test cases generator
+│   ├── run_stress_test_analysis.py# Automated stress benchmark runner
+│   ├── generate_breaking_report.py# Breaking points markdown report builder
+│   └── test_hybrid_on_failures.py # Tri-engine verification script
+├── results/                       # Reproducible run outputs (metrics.json, adversarial_stress_test/)
+└── tests/                         # 84 unit, integration, trilingual, capacity, failure mode, & hybrid tests (100% pass)
 ```
 
 ---
