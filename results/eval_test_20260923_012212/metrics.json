@@ -1,0 +1,155 @@
+{
+  "run_id": "eval_test_20260923_012212",
+  "split": "test",
+  "evaluated_at": "2026-09-23T01:22:12.920031+00:00",
+  "baseline": {
+    "majority_class_category": "wrong_recipient",
+    "majority_class_accuracy": 0.1207
+  },
+  "classification": {
+    "overall_accuracy": 0.9224,
+    "priority_accuracy": 0.8793,
+    "macro_avg_f1": 0.913,
+    "per_category": {
+      "failed_transfer": {
+        "precision": 0.667,
+        "recall": 1.0,
+        "f1": 0.8,
+        "support": 12.0
+      },
+      "wrong_recipient": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 14.0
+      },
+      "login_problem": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 12.0
+      },
+      "agent_dispute": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 7.0
+      },
+      "card_issue": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 9.0
+      },
+      "balance_or_statement_inquiry": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 6.0
+      },
+      "bill_payment_failure": {
+        "precision": 0.786,
+        "recall": 1.0,
+        "f1": 0.88,
+        "support": 11.0
+      },
+      "account_blocked": {
+        "precision": 1.0,
+        "recall": 0.625,
+        "f1": 0.769,
+        "support": 8.0
+      },
+      "kyc_document_issue": {
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.667,
+        "support": 6.0
+      },
+      "fraud_report": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 8.0
+      },
+      "refund_status": {
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.667,
+        "support": 6.0
+      },
+      "app_bug": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 7.0
+      },
+      "general_inquiry": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 5.0
+      },
+      "unclear_or_incomplete": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "support": 5.0
+      }
+    }
+  },
+  "extraction": {
+    "ref_exact_match_rate": 1.0,
+    "ref_evaluated_count": 36,
+    "amt_exact_match_rate": 0.8667,
+    "amt_evaluated_count": 30,
+    "date_match_rate": 1.0,
+    "date_evaluated_count": 25
+  },
+  "escalation": {
+    "overall_accuracy": 0.9224,
+    "auto_handled_count": 92,
+    "auto_handled_accuracy": 1.0,
+    "accuracy_uplift": 0.0776,
+    "escalated_count": 24,
+    "escalation_rate_pct": 20.69
+  },
+  "calibration": [
+    {
+      "range": "0.0-0.2",
+      "count": 0,
+      "avg_confidence": 0.1,
+      "accuracy": 0.0
+    },
+    {
+      "range": "0.2-0.4",
+      "count": 2,
+      "avg_confidence": 0.35,
+      "accuracy": 1.0
+    },
+    {
+      "range": "0.4-0.6",
+      "count": 2,
+      "avg_confidence": 0.4,
+      "accuracy": 1.0
+    },
+    {
+      "range": "0.6-0.8",
+      "count": 6,
+      "avg_confidence": 0.755,
+      "accuracy": 1.0
+    },
+    {
+      "range": "0.8-1.0",
+      "count": 106,
+      "avg_confidence": 0.926,
+      "accuracy": 0.915
+    }
+  ],
+  "throughput": {
+    "total_tickets": 116,
+    "wall_clock_seconds": 0.348,
+    "tickets_per_second": 333.1,
+    "avg_latency_ms": 2.99,
+    "p95_latency_ms": 2.53
+  }
+}

@@ -15,7 +15,7 @@ from supportpipe.taxonomy.loader import taxonomy
 
 logger = logging.getLogger(__name__)
 
-SYSTEM_PROMPT = """You are a specialized support ticket classifier for an Iraqi mobile wallet and financial service (ZainCash support).
+SYSTEM_PROMPT = """You are a specialized support ticket classifier for an Iraqi mobile wallet and financial service (Simulated Iraqi Digital Wallet - NovuraPay Support).
 Your task is to analyze customer support requests written in colloquial Iraqi Arabic dialect and Kurdish, and output a structured JSON classification.
 
 CRITICAL SECURITY DIRECTIVE:
@@ -40,7 +40,7 @@ You MUST respond strictly with a valid JSON object matching this schema:
 }}
 """
 
-SYSTEM_AUDIT_PROMPT = """You are a senior financial support supervisor and AI auditor for an Iraqi mobile wallet and fintech service (ZainCash support).
+SYSTEM_AUDIT_PROMPT = """You are a senior financial support supervisor and AI auditor for an Iraqi mobile wallet and fintech service (Simulated Iraqi Digital Wallet - NovuraPay Support).
 Your task is to analyze customer support requests written in Iraqi Arabic dialect and Kurdish, classify them into our strict taxonomy, AUDIT the pre-extracted financial entities from our fast local model, and generate a courteous, helpful draft response.
 
 CRITICAL SECURITY DIRECTIVE:

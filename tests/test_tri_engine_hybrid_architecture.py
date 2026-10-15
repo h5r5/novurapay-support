@@ -164,6 +164,7 @@ def test_hybrid_provider_triple_consensus() -> None:
         mock_provider=mock_mock,
         jev_provider=mock_jev,
         gemini_provider=mock_gemini,
+        audit_sampling_rate=1.0,
     )
 
     res = hybrid.classify(
@@ -176,6 +177,74 @@ def test_hybrid_provider_triple_consensus() -> None:
     assert res.category_confidence == 0.99
     assert res.priority == "high"
     assert "Triple Consensus" in res.reasoning_summary
+
+
+def test_hybrid_provider_waterfall_step1_fast_exit() -> None:
+    """Verify that high-confidence (>= 0.95) System 1 predictions return immediately with 0 cloud calls."""
+    mock_mock = MagicMock(spec=MockClassifierProvider)
+    mock_mock.classify.return_value = ClassificationResult(
+        category="login_problem",
+        category_confidence=0.98,
+        priority="medium",
+        priority_confidence=0.95,
+        reasoning_summary="System 1 high confidence regex",
+    )
+
+    mock_jev = MagicMock(spec=BaseClassifierProvider)
+    mock_gemini = MagicMock(spec=BaseClassifierProvider)
+
+    hybrid = HybridClassifierProvider(
+        mock_provider=mock_mock,
+        jev_provider=mock_jev,
+        gemini_provider=mock_gemini,
+        audit_sampling_rate=0.0,
+    )
+
+    res = hybrid.classify(ticket_text="نسيت الباسورد مالتي", channel="app")
+
+    assert res.category == "login_problem"
+    assert res.category_confidence == 0.98
+    # Cloud providers should never be invoked
+    mock_jev.classify.assert_not_called()
+    mock_gemini.classify.assert_not_called()
+
+
+def test_hybrid_provider_waterfall_step2_preserves_gemini_quota() -> None:
+    """Verify that when Jev is confident (>= 0.80) and agrees with System 1, Gemini is NOT invoked."""
+    mock_mock = MagicMock(spec=MockClassifierProvider)
+    mock_mock.classify.return_value = ClassificationResult(
+        category="failed_transfer",
+        category_confidence=0.85,
+        priority="high",
+        priority_confidence=0.85,
+        reasoning_summary="System 1 moderate confidence",
+    )
+
+    mock_jev = MagicMock(spec=BaseClassifierProvider)
+    mock_jev.classify.return_value = ClassificationResult(
+        category="failed_transfer",
+        category_confidence=0.91,
+        priority="high",
+        priority_confidence=0.90,
+        reasoning_summary="Jev fast decision",
+    )
+
+    mock_gemini = MagicMock(spec=BaseClassifierProvider)
+
+    hybrid = HybridClassifierProvider(
+        mock_provider=mock_mock,
+        jev_provider=mock_jev,
+        gemini_provider=mock_gemini,
+        audit_sampling_rate=0.0,
+    )
+
+    res = hybrid.classify(ticket_text="حولت رصيد وما وصل", channel="app")
+
+    assert res.category == "failed_transfer"
+    assert "Waterfall Consensus" in res.reasoning_summary
+    assert "Gemini quota preserved" in res.reasoning_summary
+    mock_jev.classify.assert_called_once()
+    mock_gemini.classify.assert_not_called()
 
 
 def test_hybrid_provider_cloud_consensus_override(tmp_path: Path) -> None:

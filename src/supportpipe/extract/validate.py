@@ -9,7 +9,7 @@ def is_valid_transaction_ref(ref: str | None) -> bool:
     """Validate format of transaction reference strings.
 
     Accepts synthetic transaction references, e.g.:
-    - TXN-12345678, REF-829103, ZAIN-91827364
+    - TXN-12345678, REF-829103, NOVURA-91827364
     - 8 to 16 digit sequence
     """
     if not ref or not ref.strip():

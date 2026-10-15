@@ -39,7 +39,7 @@ def generate_nationwide_synthetic_corpus(total_tickets: int = 1000) -> list[Tick
         ),
         # 3. Western Dialect (Anbar, Fallujah, Ramadi)
         (
-            "يالطيب دحكلي بالحوالة دزيت ميت الف دينار من محفظتي 07812223344 لرقم اخوي 07509998877 والعملية علكت كود التحويل ZAIN-ANB-3001",
+            "يالطيب دحكلي بالحوالة دزيت ميت الف دينار من محفظتي 07812223344 لرقم اخوي 07509998877 والعملية علكت كود التحويل NOVURA-ANB-3001",
             "app",
         ),
         # 4. Northern Dialect (Mosul, Kirkuk code switching)

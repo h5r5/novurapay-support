@@ -7,6 +7,7 @@ an active learning discrepancy feedback loop.
 from __future__ import annotations
 
 import logging
+import random
 from typing import Any
 
 from supportpipe.classify.providers.base import BaseClassifierProvider
@@ -29,6 +30,7 @@ class HybridClassifierProvider(BaseClassifierProvider):
         mock_provider: MockClassifierProvider | None = None,
         jev_provider: JevClassifierProvider | None = None,
         gemini_provider: GeminiClassifierProvider | None = None,
+        audit_sampling_rate: float = 0.05,
     ) -> None:
         self.mock_provider = mock_provider or MockClassifierProvider()
 
@@ -43,6 +45,7 @@ class HybridClassifierProvider(BaseClassifierProvider):
             gemini_provider
             or (GeminiClassifierProvider() if (has_gemini and settings.llm_mode != "offline") else None)
         )
+        self.audit_sampling_rate = audit_sampling_rate
 
     def classify(
         self,
@@ -50,20 +53,38 @@ class HybridClassifierProvider(BaseClassifierProvider):
         channel: str = "app",
         fast_extracted: ExtractedFields | dict[str, Any] | None = None,
         ticket_id: str = "TKT-LIVE",
+        force_audit: bool = False,
         **kwargs: Any,
     ) -> ClassificationResult:
-        """Execute consensus classification and entity auditing across the three engines."""
-        # 1. System 1: Fast local baseline heuristic (always runs, ~0.5ms)
+        """Execute consensus classification and entity auditing across the three engines using Tiered Waterfall.
+
+        Tiered Waterfall Stages:
+        - Step 1 (System 1 Local): Run fast offline heuristic (~0.5ms). If confidence >= 0.95
+          and not forced/sampled for audit, return immediately (zero cloud cost).
+        - Step 2 (System 1.5 Jev): If System 1 conf < 0.95, invoke TypeSafe Jev 1.13 (~580ms).
+          If Jev succeeds with confidence >= 0.80 and agrees with System 1 (and not audit-sampled),
+          return 2-engine consensus immediately to strictly preserve Gemini quota.
+        - Step 3 (System 2 Gemini): Invoke Google Gemini 3.6 Flash only if Jev fails, or Jev
+          confidence < 0.80, or if there is an irreconcilable conflict, or if audit sampling triggers
+          (default 5% sampling rate) to protect Gemini free daily limits.
+        """
+        # Step 1: System 1 Fast local baseline heuristic (always runs, ~0.5ms)
         res_mock = self.mock_provider.classify(ticket_text=ticket_text, channel=channel)
 
         # If neither cloud engine is available, return local heuristic directly
         if not self.jev_provider and not self.gemini_provider:
             return res_mock
 
+        # Step 1 early exit check: If high confidence (>= 0.95) and not forced/sampled, exit immediately
+        is_sample_audit = (self.audit_sampling_rate > 0.0) and (random.random() < self.audit_sampling_rate)
+        if not force_audit and not is_sample_audit and res_mock.category_confidence >= 0.95:
+            logger.debug("Step 1 Waterfall Fast-Exit: System 1 confidence %.2f >= 0.95", res_mock.category_confidence)
+            return res_mock
+
         res_jev: ClassificationResult | None = None
         res_gemini: ClassificationResult | None = None
 
-        # 2. System 1.5: TypeSafe AI Jev Choice Engine
+        # Step 2: System 1.5 TypeSafe AI Jev Choice Engine
         if self.jev_provider:
             try:
                 res_jev = self.jev_provider.classify(
@@ -75,8 +96,46 @@ class HybridClassifierProvider(BaseClassifierProvider):
                 logger.warning("Jev engine failed in hybrid pass: %s", jev_err)
                 res_jev = None
 
-        # 3. System 2: Google Gemini Auditor and Drafter
-        if self.gemini_provider:
+        # Step 2 check: If Jev agrees with System 1 and is confident (>= 0.80), and no audit sampled,
+        # return waterfall consensus immediately without exhausting Gemini quota
+        if (
+            res_jev is not None
+            and res_jev.category == res_mock.category
+            and res_jev.category_confidence >= 0.80
+            and not force_audit
+            and not is_sample_audit
+        ):
+            wf_cat = res_jev.category
+            wf_cat_conf = round(min(0.98, max(res_mock.category_confidence, res_jev.category_confidence) + 0.08), 4)
+            wf_prio = res_jev.priority
+            wf_prio_conf = res_jev.priority_confidence
+            reasoning = f"Waterfall Consensus (System 1 + Jev 1.13) on '{wf_cat}' [Gemini quota preserved]"
+
+            return ClassificationResult(
+                category=wf_cat if wf_cat in taxonomy.get_valid_category_ids() else "unclear_or_incomplete",
+                category_confidence=wf_cat_conf,
+                priority=wf_prio,
+                priority_confidence=wf_prio_conf,
+                reasoning_summary=reasoning[:300],
+                sentiment_tags=list(res_mock.sentiment_tags),
+                audit_details=None,
+            )
+
+        # Step 3: System 2 Google Gemini Auditor and Drafter
+        # Only invoke if Jev fails, or Jev confidence < 0.80, or conflict between Jev and System 1, or audit sampling
+        should_call_gemini = (
+            self.gemini_provider is not None
+            and (
+                res_jev is None
+                or res_jev.category_confidence < 0.80
+                or res_jev.category != res_mock.category
+                or force_audit
+                or is_sample_audit
+                or kwargs.get("force_gemini", False)
+            )
+        )
+
+        if should_call_gemini and self.gemini_provider:
             try:
                 res_gemini = self.gemini_provider.classify(
                     ticket_text=ticket_text,

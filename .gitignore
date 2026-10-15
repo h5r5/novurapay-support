@@ -59,9 +59,10 @@ scratch/
 presentation/
 *.pptx
 *.pdf
-.Agentic AI Challenge Next Steps.md
-.Agentic AI Challenge Resources.md
-.Agentic AI Challenge_Free LLM API Access.md
+# Challenge Briefs (local only, do not commit)
+Agentic AI Challenge*.md
+.Agentic AI Challenge*.md
+
 
 # Graphify local cache
 graphify-out/cache/

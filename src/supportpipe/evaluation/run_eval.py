@@ -10,6 +10,7 @@ import pandas as pd
 from supportpipe.config import settings
 from supportpipe.datagen.splits import compute_sha256
 from supportpipe.evaluation.metrics import (
+    compute_bootstrap_confidence_intervals,
     compute_calibration_buckets,
     compute_classification_metrics,
     compute_escalation_slice_metrics,
@@ -96,6 +97,15 @@ def execute_evaluation(split: str = "test", provider_name: str | None = None) ->
     # 5. Escalation Behaviour & Slice Accuracy
     escalation_metrics = compute_escalation_slice_metrics(labeled_tickets, results)
 
+    # 5.5 Bootstrap 95% Confidence Intervals (1,000 resamples)
+    escalated_flags = [res.escalated for res in results]
+    bootstrap_ci = compute_bootstrap_confidence_intervals(
+        y_true=y_true_cat,
+        y_pred=y_pred_cat,
+        escalated_flags=escalated_flags,
+        labels=valid_cats,
+    )
+
     # 6. Baseline Comparison (Majority class)
     most_common_cat = max(set(y_true_cat), key=y_true_cat.count)
     majority_correct = sum(1 for yt in y_true_cat if yt == most_common_cat)
@@ -137,6 +147,7 @@ def execute_evaluation(split: str = "test", provider_name: str | None = None) ->
                 if cat in cat_metrics["classification_report"]
             },
         },
+        "bootstrap_confidence_intervals": bootstrap_ci,
         "extraction": ext_metrics,
         "escalation": escalation_metrics,
         "calibration": calibration,

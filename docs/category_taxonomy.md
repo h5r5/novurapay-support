@@ -10,7 +10,7 @@
 
 This taxonomy is constructed to reflect real customer service operations in Iraqi fintech and mobile wallet environments. Rather than relying on synthetic imagination, categories and routing destinations are grounded in:
 1. **Public Help Center Category Structures & FAQs:**
-   - ZainCash Iraq Official Help Portal & Customer Care FAQs (accessed September 2026, `https://zaincash.iq/`).
+   - NovuraPay (Simulated Iraqi Digital Wallet - NovuraPay Support, grounded in Iraqi mobile wallet operations and Central Bank frameworks).
    - Qi Card / International Smart Card (ISC) Customer Support Documentation (accessed September 2026, `https://qi.iq/`).
    - FastPay Iraq Support Guides & Merchant/User Help (accessed September 2026, `https://fast-pay.cash/`).
 2. **App Store & Google Play Customer Review Themes:** Analysis of public user reviews highlighting top pain points: pending P2P transfers, cash-out discrepancies at POS agents, ATM card declines, and biometric/identity document verification failures.

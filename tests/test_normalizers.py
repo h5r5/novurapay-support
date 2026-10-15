@@ -95,7 +95,7 @@ def test_resolve_relative_dates() -> None:
 def test_transaction_ref_validation() -> None:
     """Verify transaction reference pattern checks."""
     assert is_valid_transaction_ref("TXN-10293847") is True
-    assert is_valid_transaction_ref("ZAIN_982173") is True
+    assert is_valid_transaction_ref("NOVURA_982173") is True
     assert is_valid_transaction_ref("9812746198") is True
     assert is_valid_transaction_ref("") is False
     assert is_valid_transaction_ref("   ") is False

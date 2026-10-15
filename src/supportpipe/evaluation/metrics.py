@@ -4,7 +4,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, f1_score
 
 from supportpipe.schemas import LabeledTicket, PipelineResult
 
@@ -166,4 +166,93 @@ def compute_escalation_slice_metrics(
         "accuracy_uplift": round(auto_acc - overall_acc, 4),
         "escalated_count": escalated_count,
         "escalation_rate_pct": round(escalated_count / total * 100.0, 2) if total > 0 else 0.0,
+    }
+
+
+def compute_bootstrap_confidence_intervals(
+    y_true: list[str],
+    y_pred: list[str],
+    escalated_flags: list[bool],
+    labels: list[str],
+    n_resamples: int = 1000,
+    confidence_level: float = 0.95,
+    random_seed: int = 42,
+) -> dict[str, dict[str, float]]:
+    """Calculate 95% Bootstrap Confidence Intervals (1,000 resamples) for metrics.
+
+    Computes point estimates, bootstrap means, and empirical percentiles for:
+    - Overall Accuracy
+    - Macro Avg F1
+    - Auto-Handled Accuracy
+
+    Returns:
+        dict mapping metric name to {
+            "point_estimate": float,
+            "mean": float,
+            "lower_ci": float,
+            "upper_ci": float,
+        }
+    """
+    n = len(y_true)
+    if n == 0:
+        return {}
+
+    rng = np.random.RandomState(random_seed)
+    alpha = (1.0 - confidence_level) / 2.0
+    lower_pct = alpha * 100.0
+    upper_pct = (1.0 - alpha) * 100.0
+
+    # Point estimates on full dataset
+    point_acc = sum(1 for yt, yp in zip(y_true, y_pred, strict=False) if yt == yp) / n
+    point_f1 = float(f1_score(y_true, y_pred, labels=labels, average="macro", zero_division=0))
+    auto_indices = [i for i, e in enumerate(escalated_flags) if not e]
+    point_auto_acc = (
+        sum(1 for i in auto_indices if y_true[i] == y_pred[i]) / len(auto_indices)
+        if auto_indices
+        else 0.0
+    )
+
+    boot_accs: list[float] = []
+    boot_f1s: list[float] = []
+    boot_auto_accs: list[float] = []
+
+    for _ in range(n_resamples):
+        sample_indices = rng.randint(0, n, size=n)
+        yt_sample = [y_true[i] for i in sample_indices]
+        yp_sample = [y_pred[i] for i in sample_indices]
+        esc_sample = [escalated_flags[i] for i in sample_indices]
+
+        # Accuracy
+        acc_s = sum(1 for yt, yp in zip(yt_sample, yp_sample, strict=False) if yt == yp) / n
+        boot_accs.append(acc_s)
+
+        # Macro F1
+        f1_s = float(f1_score(yt_sample, yp_sample, labels=labels, average="macro", zero_division=0))
+        boot_f1s.append(f1_s)
+
+        # Auto-handled accuracy
+        non_esc = [i for i, e in enumerate(esc_sample) if not e]
+        if non_esc:
+            auto_acc_s = sum(1 for i in non_esc if yt_sample[i] == yp_sample[i]) / len(non_esc)
+            boot_auto_accs.append(auto_acc_s)
+
+    return {
+        "overall_accuracy": {
+            "point_estimate": round(point_acc, 4),
+            "mean": round(float(np.mean(boot_accs)), 4),
+            "lower_ci": round(float(np.percentile(boot_accs, lower_pct)), 4),
+            "upper_ci": round(float(np.percentile(boot_accs, upper_pct)), 4),
+        },
+        "macro_f1": {
+            "point_estimate": round(point_f1, 4),
+            "mean": round(float(np.mean(boot_f1s)), 4),
+            "lower_ci": round(float(np.percentile(boot_f1s, lower_pct)), 4),
+            "upper_ci": round(float(np.percentile(boot_f1s, upper_pct)), 4),
+        },
+        "auto_handled_accuracy": {
+            "point_estimate": round(point_auto_acc, 4),
+            "mean": round(float(np.mean(boot_auto_accs)), 4) if boot_auto_accs else 0.0,
+            "lower_ci": round(float(np.percentile(boot_auto_accs, lower_pct)), 4) if boot_auto_accs else 0.0,
+            "upper_ci": round(float(np.percentile(boot_auto_accs, upper_pct)), 4) if boot_auto_accs else 0.0,
+        },
     }

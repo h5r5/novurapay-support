@@ -13,7 +13,7 @@
 
 ## ⚡ 60-Second Judge Demo Pitch
 
-> "In Iraqi digital wallets (such as ZainCash, Qi Card, and FIB), thousands of customer support inquiries arrive daily written in colloquial Iraqi Arabic and Kurdish dialects, interspersed with Arabizi, slang, and emotion. Human triage agents are overwhelmed, response times lag, and manual routing leads to costly financial misdirection.
+> "In Iraqi digital wallets (such as simulated wallet NovuraPay, Qi Card, and FIB), thousands of customer support inquiries arrive daily written in colloquial Iraqi Arabic and Kurdish dialects, interspersed with Arabizi, slang, and emotion. Human triage agents are overwhelmed, response times lag, and manual routing leads to costly financial misdirection.
 >
 > **SupportPipe is an enterprise back-office batch pipeline, not a chatbot.** It processes ticket queues with deterministic precision through typed stages:
 >
@@ -29,9 +29,12 @@
 
 SupportPipe strictly complies with all mandatory pre-scoring challenge criteria:
 
+> [!NOTE]
+> **Repository Rename Notice:** To maintain strict competition Rule 14 brand neutrality (Simulated Iraqi Digital Wallet - NovuraPay), the repository has been updated to [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support). Please ensure the repository is renamed under GitHub.com Settings to match `novurapay-support`.
+
 | Gate | Requirement | Submission Status & Evidence |
 | :--- | :--- | :--- |
-| **Gate 1** | Real commit history spanning build period | Continuous, atomic Git commits on `main` tracking [`https://github.com/h5r5/ZainCash-support-`](https://github.com/h5r5/ZainCash-support-). |
+| **Gate 1** | Real commit history spanning build period | Continuous, atomic Git commits on `main` tracking [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support). |
 | **Gate 2** | Live run on judge-supplied input | Deterministic batch processing via `uv run supportpipe run --input <file.jsonl>` and interactive "Paste JSON" test panel in Streamlit UI. |
 | **Gate 3** | Full disclosure of models, tools, and data | Full disclosures in [`DISCLOSURE.md`](DISCLOSURE.md) (Gemini 3.6 Flash, TypeSafe Jev 1.13, in-domain offline ML, synthetic data, uv). |
 | **Gate 4** | Documented failure modes and handling ($\ge$ 3) | 6 detailed failure modes with automated unit test suites in [`FAILURE_MODES.md`](FAILURE_MODES.md) and [`tests/test_failure_modes.py`](tests/test_failure_modes.py). |
@@ -154,8 +157,8 @@ All figures below originate directly from reproducible runs (`supportpipe eval -
 SupportPipe is built with modern Python packaging and managed via `uv`:
 ```bash
 # Clone the repository
-git clone https://github.com/h5r5/ZainCash-support-.git
-cd ZainCash-support-
+git clone https://github.com/h5r5/novurapay-support.git
+cd novurapay-support
 
 # Install dependencies and dev extras
 uv sync --extra dev
@@ -216,7 +219,7 @@ uv run ruff check src scripts tests
 ## 📂 Repository Structure
 
 ```text
-ZainCash-support-/
+novurapay-support/
 ├── README.md                      # Comprehensive project guide, architecture & benchmarks
 ├── DISCLOSURE.md                  # Gate 3: Models, synthetic data & tooling disclosures
 ├── FAILURE_MODES.md               # Gate 4: 6 detailed failure modes and automated test cases

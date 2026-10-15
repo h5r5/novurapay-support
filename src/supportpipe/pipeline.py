@@ -192,7 +192,7 @@ def run_batch(
         user_req_key = (u_id, clean_text_key)
 
         ref_match = re.search(
-            r"\b(TXN-[A-Z0-9_-]{5,20}|REF-[A-Z0-9_-]{5,20}|ZAIN-[0-9]{5,15})\b",
+            r"\b(TXN-[A-Z0-9_-]{5,20}|REF-[A-Z0-9_-]{5,20}|(WALLET|NOVURA|REF|TXN)-[0-9]{5,15})\b",
             ticket.raw_text,
             re.IGNORECASE,
         )

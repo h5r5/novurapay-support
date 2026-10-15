@@ -1,7 +1,11 @@
 # System Disclosure & Provenance (DISCLOSURE.md)
 
 **Agentic AI Challenge Iraq - Topic 06: Support Pipeline Automation**  
-**Submission Compliance: Gate 3 (Pre-Scoring Requirement)**
+**Submission Compliance: Gate 3 (Pre-Scoring Requirement)**  
+**Repository:** [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support)
+
+> [!NOTE]
+> **Repository Rename Notice:** To maintain strict Rule 14 competition compliance and brand neutrality for the simulated wallet **NovuraPay** (محفظة نوفورا الرقمية), the repository URL is tracking [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support). The repository settings on GitHub.com should be renamed to `novurapay-support`.
 
 ---
 

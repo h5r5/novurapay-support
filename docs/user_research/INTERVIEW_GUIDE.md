@@ -1,7 +1,7 @@
 # User Research Interview Guide: Wallet Support Workflow
 
 **Topic 06: Support Pipeline Automation (Agentic AI Challenge Iraq)**  
-**Target Participants:** Customer support agents at Iraqi fintech/wallet/telecom services (e.g., ZainCash, Qi Card, FastPay) or heavy wallet app users who frequently submit support tickets.  
+**Target Participants:** Customer support agents at Iraqi fintech/wallet/telecom services (e.g., NovuraPay simulation, Qi Card, FastPay) or heavy wallet app users who frequently submit support tickets.  
 **Language:** Iraqi Arabic (العامية العراقية) & English  
 **Ethics & Confidentiality:** Verbal consent required; strictly anonymized; **zero real customer names, phone numbers, or account numbers recorded.**
 

@@ -180,7 +180,7 @@ def extract_entities_offline(
     # 3. Transaction reference regex patterns (on masked text)
     found_ref: str | None = None
     ref_match = re.search(
-        r"\b(TXN-[A-Z0-9_-]{5,20}|REF-[A-Z0-9_-]{5,20}|Ref#[A-Z0-9_-]{5,20}|ZAIN-[0-9]{5,15})\b",
+        r"\b(TXN-[A-Z0-9_-]{5,20}|REF-[A-Z0-9_-]{5,20}|Ref#[A-Z0-9_-]{5,20}|(?:WALLET|NOVURA|REF|TXN)-[0-9]{5,15})\b",
         text_clean,
         re.IGNORECASE,
     )
@@ -210,7 +210,7 @@ def extract_entities_offline(
     # Scrub HTML comments, tags, and ALL transaction references from text_for_amt
     text_for_amt = re.sub(r"<!--.*?-->", " ", text_clean, flags=re.DOTALL)
     text_for_amt = re.sub(r"<[^>]+>", " ", text_for_amt)
-    text_for_amt = re.sub(r"\b(?:TXN|REF|ZAIN)[-_A-Z0-9]+\b", " ", text_for_amt, flags=re.IGNORECASE)
+    text_for_amt = re.sub(r"\b(?:TXN|REF|WALLET|NOVURA)[-_A-Z0-9]+\b", " ", text_for_amt, flags=re.IGNORECASE)
     text_for_amt = re.sub(r"\bRef#[A-Z0-9_-]+\b", " ", text_for_amt, flags=re.IGNORECASE)
     if found_ref:
         text_for_amt = text_for_amt.replace(found_ref, " ")

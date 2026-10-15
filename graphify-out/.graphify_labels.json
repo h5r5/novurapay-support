@@ -1,1 +1,9 @@
-{"0": "schemas.py", "1": "Ticket", "2": "test_tri_engine_hybrid_architecture.py", "3": "test_kurdish_nationwide_scenarios.py", "4": "app.py", "5": "process_ticket", "6": "test_dialect_sentiment.py", "7": "run_eval.py", "8": "normalize.py", "9": "test_remediation_regressions.py", "10": "extract/__init__.py", "11": "cli.py", "12": "DiscrepancyStore", "13": "TaxonomyRegistry", "14": "PipelineResult", "15": "manifest.json", "16": "test_failure_modes.py", "17": "test_scaffold.py", "18": "should_escalate", "19": "conftest.py", "20": "test_taxonomy.py", "21": "draft/validate.py", "22": "test_pipeline_integration.py", "23": "_init_offline_pipelines", "24": "parse_iqd_amount", "25": "ReviewQueueStore", "26": "mask_pii", "27": "ui/__init__.py", "28": "supportpipe"}
+{
+  "11": "cli.py",
+  "12": "DiscrepancyStore",
+  "15": "manifest.json",
+  "19": "conftest.py",
+  "20": "test_taxonomy.py",
+  "27": "ui/__init__.py",
+  "28": "supportpipe"
+}

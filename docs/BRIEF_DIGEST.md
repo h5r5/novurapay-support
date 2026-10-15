@@ -6,11 +6,12 @@
 
 ---
 
-## 1. The Four Pre-Scoring Gates
+> [!NOTE]
+> **Repository Rename Notice:** In compliance with Rule 14 (Simulated Iraqi Digital Wallet - NovuraPay), the repo is tracking [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support). Owner should rename the repository in GitHub.com Settings to `novurapay-support`.
 
 | Gate ID | Requirement | Where Satisfied (File / Module / Test) | Verification Method | Status |
 |---|---|---|---|---|
-| **GATE-01** | Repository with commit history spanning build period | `https://github.com/h5r5/ZainCash-support-`, Git log | `git log --oneline` shows continuous, meaningful commits across build days | `IN_PROGRESS` |
+| **GATE-01** | Repository with commit history spanning build period | `https://github.com/h5r5/novurapay-support`, Git log | `git log --oneline` shows continuous, meaningful commits across build days | `IN_PROGRESS` |
 | **GATE-02** | Live run on judge-supplied input | `src/supportpipe/cli.py`, `src/supportpipe/ui/app.py` | CLI batch run command (`supportpipe run --input <file>`) accepting novel batch | `VERIFIED_COMPLETE` |
 | **GATE-03** | Full disclosure of models, tools, and data | `DISCLOSURE.md` | Audit of models (Gemini 3.8 Flash, Jev 1.13), libraries, prompts, synthetic data | `VERIFIED_COMPLETE` |
 | **GATE-04** | At least 3 documented failure modes and how each is handled (target >= 5) | `FAILURE_MODES.md`, `tests/test_failure_modes.py` | 5 failure modes documented with triggers, mitigations, and passing unit tests | `VERIFIED_COMPLETE` |
