@@ -393,8 +393,8 @@ class MockClassifierProvider(BaseClassifierProvider):
             )
 
         # 2.25 High-Confidence Failed Transfer vs Wrong Recipient Disambiguation
-        if re.search(r"(?:معلك|معلق|ما\s*تحولت|ما\s*وصلن|ما\s*وصلت|ما\s*استلمها|ما\s*استلم|ما\s*نزلت|مشتكت|التحويل\s*معلق)", text, re.I):
-            if not re.search(r"(?:شخص\s*غلط|رقم\s*غلط|حولت\s*بالخطأ|غلطت\s*بالرقم|غلطت\s*برقم|لشخص\s*غريب|لغريب)", text, re.I) and not re.search(r"(?:رمز\s*التاكيد|رمز\s*التأكيد|رمز\s*التحقق|كود|otp|باسورد|دخول)", text, re.I):
+        if re.search(r"(?:معلك|معلق|و?ما\s*تحول(?:ت)?|و?ما\s*وصل(?:ت|ن)?|و?ما\s*استلم(?:ها)?|و?ما\s*نزلت|مشتكت|التحويل\s*معلق)", text, re.I):
+            if not re.search(r"(?:شخص\s*غلط|رقم\s*غلط|حولت\s*بالخطأ|غلطت\s*بالرقم|غلطت\s*برقم|لشخص\s*غريب|لغريب)", text, re.I) and not re.search(r"(?:رمز\s*(?:التاكيد|التأكيد|التحقق)|كود\s*(?:التحقق|التاكيد|التأكيد|الدخول|otp)|otp|باسورد|تسجيل\s*دخول)", text, re.I):
                 return ClassificationResult(
                     category="failed_transfer",
                     category_confidence=0.92,

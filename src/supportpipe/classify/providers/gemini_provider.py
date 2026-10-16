@@ -86,10 +86,19 @@ You MUST respond strictly with a valid JSON object matching this schema:
 class GeminiClassifierProvider(BaseClassifierProvider):
     """Classifier and Auditor using Google Gemini via API."""
 
+    _circuit_open: bool = False
+    _circuit_warned: bool = False
+
     def __init__(self, api_key: str | None = None) -> None:
         self.api_key = api_key or settings.gemini_api_key
         self.model = settings.gemini_model or "gemini-3.6-flash"
         self.timeout = httpx.Timeout(30.0, connect=10.0)
+
+    @classmethod
+    def reset_circuit_breaker(cls) -> None:
+        """Reset circuit breaker state."""
+        cls._circuit_open = False
+        cls._circuit_warned = False
 
     def classify(
         self,
@@ -99,10 +108,16 @@ class GeminiClassifierProvider(BaseClassifierProvider):
         **kwargs: Any,
     ) -> ClassificationResult:
         """Classify ticket text and optionally audit fast_extracted entities."""
+        if self._circuit_open:
+            raise RuntimeError(
+                "[CIRCUIT_BREAKER] Cloud provider quota exceeded (HTTP 429). Fast-failing Gemini request."
+            )
+
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY is not configured")
 
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent?key={self.api_key}"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
+        headers = {"x-goog-api-key": self.api_key}
 
         if fast_extracted:
             # Audit mode
@@ -140,21 +155,49 @@ class GeminiClassifierProvider(BaseClassifierProvider):
 
         with httpx.Client(timeout=self.timeout) as client:
             resp = None
-            last_err = None
+            last_err: Exception | None = None
             for attempt in range(2):
                 try:
-                    resp = client.post(url, json=payload)
+                    resp = client.post(url, headers=headers, json=payload)
+                    if resp.status_code == 429:
+                        GeminiClassifierProvider._circuit_open = True
+                        if not GeminiClassifierProvider._circuit_warned:
+                            logger.warning(
+                                "[CIRCUIT_BREAKER] Cloud provider quota exceeded (HTTP 429). "
+                                "Tripping circuit breaker and falling back to Jev/Mock for remaining tickets."
+                            )
+                            GeminiClassifierProvider._circuit_warned = True
+                        raise httpx.HTTPStatusError(
+                            "HTTP 429 Too Many Requests: Quota exceeded",
+                            request=resp.request,
+                            response=resp,
+                        )
                     if resp.status_code == 503 and attempt == 0:
                         time.sleep(1.5)
                         continue
                     resp.raise_for_status()
                     break
-                except (httpx.HTTPStatusError, httpx.RequestError) as req_err:
+                except httpx.HTTPStatusError as status_err:
+                    if status_err.response.status_code == 429:
+                        GeminiClassifierProvider._circuit_open = True
+                        if not GeminiClassifierProvider._circuit_warned:
+                            logger.warning(
+                                "[CIRCUIT_BREAKER] Cloud provider quota exceeded (HTTP 429). "
+                                "Tripping circuit breaker and falling back to Jev/Mock for remaining tickets."
+                            )
+                            GeminiClassifierProvider._circuit_warned = True
+                        raise status_err from None
+                    last_err = status_err
+                    if attempt == 0:
+                        time.sleep(1.5)
+                        continue
+                    raise status_err from None
+                except httpx.RequestError as req_err:
                     last_err = req_err
                     if attempt == 0:
                         time.sleep(1.5)
                         continue
-                    raise last_err from None
+                    raise req_err from None
 
             if resp is None:
                 raise RuntimeError(f"Gemini API request failed after retries: {last_err}")

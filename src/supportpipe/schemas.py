@@ -58,6 +58,7 @@ class TicketLabel(BaseModel):
         None  # e.g., dual_problem, missing_ref, prompt_injection, vague_one_liner
     )
     notes: str | None = None
+    template_id: str | None = None
 
 
 class LabeledTicket(BaseModel):

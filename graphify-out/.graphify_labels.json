@@ -1,8 +1,4 @@
 {
-  "11": "cli.py",
-  "12": "DiscrepancyStore",
-  "15": "manifest.json",
-  "19": "conftest.py",
   "20": "test_taxonomy.py",
   "27": "ui/__init__.py",
   "28": "supportpipe"

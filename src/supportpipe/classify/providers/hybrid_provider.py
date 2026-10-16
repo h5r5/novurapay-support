@@ -12,6 +12,7 @@ from typing import Any
 
 from supportpipe.classify.providers.base import BaseClassifierProvider
 from supportpipe.classify.providers.gemini_provider import GeminiClassifierProvider
+from supportpipe.classify.providers.groq_provider import GroqClassifierProvider
 from supportpipe.classify.providers.jev_provider import JevClassifierProvider
 from supportpipe.classify.providers.mock_provider import MockClassifierProvider
 from supportpipe.config import settings
@@ -30,6 +31,7 @@ class HybridClassifierProvider(BaseClassifierProvider):
         mock_provider: MockClassifierProvider | None = None,
         jev_provider: JevClassifierProvider | None = None,
         gemini_provider: GeminiClassifierProvider | None = None,
+        groq_provider: GroqClassifierProvider | None = None,
         audit_sampling_rate: float = 0.05,
     ) -> None:
         self.mock_provider = mock_provider or MockClassifierProvider()
@@ -44,6 +46,12 @@ class HybridClassifierProvider(BaseClassifierProvider):
         self.gemini_provider = (
             gemini_provider
             or (GeminiClassifierProvider() if (has_gemini and settings.llm_mode != "offline") else None)
+        )
+
+        has_groq = bool(settings.groq_api_key)
+        self.groq_provider = (
+            groq_provider
+            or (GroqClassifierProvider() if (has_groq and settings.llm_mode != "offline") else None)
         )
         self.audit_sampling_rate = audit_sampling_rate
 
@@ -71,8 +79,8 @@ class HybridClassifierProvider(BaseClassifierProvider):
         # Step 1: System 1 Fast local baseline heuristic (always runs, ~0.5ms)
         res_mock = self.mock_provider.classify(ticket_text=ticket_text, channel=channel)
 
-        # If neither cloud engine is available, return local heuristic directly
-        if not self.jev_provider and not self.gemini_provider:
+        # If no cloud engine is available, return local heuristic directly
+        if not self.jev_provider and not self.gemini_provider and not self.groq_provider:
             return res_mock
 
         # Step 1 early exit check: If high confidence (>= 0.95) and not forced/sampled, exit immediately
@@ -146,7 +154,24 @@ class HybridClassifierProvider(BaseClassifierProvider):
                 logger.warning("Gemini engine failed in hybrid pass: %s", gem_err)
                 res_gemini = None
 
-        # If both cloud engines failed or unavailable, fallback safely to System 1
+        # Cloud fallback: Try Groq if Gemini failed or unavailable
+        if not res_gemini and self.groq_provider and (
+            res_jev is None
+            or res_jev.category_confidence < 0.80
+            or res_jev.category != res_mock.category
+            or force_audit
+            or is_sample_audit
+        ):
+            try:
+                res_gemini = self.groq_provider.classify(
+                    ticket_text=ticket_text,
+                    channel=channel,
+                    fast_extracted=fast_extracted,
+                )
+            except Exception as groq_err:
+                logger.warning("Groq engine failed in hybrid pass: %s", groq_err)
+
+        # If cloud engines failed or unavailable, fallback safely to System 1
         if not res_jev and not res_gemini:
             return res_mock
 

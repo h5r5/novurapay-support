@@ -67,6 +67,17 @@ class DiscrepancyStore:
     ) -> DiscrepancyRecord:
         """Create, mask, and append a discrepancy record to JSONL."""
         masked_text = mask_pii(raw_text)
+        safe_offline = (
+            mask_pii(str(offline_value))
+            if (field_name == "phone" or isinstance(offline_value, str))
+            else offline_value
+        )
+        safe_llm = (
+            mask_pii(str(llm_value))
+            if (field_name == "phone" or isinstance(llm_value, str))
+            else llm_value
+        )
+        safe_reason = mask_pii(discrepancy_reason) if discrepancy_reason else None
 
         record = DiscrepancyRecord(
             ticket_id=ticket_id,
@@ -74,11 +85,11 @@ class DiscrepancyStore:
             raw_text_masked=masked_text,
             discrepancy_type=discrepancy_type,
             field_name=field_name,
-            offline_value=offline_value,
-            llm_value=llm_value,
+            offline_value=safe_offline,
+            llm_value=safe_llm,
             resolution_applied=resolution_applied,
             confidence_delta=round(confidence_delta, 4),
-            discrepancy_reason=discrepancy_reason,
+            discrepancy_reason=safe_reason,
             rule_suggestion=rule_suggestion,
         )
 

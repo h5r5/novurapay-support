@@ -1,20 +1,26 @@
 {
   "version": "1.0.0",
-  "created_at": "2026-09-22T04:45:00+03:00",
+  "created_at": "2026-10-16T19:00:00+03:00",
   "random_seed": 42,
-  "total_tickets": 331,
+  "total_tickets": 352,
   "splits": {
     "dev": {
       "file": "data/splits/dev.jsonl",
-      "count": 215,
-      "sha256": "487facdf9a994e2bc1fc901faed32e81be5fdf6c93c80c4dd85b04964ce6c34f"
+      "count": 219,
+      "sha256": "d94dce627de9ee82841b62e3223ed53347e830d043d42184c9cd41b709666593"
     },
     "test": {
       "file": "data/splits/test.jsonl",
-      "count": 116,
-      "sha256": "f99cc0029239debb9043814059927d6fe48ac9d8c5a7a7b1df04eb4c989f6b0b",
+      "count": 133,
+      "sha256": "78877a78997ea03ff9f543024f6bfa0951d96970f9a9abdaa92e8a9e442bfb56",
+      "frozen": true
+    },
+    "handwritten": {
+      "file": "data/handwritten/human_tickets.jsonl",
+      "count": 20,
+      "sha256": "3edbe39a9c68cbaacdfeabb91e5e2173f64086d3e5021e5efe26fb260f485044",
       "frozen": true
     }
   },
-  "description": "Synthetic Iraqi Arabic support ticket dataset for Agentic AI Challenge Iraq Topic 06"
+  "description": "Synthetic and authentic human Iraqi Arabic support ticket dataset for Agentic AI Challenge Iraq Topic 06"
 }

@@ -1,5 +1,6 @@
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import click
@@ -83,7 +84,7 @@ def run(input_path: Path, output_dir: Path | None) -> None:
     results, summary = run_batch(tickets)
 
     store = ReviewQueueStore(storage_dir=output_dir)
-    run_id = f"batch_{len(tickets)}_tickets"
+    run_id = f"batch_{len(tickets)}_tickets_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     saved_folder = store.save_run(run_id=run_id, results=results, summary=summary)
 
     click.echo("Batch processing complete!")
@@ -98,7 +99,7 @@ def run(input_path: Path, output_dir: Path | None) -> None:
 @main.command()
 @click.option(
     "--split",
-    type=click.Choice(["dev", "test"], case_sensitive=False),
+    type=click.Choice(["dev", "test", "handwritten"], case_sensitive=False),
     default="test",
     help="Dataset split to evaluate on (frozen test set by default).",
 )

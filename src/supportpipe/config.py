@@ -14,12 +14,13 @@ class Settings(BaseSettings):
     )
 
     # Execution Mode
-    llm_mode: Literal["live", "cached", "offline"] = "offline"
+    llm_mode: Literal["live", "cached", "offline", "hybrid"] = "offline"
 
     # API Keys & Endpoints
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3.6-flash"
     groq_api_key: str = ""
+    groq_model: str = "llama-3.3-70b-versatile"
     jev_api_key: str = ""
     typesafe_api_key: str = ""
     jev_base_url: str = "https://api.typesafe.ai"

@@ -105,18 +105,37 @@ def process_ticket(
         if classification.audit_details and classification.audit_details.get("draft_reply"):
             candidate_draft = classification.audit_details.get("draft_reply")
         elif settings.llm_mode != "offline":
-            try:
-                from supportpipe.draft.generator import generate_candidate_draft
+            if settings.groq_api_key:
+                try:
+                    from supportpipe.classify.providers.groq_provider import generate_groq_draft
 
-                candidate_draft = generate_candidate_draft(
-                    ticket_raw_text=ticket.raw_text,
-                    category=classification.category,
-                    priority=classification.priority,
-                    extracted=extracted,
-                )
-            except Exception as draft_err:
-                logger.warning("Failed generating candidate LLM draft: %s", draft_err)
-                candidate_draft = None
+                    candidate_draft = generate_groq_draft(
+                        ticket_raw_text=ticket.raw_text,
+                        category=classification.category,
+                        priority=classification.priority,
+                        extracted=extracted,
+                    )
+                except Exception as groq_err:
+                    logger.warning("Failed generating Groq candidate draft: %s", groq_err)
+                    candidate_draft = None
+            elif settings.llm_mode == "live" and settings.gemini_api_key:
+                try:
+                    from supportpipe.classify.providers.gemini_provider import (
+                        GeminiClassifierProvider,
+                    )
+
+                    if not GeminiClassifierProvider._circuit_open:
+                        from supportpipe.draft.generator import generate_candidate_draft
+
+                        candidate_draft = generate_candidate_draft(
+                            ticket_raw_text=ticket.raw_text,
+                            category=classification.category,
+                            priority=classification.priority,
+                            extracted=extracted,
+                        )
+                except Exception as draft_err:
+                    logger.warning("Failed generating candidate LLM draft: %s", draft_err)
+                    candidate_draft = None
 
         draft_reply, _, _, draft_source = draft_manager.generate_draft(
             ticket_raw_text=ticket.raw_text,
@@ -184,7 +203,7 @@ def run_batch(
     total_latency = 0.0
 
     seen_user_requests: set[tuple[str, str]] = set()
-    seen_refs: set[str] = set()
+    seen_user_refs: set[tuple[str, str]] = set()
 
     for ticket in tickets:
         clean_text_key = " ".join(ticket.raw_text.strip().split())
@@ -197,18 +216,18 @@ def run_batch(
             re.IGNORECASE,
         )
         cand_ref = ref_match.group(1).upper() if ref_match else None
+        user_ref_key = (u_id, cand_ref) if cand_ref else None
 
         is_dup = False
-        if clean_text_key:
-            if user_req_key in seen_user_requests:
-                is_dup = True
-            elif cand_ref and cand_ref in seen_refs:
-                is_dup = True
+        if clean_text_key and user_req_key in seen_user_requests:
+            is_dup = True
+        elif user_ref_key and user_ref_key in seen_user_refs:
+            is_dup = True
 
         if clean_text_key:
             seen_user_requests.add(user_req_key)
-        if cand_ref:
-            seen_refs.add(cand_ref)
+        if user_ref_key:
+            seen_user_refs.add(user_ref_key)
 
         try:
             res = process_ticket(

@@ -7,6 +7,7 @@ from typing import Any
 
 from supportpipe.classify.providers.base import BaseClassifierProvider
 from supportpipe.classify.providers.gemini_provider import GeminiClassifierProvider
+from supportpipe.classify.providers.groq_provider import GroqClassifierProvider
 from supportpipe.classify.providers.hybrid_provider import HybridClassifierProvider
 from supportpipe.classify.providers.jev_provider import JevClassifierProvider
 from supportpipe.classify.providers.mock_provider import MockClassifierProvider
@@ -18,25 +19,30 @@ logger = logging.getLogger(__name__)
 
 def get_classifier_provider(provider_name: str | None = None) -> BaseClassifierProvider:
     """Instantiate classifier provider based on settings and availability."""
-    if settings.llm_mode == "offline" and provider_name != "hybrid":
+    if settings.llm_mode == "offline" and provider_name not in ["hybrid", "groq"]:
         return MockClassifierProvider()
 
     has_jev = bool(settings.jev_api_key or settings.typesafe_api_key)
     has_gemini = bool(settings.gemini_api_key)
+    has_groq = bool(settings.groq_api_key)
 
     # Determine default provider
     default_name = "mock"
     if settings.llm_mode == "hybrid" or (has_jev and has_gemini):
         default_name = "hybrid"
-    elif has_jev:
-        default_name = "jev"
+    elif has_groq:
+        default_name = "groq"
     elif has_gemini:
         default_name = "gemini"
+    elif has_jev:
+        default_name = "jev"
 
     name = (provider_name or default_name).lower()
 
     if name in ["hybrid", "tri_engine", "tri"]:
         return HybridClassifierProvider()
+    elif name == "groq" and has_groq:
+        return GroqClassifierProvider()
     elif name == "jev" and has_jev:
         return JevClassifierProvider()
     elif name == "gemini" and has_gemini:

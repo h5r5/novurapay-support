@@ -32,6 +32,11 @@ def generate_candidate_draft(
     if settings.llm_mode != "live" or not settings.gemini_api_key:
         return None
 
+    from supportpipe.classify.providers.gemini_provider import GeminiClassifierProvider
+
+    if GeminiClassifierProvider._circuit_open:
+        return None
+
     cat_name = taxonomy.categories.get(category, {}).get("name_ar", category)
     if extracted.currency == "USD" and extracted.amount_usd is not None:
         amount_str = f"{extracted.amount_usd:,} دولار"
@@ -51,7 +56,8 @@ def generate_candidate_draft(
     )
 
     model = settings.gemini_model or "gemini-1.5-flash"
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={settings.gemini_api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    headers = {"x-goog-api-key": settings.gemini_api_key}
     payload: dict[str, Any] = {
         "contents": [
             {
@@ -68,7 +74,16 @@ def generate_candidate_draft(
     try:
         timeout = httpx.Timeout(10.0, connect=4.0)
         with httpx.Client(timeout=timeout) as client:
-            resp = client.post(url, json=payload)
+            resp = client.post(url, headers=headers, json=payload)
+            if resp.status_code == 429:
+                GeminiClassifierProvider._circuit_open = True
+                if not GeminiClassifierProvider._circuit_warned:
+                    logger.warning(
+                        "[CIRCUIT_BREAKER] Cloud provider quota exceeded (HTTP 429). "
+                        "Tripping circuit breaker and falling back to Jev/Mock for remaining tickets."
+                    )
+                    GeminiClassifierProvider._circuit_warned = True
+                return None
             resp.raise_for_status()
             data = resp.json()
             candidate: str = str(data["candidates"][0]["content"]["parts"][0]["text"]).strip()

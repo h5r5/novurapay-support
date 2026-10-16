@@ -46,9 +46,17 @@ class ReviewQueueStore:
         with open(results_file, "w", encoding="utf-8") as f:
             for item in results:
                 raw_dict = item.model_dump()
-                # Apply PII hygiene to any free text
+                # Apply PII hygiene to any free text and extracted sensitive fields
                 if raw_dict.get("draft_reply"):
                     raw_dict["draft_reply"] = mask_pii(raw_dict["draft_reply"])
+                if raw_dict.get("escalation_reason"):
+                    raw_dict["escalation_reason"] = mask_pii(raw_dict["escalation_reason"])
+                if raw_dict.get("reasoning_summary"):
+                    raw_dict["reasoning_summary"] = mask_pii(raw_dict["reasoning_summary"])
+                if raw_dict.get("extracted_fields") and isinstance(raw_dict["extracted_fields"], dict):
+                    phone = raw_dict["extracted_fields"].get("phone_number")
+                    if phone:
+                        raw_dict["extracted_fields"]["phone_number"] = mask_pii(str(phone))
                 f.write(json.dumps(raw_dict, ensure_ascii=False) + "\n")
 
         summary_file = run_folder / "summary.json"
