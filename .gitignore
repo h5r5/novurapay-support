@@ -41,7 +41,8 @@ id_rsa*
 *.swp
 *.swo
 .skills
-.agents
+.agents/*
+!.agents/rules/
 .agent
 .claude/
 
