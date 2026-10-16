@@ -89,9 +89,9 @@ class GeminiClassifierProvider(BaseClassifierProvider):
     _circuit_open: bool = False
     _circuit_warned: bool = False
 
-    def __init__(self, api_key: str | None = None) -> None:
+    def __init__(self, api_key: str | None = None, model: str | None = None) -> None:
         self.api_key = api_key or settings.gemini_api_key
-        self.model = settings.gemini_model or "gemini-3.6-flash"
+        self.model = model or settings.gemini_model or "gemini-2.5-flash"
         self.timeout = httpx.Timeout(30.0, connect=10.0)
 
     @classmethod

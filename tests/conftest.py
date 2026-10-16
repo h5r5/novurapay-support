@@ -12,10 +12,16 @@ def force_offline_mode_for_unit_tests(
     monkeypatch: pytest.MonkeyPatch,
 ) -> Generator[None, None, None]:
     """Force offline mock mode during unit testing to prevent API quota consumption."""
+    from supportpipe.classify.providers.gemini_provider import GeminiClassifierProvider
+    from supportpipe.classify.providers.groq_provider import GroqClassifierProvider
     from supportpipe.config import settings
 
+    GeminiClassifierProvider.reset_circuit_breaker()
+    GroqClassifierProvider.reset_circuit_breaker()
     monkeypatch.setattr(settings, "llm_mode", "offline")
     yield
+    GeminiClassifierProvider.reset_circuit_breaker()
+    GroqClassifierProvider.reset_circuit_breaker()
 
 
 @pytest.fixture

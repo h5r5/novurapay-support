@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 def get_classifier_provider(provider_name: str | None = None) -> BaseClassifierProvider:
     """Instantiate classifier provider based on settings and availability."""
-    if settings.llm_mode == "offline" and provider_name not in ["hybrid", "groq"]:
+    if provider_name is None and settings.llm_mode == "offline":
         return MockClassifierProvider()
 
     has_jev = bool(settings.jev_api_key or settings.typesafe_api_key)

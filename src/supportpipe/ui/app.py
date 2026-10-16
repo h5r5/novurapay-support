@@ -15,12 +15,22 @@ from typing import Any, cast
 import pandas as pd
 import streamlit as st
 
+from supportpipe.classify.providers.gemini_provider import GeminiClassifierProvider
+from supportpipe.classify.providers.groq_provider import GroqClassifierProvider
 from supportpipe.config import settings
 from supportpipe.extract.normalize import mask_phone_number
 from supportpipe.logging_store import ReviewQueueStore
 from supportpipe.patterns.report import analyze_ticket_patterns, format_markdown_pattern_report
 from supportpipe.pipeline import process_ticket, run_batch
 from supportpipe.schemas import PipelineResult, Ticket
+from supportpipe.ui.engine_settings import (
+    ENGINE_OPTIONS,
+    INITIAL_ENV_KEYS,
+    get_key_status,
+    ping_engine_connection,
+    resolve_engine_choice,
+    sync_runtime_settings,
+)
 from supportpipe.ui.icons import svg_icon
 
 # -----------------------------------------------------------------------------
@@ -558,6 +568,12 @@ def load_recent_runs() -> list[str]:
 
 
 # -----------------------------------------------------------------------------
+# 5. Dynamic Engine Selection & Runtime Settings Synchronization
+# -----------------------------------------------------------------------------
+# Sync any session state keys before rendering telemetry
+sync_runtime_settings()
+
+# -----------------------------------------------------------------------------
 # 5. Top Telemetry Bar
 # -----------------------------------------------------------------------------
 icon_light = svg_icon("lightning", size=14, color="#10b981")
@@ -566,10 +582,23 @@ icon_chk = svg_icon("check_circle", size=14, color="#10b981")
 icon_shd = svg_icon("shield_check", size=14, color="#f59e0b")
 
 has_jev = bool(settings.jev_api_key or settings.typesafe_api_key)
+has_groq = bool(settings.groq_api_key)
+has_gemini = bool(settings.gemini_api_key)
+
 jev_tag_html = (
-    f'<span class="telemetry-tag tag-review">{icon_cld} Jev 1.13: متصل</span>'
+    f'<span class="telemetry-tag tag-auto">{icon_cld} Jev: متصل</span>'
     if has_jev
-    else f'<span class="telemetry-tag tag-review" style="opacity:0.8;">{icon_cld} Jev: غير مفعل (Mock Hybrid)</span>'
+    else f'<span class="telemetry-tag tag-review" style="opacity:0.7;">{icon_cld} Jev: غير مفعل</span>'
+)
+groq_tag_html = (
+    f'<span class="telemetry-tag tag-auto">{icon_light} Groq: متصل</span>'
+    if has_groq
+    else f'<span class="telemetry-tag tag-review" style="opacity:0.7;">{icon_light} Groq: غير مفعل</span>'
+)
+gemini_tag_html = (
+    f'<span class="telemetry-tag tag-auto">{icon_cld} Gemini: متصل</span>'
+    if has_gemini
+    else f'<span class="telemetry-tag tag-review" style="opacity:0.7;">{icon_cld} Gemini: غير مفعل</span>'
 )
 
 st.markdown(
@@ -579,8 +608,10 @@ st.markdown(
             <span class="pulse-dot"></span>
             <span style="font-weight:800; font-size:1.1rem; color:#fafafa;">SupportPipe | منظومة فرز وتوجيه تذاكر الدعم</span>
         </div>
-        <div style="display:flex; align-items:center; gap:10px;">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <span class="telemetry-tag tag-auto">{icon_light} أوفلاين: {avg_lat:.2f} ms ({tps:.0f} tps)</span>
+            {groq_tag_html}
+            {gemini_tag_html}
             {jev_tag_html}
             <span class="telemetry-tag tag-auto">{icon_chk} دقة الفرز: {cls_acc:.1f}%</span>
             <span class="telemetry-tag tag-escalate">{icon_shd} مراجعة بشرية مقيدة</span>
@@ -627,7 +658,9 @@ with tab_ai:
     # =========================================================================
     st.markdown('<div class="gemini-capsule-marker"></div>', unsafe_allow_html=True)
     with st.container():
-        c_plus, c_input, c_model, c_btn = st.columns([0.05, 0.58, 0.25, 0.12], vertical_alignment="center")
+        c_plus, c_settings, c_input, c_model, c_btn = st.columns(
+            [0.05, 0.05, 0.52, 0.26, 0.12], vertical_alignment="center"
+        )
 
         with c_plus:
             with st.popover("+", help="أدوات الإدخال وسيناريوهات الاختبار والدفعات"):
@@ -657,8 +690,10 @@ with tab_ai:
                     st.rerun()
 
                 st.divider()
-                st.markdown("##### 📁 رفع أو لصق دفعة JSON:")
-                uploaded_file = st.file_uploader("ملف JSON أو JSONL:", type=["json", "jsonl"], key="popover_batch_uploader")
+                st.markdown("##### 📁 معالجة دفعة تذاكر (Batch Processing):")
+                uploaded_file = st.file_uploader(
+                    "ملف JSON أو JSONL:", type=["json", "jsonl"], key="popover_batch_uploader"
+                )
                 sample_batch_demo = [
                     {
                         "ticket_id": "BATCH-001",
@@ -681,10 +716,161 @@ with tab_ai:
                         batch_demo_val = uploaded_file.read().decode("utf-8")
                     except Exception as ex:
                         st.error(f"خطأ في الملف: {ex}")
-                pasted_json = st.text_area("محتوى الدفعة (JSON):", value=batch_demo_val, height=110, key="popover_batch_json")
-                if st.button("تشغيل ومعالجة الدفعة المرفوعة الآن", type="primary", use_container_width=True):
+                pasted_json = st.text_area(
+                    "محتوى الدفعة (JSON):", value=batch_demo_val, height=110, key="popover_batch_json"
+                )
+
+                batch_engine_choice = st.selectbox(
+                    "المحرك المستخدم لتشغيل الدفعة:",
+                    [
+                        "استخدام المحرك المعتمد حالياً في الواجهة",
+                        "💻 المحرك المحلي فائق السرعة (Local Mock - لحفظ الكوتا)",
+                        "⚡ Groq Llama 3.3 70B Versatile",
+                        "⚡ Groq Llama 3.1 8B Instant",
+                        "🌐 Google Gemini 2.5 Flash",
+                        "🧠 TypeSafe Jev 1.13 API",
+                        "🔄 Tiered Hybrid Waterfall",
+                    ],
+                    index=0,
+                    key="popover_batch_engine_choice",
+                )
+
+                if st.button("تشغيل ومعالجة الدفعة الآن", type="primary", use_container_width=True):
                     st.session_state["batch_json_to_run"] = pasted_json
+                    st.session_state["batch_engine_to_run"] = batch_engine_choice
                     st.rerun()
+
+        with c_settings:
+            with st.popover("⚙️", help="إعدادات نماذج الذكاء الاصطناعي ومفاتيح الـ API"):
+                st.markdown("#### ⚙️ إعدادات النماذج ومفاتيح الربط")
+                st.caption("إدخال وتعديل مفاتيح الـ API وعتبات القرار مباشرة في الجلسة دون الحاجة لإعادة تشغيل السيرفر.")
+
+                st.markdown("##### 🔑 مفاتيح المزودات السحابية (API Keys):")
+
+                # 1. Groq
+                _g_eff, groq_badge, groq_cls = get_key_status("groq")
+                col_g1, col_g2 = st.columns([0.7, 0.3])
+                with col_g1:
+                    st.text_input(
+                        "Groq API Key (Llama 3.3 / 3.1):",
+                        value=st.session_state.get("groq_key_input", ""),
+                        type="password",
+                        key="groq_key_input",
+                        placeholder="تم الضبط في .env" if INITIAL_ENV_KEYS.get("groq") else "مثال: gsk_...",
+                    )
+                with col_g2:
+                    st.write("")
+                    st.write("")
+                    st.markdown(f'<span class="telemetry-tag {groq_cls}" style="margin-top:8px;">{groq_badge}</span>', unsafe_allow_html=True)
+
+                # 2. Google Gemini
+                _m_eff, gemini_badge, gemini_cls = get_key_status("gemini")
+                col_m1, col_m2 = st.columns([0.7, 0.3])
+                with col_m1:
+                    st.text_input(
+                        "Google Gemini API Key:",
+                        value=st.session_state.get("gemini_key_input", ""),
+                        type="password",
+                        key="gemini_key_input",
+                        placeholder="تم الضبط في .env" if INITIAL_ENV_KEYS.get("gemini") else "مثال: AIzaSy...",
+                    )
+                with col_m2:
+                    st.write("")
+                    st.write("")
+                    st.markdown(f'<span class="telemetry-tag {gemini_cls}" style="margin-top:8px;">{gemini_badge}</span>', unsafe_allow_html=True)
+
+                # 3. TypeSafe Jev
+                _j_eff, jev_badge, jev_cls = get_key_status("jev")
+                col_j1, col_j2 = st.columns([0.7, 0.3])
+                with col_j1:
+                    st.text_input(
+                        "TypeSafe Jev API Key:",
+                        value=st.session_state.get("jev_key_input", ""),
+                        type="password",
+                        key="jev_key_input",
+                        placeholder="تم الضبط في .env" if INITIAL_ENV_KEYS.get("jev") else "مثال: jev_...",
+                    )
+                with col_j2:
+                    st.write("")
+                    st.write("")
+                    st.markdown(f'<span class="telemetry-tag {jev_cls}" style="margin-top:8px;">{jev_badge}</span>', unsafe_allow_html=True)
+
+                st.divider()
+                st.markdown("##### 🎛️ ضبط عتبة الثقة والتصعيد (Confidence Threshold):")
+                st.slider(
+                    "عتبة الثقة المطلوبة للاعتماد الذاتي:",
+                    min_value=0.50,
+                    max_value=0.95,
+                    value=float(st.session_state.get("conf_threshold_input", settings.category_confidence_threshold)),
+                    step=0.05,
+                    key="conf_threshold_input",
+                    help="إذا كانت ثقة تصنيف النموذج أقل من هذه العتبة، يتم تحويل التذكرة آلياً إلى طابور المراجعة البشرية.",
+                )
+
+                st.divider()
+                st.markdown("##### 🩺 فحص الاتصال وسرعة الاستجابة (Ping & Health):")
+                test_c1, test_c2 = st.columns([0.6, 0.4])
+                with test_c1:
+                    target_test_prov = st.selectbox(
+                        "المزود المراد اختباره:",
+                        ["المحرك النشط المختار حالياً", "Groq Llama", "Google Gemini", "TypeSafe Jev", "المحرك المحلي (Mock)"],
+                        key="target_test_provider",
+                    )
+                with test_c2:
+                    st.write("")
+                    st.write("")
+                    do_test_conn = st.button("فحص الاتصال ↵", use_container_width=True)
+
+                if do_test_conn:
+                    if "المحرك النشط" in target_test_prov:
+                        active_meta_for_test = resolve_engine_choice(st.session_state.get("selected_engine_choice", ENGINE_OPTIONS[0]))
+                        p_to_test = active_meta_for_test["provider"]
+                        m_to_test = active_meta_for_test.get("model")
+                    elif "Groq" in target_test_prov:
+                        p_to_test = "groq"
+                        m_to_test = settings.groq_model
+                    elif "Gemini" in target_test_prov:
+                        p_to_test = "gemini"
+                        m_to_test = settings.gemini_model
+                    elif "Jev" in target_test_prov:
+                        p_to_test = "jev"
+                        m_to_test = "jev-latest"
+                    else:
+                        p_to_test = "mock"
+                        m_to_test = None
+
+                    if p_to_test == "duel":
+                        p_to_test = "groq" if (settings.groq_api_key or st.session_state.get("groq_key_input")) else "mock"
+
+                    with st.spinner(f"جاري فحص الاتصال بمزود [{p_to_test}]..."):
+                        active_key_test = (
+                            st.session_state.get("groq_key_input") if p_to_test == "groq"
+                            else (st.session_state.get("gemini_key_input") if p_to_test == "gemini"
+                            else (st.session_state.get("jev_key_input") if p_to_test == "jev" else None))
+                        )
+                        ok, lat_ping, msg = ping_engine_connection(
+                            p_to_test,
+                            api_key=active_key_test,
+                            model=m_to_test,
+                        )
+
+                    if ok:
+                        st.success(f"✓ الاتصال ناجح! زمن الاستجابة (Ping): {lat_ping:.1f} ms | {msg}")
+                    else:
+                        st.error(f"✗ فشل الاتصال بمزود [{p_to_test}] (زمن: {lat_ping:.1f} ms): {msg}")
+
+                st.divider()
+                st.markdown("##### ⚡ حالة قواطع الدائرة (Circuit Breakers):")
+                g_open = GroqClassifierProvider._circuit_open
+                m_open = GeminiClassifierProvider._circuit_open
+                if g_open or m_open:
+                    st.warning(f"⚠️ تنبيه: قاطع الدائرة مفصول بسبب تجاوز الكوتا ({'Groq ' if g_open else ''}{'Gemini' if m_open else ''})")
+                    if st.button("إعادة تعيين وتشغيل قواطع الدائرة الآن", use_container_width=True):
+                        GroqClassifierProvider.reset_circuit_breaker()
+                        GeminiClassifierProvider.reset_circuit_breaker()
+                        st.rerun()
+                else:
+                    st.info("جميع قواطع الدائرة بحالة سليمة وجاهزة للاستجابة.")
 
         with c_input:
             ticket_input = st.text_input(
@@ -697,13 +883,9 @@ with tab_ai:
         with c_model:
             engine_choice = st.selectbox(
                 "المحرك المعتمد:",
-                [
-                    "الهجين الثلاثي (System 1 + Jev + Gemini)",
-                    "نموذج الأوفلاين السريع (0.5ms)",
-                    "سحابة Jev 1.13 API",
-                    "مبارزة ثنائية (وجهاً لوجه)",
-                ],
+                ENGINE_OPTIONS,
                 index=0,
+                key="selected_engine_choice",
                 label_visibility="collapsed",
             )
 
@@ -715,6 +897,7 @@ with tab_ai:
     # -------------------------------------------------------------------------
     if "batch_json_to_run" in st.session_state and st.session_state["batch_json_to_run"]:
         raw_b = st.session_state.pop("batch_json_to_run")
+        chosen_b_engine = st.session_state.pop("batch_engine_to_run", "استخدام المحرك المعتمد حالياً في الواجهة")
         try:
             parsed = json.loads(raw_b)
             b_tickets: list[Ticket] = []
@@ -725,17 +908,47 @@ with tab_ai:
             else:
                 b_tickets.append(Ticket.model_validate(parsed))
 
-            with st.spinner(f"جاري معالجة {len(b_tickets)} تذكرة..."):
-                b_res, b_sum = run_batch(b_tickets, provider_override="mock")
+            if "المعتمد حالياً" in chosen_b_engine:
+                b_meta = resolve_engine_choice(engine_choice)
+            else:
+                b_meta = resolve_engine_choice(chosen_b_engine)
 
-            st.success(f"اكتملت معالجة الدفعة بنجاح ({len(b_tickets)} تذكرة) في {b_sum.total_wall_clock_ms:.1f} ms!")
+            b_prov = b_meta["provider"]
+            if b_prov == "duel":
+                b_prov = "mock"
+
+            if b_meta.get("model"):
+                if b_prov == "groq":
+                    settings.groq_model = b_meta["model"]
+                elif b_prov == "gemini":
+                    settings.gemini_model = b_meta["model"]
+                elif b_prov == "jev":
+                    settings.jev_model = b_meta["model"]
+
+            if b_prov == "mock":
+                settings.llm_mode = "offline"
+            elif b_prov == "hybrid":
+                settings.llm_mode = "hybrid"
+            else:
+                settings.llm_mode = "live"
+
+            with st.spinner(f"جاري معالجة {len(b_tickets)} تذكرة عبر [{b_meta['label']}]..."):
+                b_res, b_sum = run_batch(b_tickets, provider_override=b_prov)
+
+            tps = len(b_tickets) / (b_sum.total_wall_clock_ms / 1000.0) if b_sum.total_wall_clock_ms > 0 else 0.0
+            st.success(
+                f"اكتملت معالجة الدفعة بنجاح ({len(b_tickets)} تذكرة) عبر [{b_meta['label']}] "
+                f"في {b_sum.total_wall_clock_ms:.1f} ms بمعدل {tps:.1f} tps!"
+            )
             df_batch = pd.DataFrame([
                 {
                     "المعرف": r.ticket_id,
+                    "المسار/المزود": r.provider_path,
                     "الفئة": r.category,
                     "الثقة": f"{r.category_confidence*100:.1f}%",
                     "الأولوية": r.priority.upper(),
                     "الفريق": r.team,
+                    "الزمن (ms)": f"{r.latency_ms:.1f}",
                     "الحالة": "مصعدة للبشر" if r.escalated else "معالجة ذاتية",
                     "مسودة الرد": r.draft_reply or "(تحويل يدوي)",
                 }
@@ -768,20 +981,42 @@ with tab_ai:
         st.session_state["last_run_text"] = active_text
         st.session_state["last_run_engine"] = engine_choice
 
-        if "مبارزة" in engine_choice:
+        meta = resolve_engine_choice(engine_choice)
+        p_key = meta["provider"]
+        if meta.get("model"):
+            if p_key == "groq":
+                settings.groq_model = meta["model"]
+            elif p_key == "gemini":
+                settings.gemini_model = meta["model"]
+            elif p_key == "jev":
+                settings.jev_model = meta["model"]
+
+        if p_key == "duel":
             with st.spinner("جاري تشغيل كلا المحركين وجهاً لوجه..."):
-                res_j = process_ticket(live_obj, provider_override="jev")
+                cloud_prov = (
+                    "groq"
+                    if (settings.groq_api_key or st.session_state.get("groq_key_input"))
+                    else (
+                        "gemini"
+                        if (settings.gemini_api_key or st.session_state.get("gemini_key_input"))
+                        else "jev"
+                    )
+                )
+                settings.llm_mode = "live"
+                res_j = process_ticket(live_obj, provider_override=cloud_prov)
+                settings.llm_mode = "offline"
                 res_o = process_ticket(live_obj, provider_override="mock")
             st.session_state["live_duel"] = (res_j, res_o)
             st.session_state["live_active_res"] = res_o
         else:
-            if "الهجين" in engine_choice:
-                p_key = "hybrid"
-            elif "الأوفلاين" in engine_choice:
-                p_key = "mock"
+            if p_key == "mock":
+                settings.llm_mode = "offline"
+            elif p_key == "hybrid":
+                settings.llm_mode = "hybrid"
             else:
-                p_key = "jev"
-            with st.spinner("جاري تشغيل المعمارية الهجينة واتخاذ القرار..."):
+                settings.llm_mode = "live"
+
+            with st.spinner(f"جاري تشغيل محرك [{meta['label']}] واتخاذ القرار..."):
                 active_res = process_ticket(live_obj, provider_override=p_key)
             st.session_state["live_duel"] = None
             st.session_state["live_active_res"] = active_res
@@ -803,17 +1038,19 @@ with tab_ai:
 
         cj, co = st.columns(2)
         with cj:
+            cloud_title = res_j.provider_path.split('+')[0].upper()
             st.markdown(
                 f"""
                 <div class="cockpit-card" style="border-top: 3px solid #818cf8;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong style="color:#818cf8; font-size:1rem;">TypeSafe Jev 1.13</strong>
+                        <strong style="color:#818cf8; font-size:1rem;">Cloud Engine ({cloud_title})</strong>
                         <span class="mono-code" style="color:#818cf8; font-weight:700;">{res_j.latency_ms:.1f} ms</span>
                     </div>
                     <hr style="border-color: rgba(255,255,255,0.06); margin:8px 0;">
                     <p>الفئة: <strong class="mono-code">{res_j.category}</strong> ({res_j.category_confidence*100:.1f}%)</p>
                     <p>الأولوية: <strong class="mono-code">{res_j.priority.upper()}</strong></p>
                     <p>الفريق: <strong>{res_j.team}</strong></p>
+                    <p>المسار: <span class="mono-code" style="font-size:0.8rem; color:#a1a1aa;">{res_j.provider_path}</span></p>
                     <p>الحالة: <span class="telemetry-tag {'tag-escalate' if res_j.escalated else 'tag-auto'}">{'مصعدة للبشر' if res_j.escalated else 'معالجة ذاتية'}</span></p>
                 </div>
                 """,
@@ -824,13 +1061,14 @@ with tab_ai:
                 f"""
                 <div class="cockpit-card" style="border-top: 3px solid #10b981;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong style="color:#10b981; font-size:1rem;">Offline Dialect ML</strong>
+                        <strong style="color:#10b981; font-size:1rem;">Offline Dialect Heuristic (Mock)</strong>
                         <span class="mono-code" style="color:#10b981; font-weight:700;">{res_o.latency_ms:.2f} ms</span>
                     </div>
                     <hr style="border-color: rgba(255,255,255,0.06); margin:8px 0;">
                     <p>الفئة: <strong class="mono-code">{res_o.category}</strong> ({res_o.category_confidence*100:.1f}%)</p>
                     <p>الأولوية: <strong class="mono-code">{res_o.priority.upper()}</strong></p>
                     <p>الفريق: <strong>{res_o.team}</strong></p>
+                    <p>المسار: <span class="mono-code" style="font-size:0.8rem; color:#a1a1aa;">{res_o.provider_path}</span></p>
                     <p>الحالة: <span class="telemetry-tag {'tag-escalate' if res_o.escalated else 'tag-auto'}">{'مصعدة للبشر' if res_o.escalated else 'معالجة ذاتية'}</span></p>
                 </div>
                 """,
@@ -840,6 +1078,26 @@ with tab_ai:
     active_pipeline_res = cast(PipelineResult | None, st.session_state.get("live_active_res"))
     if active_pipeline_res:
         active_res = active_pipeline_res
+
+        # Telemetry & Status Badges
+        g_open = GroqClassifierProvider._circuit_open
+        m_open = GeminiClassifierProvider._circuit_open
+        if g_open or m_open:
+            cb_html = f'<span class="telemetry-tag tag-outage">قاطع الدائرة: مفصول ({"Groq " if g_open else ""}{"Gemini" if m_open else ""})</span>'
+        else:
+            cb_html = '<span class="telemetry-tag tag-auto">قاطع الدائرة: سليم ومفعل</span>'
+
+        st.markdown(
+            f"""
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
+                <span class="telemetry-tag tag-auto">المزود الفعلي: <strong class="mono-code">{active_res.provider_path}</strong></span>
+                <span class="telemetry-tag tag-review">زمن الاستجابة: <strong class="mono-code">{active_res.latency_ms:.2f} ms</strong></span>
+                {cb_html}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
         m1, m2, m3, m4, m5 = st.columns(5)
         m1.metric("الفئة المستخرجة", active_res.category, f"{active_res.category_confidence*100:.1f}%")
         m2.metric("أولوية المعالجة", active_res.priority.upper())
@@ -852,7 +1110,7 @@ with tab_ai:
         if active_res.audit_status:
             if active_res.audit_status == "verified":
                 st.markdown(
-                    '<span class="telemetry-tag tag-auto" style="margin-bottom:10px; display:inline-block;">✓ تدقيق Gemini 3.6 Flash: الكيانات المستخرجة مؤرضة ومطابقة 100%</span>',
+                    '<span class="telemetry-tag tag-auto" style="margin-bottom:10px; display:inline-block;">✓ تدقيق Google Gemini: الكيانات المستخرجة مؤرضة ومطابقة 100%</span>',
                     unsafe_allow_html=True,
                 )
             elif active_res.audit_status == "discrepancy_detected":
