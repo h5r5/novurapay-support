@@ -16,7 +16,7 @@ from supportpipe.classify.providers.groq_provider import GroqClassifierProvider
 from supportpipe.classify.providers.jev_provider import JevClassifierProvider
 from supportpipe.classify.providers.mock_provider import MockClassifierProvider
 from supportpipe.config import settings
-from supportpipe.learning_store import discrepancy_store
+from supportpipe.learning_store import DiscrepancyStore, discrepancy_store as default_discrepancy_store
 from supportpipe.schemas import ClassificationResult, ExtractedFields, PriorityType
 from supportpipe.taxonomy.loader import taxonomy
 
@@ -33,8 +33,10 @@ class HybridClassifierProvider(BaseClassifierProvider):
         gemini_provider: GeminiClassifierProvider | None = None,
         groq_provider: GroqClassifierProvider | None = None,
         audit_sampling_rate: float = 0.05,
+        discrepancy_store: DiscrepancyStore | None = None,
     ) -> None:
         self.mock_provider = mock_provider or MockClassifierProvider()
+        self.discrepancy_store = discrepancy_store or default_discrepancy_store
 
         has_jev = bool(settings.jev_api_key or settings.typesafe_api_key)
         self.jev_provider = (
@@ -192,7 +194,7 @@ class HybridClassifierProvider(BaseClassifierProvider):
                     elif isinstance(fast_extracted, dict):
                         offline_val = fast_extracted.get(disc_field)
 
-                discrepancy_store.record_discrepancy(
+                self.discrepancy_store.record_discrepancy(
                     ticket_id=ticket_id,
                     channel=channel,
                     raw_text=ticket_text,
@@ -234,7 +236,7 @@ class HybridClassifierProvider(BaseClassifierProvider):
                 reasoning = (
                     f"Cloud Consensus (Jev + Gemini: '{final_cat}') overrules local heuristic ('{res_mock.category}')"
                 )
-                discrepancy_store.record_discrepancy(
+                self.discrepancy_store.record_discrepancy(
                     ticket_id=ticket_id,
                     channel=channel,
                     raw_text=ticket_text,

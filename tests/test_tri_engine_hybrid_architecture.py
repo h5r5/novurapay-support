@@ -281,6 +281,7 @@ def test_hybrid_provider_cloud_consensus_override(tmp_path: Path) -> None:
         mock_provider=mock_mock,
         jev_provider=mock_jev,
         gemini_provider=mock_gemini,
+        discrepancy_store=DiscrepancyStore(tmp_path / "test_override_disc.jsonl"),
     )
 
     res = hybrid.classify(

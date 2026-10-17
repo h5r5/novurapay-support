@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     data_dir: Path = project_root / "data"
     taxonomy_dir: Path = Path(__file__).resolve().parent / "taxonomy"
     results_dir: Path = project_root / "results"
+    discrepancy_store_path: Path = project_root / "data" / "audit_learning" / "discrepancies.jsonl"
 
 
 settings = Settings()
