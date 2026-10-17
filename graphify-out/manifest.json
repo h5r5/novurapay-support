@@ -210,9 +210,9 @@
     "semantic_hash": "c7a0054631978b0570f72ec5ab6f056a"
   },
   "src/supportpipe/classify/classify.py": {
-    "mtime": 1792266300.343176,
-    "seen": 1792267002.482322,
-    "ast_hash": "7d634a89797dd3dd079305ba46caa42c",
+    "mtime": 1792272102.0581384,
+    "seen": 1792272220.7744663,
+    "ast_hash": "631faaaac213ac27877c9f968b60e886",
     "semantic_hash": ""
   },
   "src/supportpipe/classify/providers/base.py": {
@@ -849,6 +849,18 @@
     "mtime": 1792271978.5199032,
     "seen": 1792272024.401727,
     "ast_hash": "51794456236c4fed00ea06729d30b690",
+    "semantic_hash": ""
+  },
+  "src/supportpipe/classify/providers/local_llm_provider.py": {
+    "mtime": 1792272084.1293137,
+    "seen": 1792272220.7744749,
+    "ast_hash": "caefd4eddcb2b818f7bad1b3cff936dd",
+    "semantic_hash": ""
+  },
+  "tests/test_local_llm_provider.py": {
+    "mtime": 1792272171.8564832,
+    "seen": 1792272220.7745326,
+    "ast_hash": "658c9ad656926e5436958aae7645e229",
     "semantic_hash": ""
   }
 }

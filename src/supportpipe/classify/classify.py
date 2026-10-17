@@ -10,6 +10,7 @@ from supportpipe.classify.providers.gemini_provider import GeminiClassifierProvi
 from supportpipe.classify.providers.groq_provider import GroqClassifierProvider
 from supportpipe.classify.providers.hybrid_provider import HybridClassifierProvider
 from supportpipe.classify.providers.jev_provider import JevClassifierProvider
+from supportpipe.classify.providers.local_llm_provider import LocalLLMClassifierProvider
 from supportpipe.classify.providers.mock_provider import MockClassifierProvider
 from supportpipe.config import settings
 from supportpipe.schemas import ClassificationResult, ExtractedFields
@@ -47,6 +48,8 @@ def get_classifier_provider(provider_name: str | None = None) -> BaseClassifierP
         return JevClassifierProvider()
     elif name == "gemini" and has_gemini:
         return GeminiClassifierProvider()
+    elif name in ["local", "local_llm"]:
+        return LocalLLMClassifierProvider()
     elif name == "mock":
         return MockClassifierProvider()
 
