@@ -4,8 +4,8 @@
 *A reproducible, auditable, high-throughput batch support pipeline tailored for Iraqi Arabic and Kurdish customer tickets. Engineered with a Tri-Engine Hybrid Architecture, calibrated confidence escalation, deterministic routing, grounded response drafting, and an active learning discrepancy store.*
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/)
-[![Tests: 84/84 Passed](https://img.shields.io/badge/tests-84%2F84%20passing-brightgreen.svg)]()
-[![Frozen Test Accuracy: 100%](https://img.shields.io/badge/frozen_test_accuracy-100%25-success.svg)]()
+[![Tests: 106/106 Passed](https://img.shields.io/badge/tests-106%2F106%20passing-brightgreen.svg)]()
+[![Holdout Accuracy: 56.4%](https://img.shields.io/badge/holdout_accuracy-56.4%25-blue.svg)]()
 [![Adversarial Breaking Points: 0/100](https://img.shields.io/badge/adversarial_breaking_points-0%2F100%20(100%25)-purple.svg)]()
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
@@ -13,7 +13,7 @@
 
 ## ⚡ 60-Second Judge Demo Pitch
 
-> "In Iraqi digital wallets (such as simulated wallet NovuraPay, Qi Card, and FIB), thousands of customer support inquiries arrive daily written in colloquial Iraqi Arabic and Kurdish dialects, interspersed with Arabizi, slang, and emotion. Human triage agents are overwhelmed, response times lag, and manual routing leads to costly financial misdirection.
+> "In Iraqi digital wallets (such as simulated wallet NovuraPay), thousands of customer support inquiries arrive daily written in colloquial Iraqi Arabic and Kurdish dialects, interspersed with Arabizi, slang, and emotion. Human triage agents are overwhelmed, response times lag, and manual routing leads to costly financial misdirection.
 >
 > **SupportPipe is an enterprise back-office batch pipeline, not a chatbot.** It processes ticket queues with deterministic precision through typed stages:
 >
@@ -30,7 +30,7 @@
 SupportPipe strictly complies with all mandatory pre-scoring challenge criteria:
 
 > [!NOTE]
-> **Repository Rename Notice:** To maintain strict competition Rule 14 brand neutrality (Simulated Iraqi Digital Wallet - NovuraPay), the repository has been updated to [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support). Please ensure the repository is renamed under GitHub.com Settings to match `novurapay-support`.
+> **Repository Branding Notice:** Adhering to internal repository brand neutrality guidelines (Simulated Iraqi Digital Wallet - NovuraPay), the repository is tracking [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support).
 
 | Gate | Requirement | Submission Status & Evidence |
 | :--- | :--- | :--- |
@@ -139,13 +139,17 @@ Drafts are strictly validated against extracted entities before submission to th
 
 ---
 
-## 📊 Evaluation Benchmarks on Frozen Test Set (116 Tickets)
+## 📊 Evaluation Benchmarks on Current Holdout Set (133 Tickets)
 
-All figures below originate directly from reproducible runs (`supportpipe eval --split test`):
+All figures below originate directly from reproducible runs on the current partitioned split (`supportpipe eval --split test`):
 
-* **Classification Accuracy vs Baseline:** **100.00%** vs **12.07%** majority baseline (**8.3x uplift**, Macro F1: **1.0000**).
-* **Auto-Handled Accuracy:** **100.00%** (zero misclassifications on auto-handled tickets).
-* **Transaction Ref Exact Match:** **100.0%** (35 / 35 tickets).
+* **Overall Holdout Accuracy:** **56.39%** (75 / 133 tickets, Wilson 95% CI: **[47.90%, 64.52%]**), labeled as *holdout, possibly partly exposed*.
+  - *Clean Slice (90 tickets, zero near-duplicate overlap or verbatim template families):* **46.67%** (42 / 90, Wilson 95% CI: **[36.71%, 56.90%]**) — the cleanest estimate available prior to `test_v2`.
+  - *Partly Exposed Slice (43 tickets):* **76.74%** (33 / 43, Wilson 95% CI: **[62.26%, 86.85%]**).
+  - *Path Breakdown:* 34 tickets handled by deterministic dialect rules (19 exposed, 15 clean; 84.21% vs 73.33%); 99 tickets handled by offline ML model (24 exposed, 75 clean; 70.83% vs 41.33%).
+  - *Historical Split Context:* Earlier ID-based overlap counts (30 in test and 86 in dev) were an artifact of reused sequential IDs. Past 100% and 92.24% claims on the old 116-ticket split were **tuned on the development set, not held-out**.
+* **Auto-Handled Safety:** Zero erroneous automated responses dispatched to customers.
+* **Transaction Ref Exact Match:** **100.0%** (synthetic reference strings).
 * **Date Match Rate:** **100.0%** (calendar-accurate normalized event dates).
 * **Processing Throughput:** **333+ tickets/sec** in offline batch execution.
 
@@ -207,7 +211,7 @@ uv run streamlit run src/supportpipe/ui/app.py
 
 ### 8. Run Full Regression Test Suite & Linters
 ```bash
-# Run all 84 automated tests
+# Run all 106 automated tests
 uv run pytest tests/ -v
 
 # Run code style & static analysis
@@ -253,7 +257,7 @@ novurapay-support/
 ├── data/
 │   ├── manifest.json              # Frozen SHA-256 test set hashes
 │   ├── QA_NOTES.md                # 65-ticket manual inspection notes
-│   ├── splits/                    # dev.jsonl (215 tickets) and test.jsonl (116 tickets)
+│   ├── splits/                    # dev.jsonl (219 tickets) and test.jsonl (133 tickets)
 │   ├── stress_test_100_adversarial.jsonl # 100 extreme adversarial stress-test tickets
 │   └── audit_learning/            # discrepancies.jsonl (Active Learning discrepancy store)
 ├── scripts/                       # Adversarial generators, stress-test runners & report generators
@@ -262,7 +266,7 @@ novurapay-support/
 │   ├── generate_breaking_report.py# Breaking points markdown report builder
 │   └── test_hybrid_on_failures.py # Tri-engine verification script
 ├── results/                       # Reproducible run outputs (metrics.json, adversarial_stress_test/)
-└── tests/                         # 84 unit, integration, trilingual, capacity, failure mode, & hybrid tests (100% pass)
+└── tests/                         # 106 unit, integration, trilingual, capacity, failure mode, & hybrid tests (100% pass)
 ```
 
 ---

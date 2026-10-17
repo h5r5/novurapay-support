@@ -3,16 +3,19 @@
 **Agentic AI Challenge Iraq — Topic 06: Support Pipeline Automation**  
 **Evaluation Target:** NovuraPay Support Pipeline (`supportpipe`)  
 **Evaluation Run ID:** `eval_test_20261015_214839`  
-**Dataset Split:** Frozen Held-Out Test Set (`data/splits/test.jsonl`, 116 tickets)  
+**Dataset Split:** Historical 116-ticket split (`data/splits/test.jsonl` prior to 75e037b, **tuned on the development set, not held-out**)  
 **Verification Hash (SHA-256):** `f99cc0029239debb9043814059927d6fe48ac9d8c5a7a7b1df04eb4c989f6b0b`
 
 ---
 
-## 1. Executive Evaluation Summary
+## 1. Executive Evaluation Summary (Historical 116-Ticket Development Benchmark)
+
+> [!NOTE]
+> **Provenance & Labeling:** The 116-ticket benchmark below reflects historical offline engine tuning (`eval_test_20261015_214839`). Because dialect heuristics were iteratively optimized on this split (see commit `bf10a3c`), these figures represent **in-sample development performance, not a held-out test**. For current partitioned evaluation with template-family isolation, see Section 1.1 below.
 
 | Metric | Point Estimate | 95% Bootstrap CI (1,000 Resamples) | Benchmark Context |
 | :--- | :---: | :---: | :--- |
-| **Overall Category Accuracy** | **92.24%** (107/116) | **[87.07%, 96.55%]** | **7.6x uplift** over majority class baseline (12.07%) |
+| **Overall Category Accuracy** | **92.24%** (107/116) *(tuned on development set, not held-out)* | **[87.07%, 96.55%]** | **7.6x uplift** over majority class baseline (12.07%) |
 | **Macro Average F1-Score** | **0.9130** | **[0.8381, 0.9628]** | Balanced performance across all 14 categories |
 | **Auto-Handled Accuracy** | **100.00%** (92/92) | **[100.00%, 100.00%]** | Zero misclassifications reach customers without human review |
 | **Priority Classification Accuracy** | **87.93%** (102/116) | **[81.90%, 93.97%]** | Accurate triage into `high`, `medium`, `low` queues |
@@ -22,6 +25,23 @@
 | **Amount Exact Match Rate** | **86.67%** (26/30) | **[73.33%, 96.67%]** | Disambiguates transaction vs balance vs fee amounts |
 | **Batch Processing Throughput** | **317.1 tickets/sec** | — | Offline execution with 3.14ms average ticket latency |
 
+---
+
+## 1.1 Current Partitioned Holdout Benchmark (133 Tickets)
+
+Measured directly on the current template-isolated holdout split (`data/splits/test.jsonl`, 133 tickets):
+
+| Stratum / Slice | n | Correct | Accuracy | Wilson 95% CI | Context / Exposure Status |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Overall Holdout (Current `test.jsonl`)** | **133** | **75** | **56.39%** | **[47.90%, 64.52%]** | *Holdout, possibly partly exposed* |
+| **CLEAN Slice (Zero overlap or verbatim templates)** | **90** | **42** | **46.67%** | **[36.71%, 56.90%]** | **Cleanest available estimate** prior to sealed `test_v2` |
+| **Partly Exposed Slice** | **43** | **33** | **76.74%** | **[62.26%, 86.85%]** | Near-duplicate text or verbatim template family |
+| ↳ *Rule Path x EXPOSED* | 19 | 16 | 84.21% | [62.43%, 94.48%] | Deterministic rules on exposed patterns |
+| ↳ *Rule Path x CLEAN* | 15 | 11 | 73.33% | [48.05%, 89.10%] | Deterministic rules on unseen tickets |
+| ↳ *ML Model x EXPOSED* | 24 | 17 | 70.83% | [50.83%, 85.09%] | TF-IDF + LR on exposed patterns |
+| ↳ *ML Model x CLEAN* | 75 | 31 | 41.33% | [30.88%, 52.63%] | TF-IDF + LR on completely unseen templates |
+
+*Historical note:* The earlier ID-based overlap count (30 in test and 86 in dev) was an artifact of reused sequential ticket IDs. True byte-identical overlap is only 2 tickets across the entire 133 holdout.
 ---
 
 ## 2. Full 14x14 Confusion Matrix Analysis
