@@ -1,9 +1,12 @@
 """Evaluation metrics computation for classification, extraction, escalation, and calibration."""
 
+import math
+from pathlib import Path
 from typing import Any
 
 import numpy as np
 import pandas as pd
+import scipy.stats
 from sklearn.metrics import classification_report, confusion_matrix, f1_score
 
 from supportpipe.schemas import LabeledTicket, PipelineResult
@@ -256,3 +259,70 @@ def compute_bootstrap_confidence_intervals(
             "upper_ci": round(float(np.percentile(boot_auto_accs, upper_pct)), 4) if boot_auto_accs else 0.0,
         },
     }
+
+
+def validate_dataset_path(path: Path | str) -> Path:
+    """Validate dataset path and strictly refuse to touch test.jsonl."""
+    p = Path(path).resolve()
+    normalized_str = str(p).lower().replace("\\", "/")
+
+    # Burned holdout diagnostic set protection
+    assert not (p.name == "test.jsonl" or "test.jsonl" in normalized_str), (
+        f"Access denied: {p} is a burned diagnostic set and must NEVER be opened or used for cross-validation!"
+    )
+    if p.name == "test.jsonl" or "test.jsonl" in normalized_str:
+        raise ValueError(
+            f"Access denied: {p} is a burned diagnostic set and must NEVER be opened or used for cross-validation!"
+        )
+
+    if not p.exists():
+        raise FileNotFoundError(f"Dataset path not found: {p}")
+
+    return p
+
+
+def compute_wilson_ci(correct: int, total: int, confidence: float = 0.95) -> tuple[float, float, float]:
+    """Calculate the Wilson score confidence interval for a binomial proportion.
+
+    Returns:
+        (accuracy, lower_ci, upper_ci)
+    """
+    if total == 0:
+        return 0.0, 0.0, 0.0
+    p = correct / total
+    z = float(scipy.stats.norm.ppf(1.0 - (1.0 - confidence) / 2.0))
+    z2 = z * z
+    denom = 1.0 + z2 / total
+    center = (p + z2 / (2.0 * total)) / denom
+    margin = (z / denom) * math.sqrt((p * (1.0 - p) / total) + (z2 / (4.0 * total * total)))
+    lower = max(0.0, center - margin)
+    upper = min(1.0, center + margin)
+    return round(p, 4), round(lower, 4), round(upper, 4)
+
+
+def compute_paired_mcnemar(
+    y_true: list[str],
+    y_pred_base: list[str],
+    y_pred_cand: list[str],
+) -> tuple[float, float, bool]:
+    """Paired McNemar test on identical out-of-fold predictions.
+
+    Returns:
+        (statistic, p_value, is_significant_at_05)
+    """
+    b = sum(1 for yt, yb, yc in zip(y_true, y_pred_base, y_pred_cand, strict=True) if yt == yb and yt != yc)
+    c = sum(1 for yt, yb, yc in zip(y_true, y_pred_base, y_pred_cand, strict=True) if yt != yb and yt == yc)
+    total_discordant = b + c
+    if total_discordant == 0:
+        return 0.0, 1.0, False
+
+    if total_discordant < 25:
+        res = scipy.stats.binomtest(b, total_discordant, 0.5)
+        p_val = float(res.pvalue)
+        stat = float(abs(b - c))
+    else:
+        stat = ((abs(b - c) - 1.0) ** 2) / total_discordant
+        p_val = float(scipy.stats.chi2.sf(stat, df=1))
+
+    return round(stat, 4), round(p_val, 4), p_val < 0.05
+
