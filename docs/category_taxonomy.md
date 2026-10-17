@@ -11,8 +11,7 @@
 This taxonomy is constructed to reflect real customer service operations in Iraqi fintech and mobile wallet environments. Rather than relying on synthetic imagination, categories and routing destinations are grounded in:
 1. **Public Help Center Category Structures & FAQs:**
    - NovuraPay (Simulated Iraqi Digital Wallet - NovuraPay Support, grounded in Iraqi mobile wallet operations and Central Bank frameworks).
-   - Qi Card / International Smart Card (ISC) Customer Support Documentation (accessed September 2026, `https://qi.iq/`).
-   - FastPay Iraq Support Guides & Merchant/User Help (accessed September 2026, `https://fast-pay.cash/`).
+   - Licensed Iraqi Payment Service Providers (PSPs) and National Switch customer support workflows.
 2. **App Store & Google Play Customer Review Themes:** Analysis of public user reviews highlighting top pain points: pending P2P transfers, cash-out discrepancies at POS agents, ATM card declines, and biometric/identity document verification failures.
 3. **Evidence Grading System:**
    - **Grade A:** Confirmed directly from published official support triage categories or direct support workflows.

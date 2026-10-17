@@ -5,9 +5,11 @@
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/)
 [![Tests: 106/106 Passed](https://img.shields.io/badge/tests-106%2F106%20passing-brightgreen.svg)]()
-[![Holdout Accuracy: 56.4%](https://img.shields.io/badge/holdout_accuracy-56.4%25-blue.svg)]()
+[![Holdout 56.4% | Unexposed 46.7%](https://img.shields.io/badge/holdout-56.4%25%20(unexposed%2046.7%25)-blue.svg)]()
 [![Adversarial Breaking Points: 0/100](https://img.shields.io/badge/adversarial_breaking_points-0%2F100%20(100%25)-purple.svg)]()
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+
+> **Evaluated Accuracy:** holdout 56.4% (75/133, includes exposed tickets); unexposed subset 46.7% (42/90, Wilson 36.7-56.9).
 
 ---
 
@@ -17,7 +19,7 @@
 >
 > **SupportPipe is an enterprise back-office batch pipeline, not a chatbot.** It processes ticket queues with deterministic precision through typed stages:
 >
-> 1. **Tri-Engine Hybrid Architecture:** Combines an ultra-fast offline dialect engine (~0.5ms), a specialized decision classifier (TypeSafe Jev 1.13), and a cloud auditor (Google Gemini 3.6 Flash) with a real-time consensus matrix and continuous discrepancy logging.
+> 1. **Tri-Engine Hybrid Architecture:** Combines an ultra-fast offline dialect engine (~0.5ms offline execution), a specialized decision classifier (TypeSafe Jev 1.13), and a cloud auditor (Google Gemini 3.6 Flash) with a real-time consensus matrix and continuous discrepancy logging *(tri-engine end-to-end consensus accuracy and live latency: design, not yet measured; offline single-engine baseline measured)*.
 > 2. **Deep Iraqi & Kurdish Dialect Grounding:** Automatically strips repetitive character elongation (*"ملييووونين وربععع"* $\rightarrow$ *"مليونين وربع"*), understands provincial currency conventions (*"دفتر"* = $100,000, *"شدة"* = $10,000, *"ورقة"* = $100, *"طابوقة"* = 25M IQD), and parses calendar-accurate relative dates (*"صارلي شهر"*, *"قبل اولت اولت البارحة"*).
 > 3. **Deterministic Operational Routing:** Eliminates LLM department hallucinations by mapping closed categories directly to operational squads via an auditable lookup table (`routing_table.yaml`).
 > 4. **Calibrated Escalation Gate:** Automatically escalates incomplete requests, missing mandatory transaction references, low-confidence predictions, and hostile injection payloads to human triage with clear, auditable reasoning tags.
@@ -67,7 +69,7 @@ flowchart TD
         E1 --> F{"Consensus Matrix<br>Evaluator"}
         E2 --> F
         E3 --> F
-        F -->|Triple Agreement| G1["High Confidence Consensus (99%)"]
+        F -->|Triple Agreement| G1["High Confidence Consensus<br>(Design Specification)"]
         F -->|Cloud Override| G2["Cloud Consensus Override"]
         F -->|Irreconcilable Conflict| G3["Trigger Escalation Gate"]
         G2 -.->|Log Conflict| H["Active Learning Discrepancy Store<br>(data/audit_learning/discrepancies.jsonl)"]
@@ -76,8 +78,8 @@ flowchart TD
     subgraph SafetyGate["4. Routing & Escalation Gate"]
         G1 --> I{"Escalation Policy Check"}
         G2 --> I
-        G3 --> J["Escalate to Human Triage<br>(Missing Fields / Low Conf / BiDi Trojan)"]
-        I -->|Missing Required Ref| J
+        G3 --> I
+        I -->|Missing Required Ref| J["Escalate to Human Triage<br>(Missing Fields / Low Conf / BiDi Trojan)"]
         I -->|Confidence < Threshold| J
         I -->|Hostile Injection / BiDi| J
         I -->|Pass| K["Deterministic Routing Table<br>(routing_table.yaml)"]
@@ -101,7 +103,7 @@ flowchart TD
 ## 💎 Key Innovations & Competitive Strengths
 
 ### 1. Tri-Engine Hybrid Architecture with Active Learning
-Rather than relying on a single fallible LLM, SupportPipe employs a tiered consensus structure:
+Rather than relying on a single fallible LLM, SupportPipe employs a tiered consensus structure *(tri-engine end-to-end consensus accuracy and live latency: design, not yet measured; current measurements reflect offline single-engine baseline)*:
 * **System 1 (Offline Heuristic & Fast ML):** Instant offline execution (<1ms) using cached TF-IDF + Logistic Regression and deterministic pattern trees.
 * **System 1.5 (TypeSafe Jev 1.13):** Production-grade specialized decision classifier outputting calibrated RLCD probabilities across 14 closed classes.
 * **System 2 (Google Gemini 3.6 Flash):** Cloud-based auditor, trilingual reasoner, and dialect first-response drafter.
