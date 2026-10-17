@@ -150,6 +150,7 @@ class HybridClassifierProvider(BaseClassifierProvider):
             )
         )
 
+        cloud_fallback_occurred = False
         if should_call_gemini and self.gemini_provider:
             try:
                 res_gemini = self.gemini_provider.classify(
@@ -160,6 +161,7 @@ class HybridClassifierProvider(BaseClassifierProvider):
             except Exception as gem_err:
                 logger.warning("Gemini engine failed in hybrid pass: %s", gem_err)
                 res_gemini = None
+                cloud_fallback_occurred = True
 
         # Cloud fallback: Try Groq if Gemini failed or unavailable
         if not res_gemini and self.groq_provider and (
@@ -175,6 +177,8 @@ class HybridClassifierProvider(BaseClassifierProvider):
                     channel=channel,
                     fast_extracted=fast_extracted,
                 )
+                if res_gemini and cloud_fallback_occurred:
+                    res_gemini.degraded = True
             except Exception as groq_err:
                 logger.warning("Groq engine failed in hybrid pass: %s", groq_err)
 

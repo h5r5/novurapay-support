@@ -5,7 +5,7 @@ from typing import Any
 
 import httpx
 
-from supportpipe.config import settings
+from supportpipe.config import ConfigError, settings
 from supportpipe.logging_store import scrub_outbound_text
 from supportpipe.schemas import ExtractedFields
 from supportpipe.taxonomy.loader import taxonomy
@@ -46,7 +46,16 @@ def generate_candidate_draft(
     else:
         amount_str = "غير محدد"
     ref_str = extracted.transaction_ref or "غير مذكور"
-    model = settings.gemini_model or "gemini-1.5-flash"
+    model = settings.gemini_flash_model or settings.gemini_model
+    if not model or str(model).strip().upper() == "OWNER_CONFIRM":
+        raise ConfigError("Model ID for draft generator is OWNER_CONFIRM or unconfigured")
+
+    from supportpipe.budget import budget_limiter
+
+    if not budget_limiter.acquire("flash"):
+        logger.warning("[BUDGET_EXHAUSTED] Flash tier budget reached for draft generator; falling back to template")
+        return None
+
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     outbound_ticket_text = scrub_outbound_text(ticket_raw_text, endpoint=url)
 

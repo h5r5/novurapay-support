@@ -13,6 +13,7 @@ def force_offline_mode_for_unit_tests(
     tmp_path_factory: pytest.TempPathFactory,
 ) -> Generator[None, None, None]:
     """Force offline mock mode during unit testing to prevent API quota consumption."""
+    from supportpipe.budget import budget_limiter
     from supportpipe.classify.providers.gemini_provider import GeminiClassifierProvider
     from supportpipe.classify.providers.groq_provider import GroqClassifierProvider
     from supportpipe.config import settings
@@ -21,6 +22,10 @@ def force_offline_mode_for_unit_tests(
     test_disc = tmp_path_factory.mktemp("audit_store") / "discrepancies.jsonl"
     monkeypatch.setattr(settings, "discrepancy_store_path", test_disc)
     monkeypatch.setattr(discrepancy_store, "file_path", test_disc)
+
+    test_budget = tmp_path_factory.mktemp("budget_store") / "call_budget_counter.json"
+    monkeypatch.setattr(settings, "budget_counter_path", test_budget)
+    monkeypatch.setattr(budget_limiter, "counter_path", test_budget)
 
     GeminiClassifierProvider.reset_circuit_breaker()
     GroqClassifierProvider.reset_circuit_breaker()

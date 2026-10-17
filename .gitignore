@@ -75,4 +75,7 @@ graphify-out/cache/
 
 # Audit learning & batch runs (keep .gitkeep tracked)
 data/audit_learning/*.jsonl
+data/call_budget_counter.json
+data/.sealed_test_lock.json
 results/batch_*
+results/eval_matrix*

@@ -9,7 +9,7 @@ from typing import Any
 import httpx
 
 from supportpipe.classify.providers.base import BaseClassifierProvider
-from supportpipe.config import settings
+from supportpipe.config import ConfigError, settings
 from supportpipe.logging_store import scrub_outbound_text
 from supportpipe.schemas import ClassificationResult, ExtractedFields
 from supportpipe.taxonomy.loader import taxonomy
@@ -114,8 +114,21 @@ class GeminiClassifierProvider(BaseClassifierProvider):
                 "[CIRCUIT_BREAKER] Cloud provider quota exceeded (HTTP 429). Fast-failing Gemini request."
             )
 
+        if not self.model or str(self.model).strip().upper() == "OWNER_CONFIRM":
+            raise ConfigError(f"Model ID for {self.__class__.__name__} is OWNER_CONFIRM or unconfigured")
+
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY is not configured")
+
+        if settings.llm_mode == "live":
+            tier = "flash"
+            if "lite" in self.model.lower():
+                tier = "flash_lite"
+            tier = kwargs.get("tier", tier)
+            from supportpipe.budget import budget_limiter
+
+            if not budget_limiter.acquire(tier):
+                raise RuntimeError(f"[BUDGET_EXHAUSTED] Tier '{tier}' reached call budget limit.")
 
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
         headers = {"x-goog-api-key": self.api_key}
