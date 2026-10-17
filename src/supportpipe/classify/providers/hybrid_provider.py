@@ -16,7 +16,12 @@ from supportpipe.classify.providers.groq_provider import GroqClassifierProvider
 from supportpipe.classify.providers.jev_provider import JevClassifierProvider
 from supportpipe.classify.providers.mock_provider import MockClassifierProvider
 from supportpipe.config import settings
-from supportpipe.learning_store import DiscrepancyStore, discrepancy_store as default_discrepancy_store
+from supportpipe.learning_store import (
+    DiscrepancyStore,
+)
+from supportpipe.learning_store import (
+    discrepancy_store as default_discrepancy_store,
+)
 from supportpipe.schemas import ClassificationResult, ExtractedFields, PriorityType
 from supportpipe.taxonomy.loader import taxonomy
 

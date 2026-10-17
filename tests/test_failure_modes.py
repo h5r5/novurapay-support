@@ -130,7 +130,9 @@ def test_failure_mode_street_slang_theft_and_anger() -> None:
 def test_failure_mode_provider_fallback_degraded_flag() -> None:
     """Verify degraded=True is tagged when classification provider falls back."""
     from unittest.mock import MagicMock, patch
+
     from supportpipe.classify.classify import classify_ticket
+
 
     with patch("supportpipe.classify.classify.get_classifier_provider") as mock_get:
         mock_prov = MagicMock()
