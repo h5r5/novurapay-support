@@ -166,6 +166,8 @@ def process_ticket(
     elif "pure_gratitude" in classification.sentiment_tags:
         urgency = "low"
 
+    is_degraded = bool(getattr(classification, "degraded", False)) or ("fallback" in provider_tag)
+
     return PipelineResult(
         ticket_id=ticket.ticket_id,
         category=classification.category,
@@ -184,6 +186,7 @@ def process_ticket(
         urgency_level=urgency,
         audit_status=audit_status,
         audit_discrepancy_details=audit_discrepancy,
+        degraded=is_degraded,
     )
 
 
@@ -252,6 +255,7 @@ def run_batch(
                 reasoning_summary=f"Unhandled exception during pipeline execution: {exc}",
                 latency_ms=0.0,
                 urgency_level="critical",
+                degraded=True,
             )
 
         results.append(res)

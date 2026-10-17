@@ -84,4 +84,5 @@ def classify_ticket(
     except Exception as e:
         logger.error("Classification failed via %s: %s. Falling back to Mock.", provider_name_tag, e)
         fallback = MockClassifierProvider().classify(ticket_text=ticket_text, channel=channel)
+        fallback.degraded = True
         return fallback, f"{provider_name_tag}_fallback_mock"

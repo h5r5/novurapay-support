@@ -175,6 +175,9 @@ class HybridClassifierProvider(BaseClassifierProvider):
 
         # If cloud engines failed or unavailable, fallback safely to System 1
         if not res_jev and not res_gemini:
+            if self.jev_provider or self.gemini_provider or self.groq_provider:
+                res_mock.degraded = True
+                res_mock.reasoning_summary = f"[DEGRADED_FALLBACK] {res_mock.reasoning_summary}"[:300]
             return res_mock
 
         # 4. Process Gemini Audit Discrepancies (Active Learning Loop)
