@@ -21,7 +21,7 @@ This repository is a **Public Open-Source** project. You must strictly enforce t
 - **Runtime Discrepancy & Log Files:** Before running `git commit`, verify `git status` to ensure runtime active learning logs (e.g., `data/audit_learning/discrepancies.jsonl`), cache directories, or temporary test runs are NOT accidentally committed.
 - If you notice any unmasked sensitive file in `git status`, immediately clean it with `git restore` or add it to `.gitignore`.
 
-### 3. PII & Brand Protection (Rule 14)
+### 3. PII & Brand Protection (project policy, AGENTS.md)
 - **Zero Real Customer PII:** Never introduce real customer names, phone numbers, or Iraqi national IDs into the codebase or datasets. All datasets must remain 100% synthetic or anonymized.
 - Free-text fields, drafts, phone numbers, and escalation reasons must be passed through `supportpipe.logging_store.mask_pii()` before persistent logging.
 - **Neutral Simulation Branding:** Strictly adhere to the neutral simulation identity **"NovuraPay"** (محفظة نوفورا الرقمية) or the technical package name `supportpipe`. Never use real trademarked digital wallet names in the codebase, docs, or prompts.

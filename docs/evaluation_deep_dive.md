@@ -33,13 +33,20 @@ Measured directly on the current template-isolated holdout split (`data/splits/t
 
 | Stratum / Slice | n | Correct | Accuracy | Wilson 95% CI | Context / Exposure Status |
 | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Overall Holdout (Current `test.jsonl`)** | **133** | **75** | **56.39%** | **[47.90%, 64.52%]** | *Holdout, possibly partly exposed* |
-| **CLEAN Slice (Zero overlap or verbatim templates)** | **90** | **42** | **46.67%** | **[36.71%, 56.90%]** | **Cleanest available estimate** prior to sealed `test_v2` |
-| **Partly Exposed Slice** | **43** | **33** | **76.74%** | **[62.26%, 86.85%]** | Near-duplicate text or verbatim template family |
-| ↳ *Rule Path x EXPOSED* | 19 | 16 | 84.21% | [62.43%, 94.48%] | Deterministic rules on exposed patterns |
-| ↳ *Rule Path x CLEAN* | 15 | 11 | 73.33% | [48.05%, 89.10%] | Deterministic rules on unseen tickets |
-| ↳ *ML Model x EXPOSED* | 24 | 17 | 70.83% | [50.83%, 85.09%] | TF-IDF + LR on exposed patterns |
-| ↳ *ML Model x CLEAN* | 75 | 31 | 41.33% | [30.88%, 52.63%] | TF-IDF + LR on completely unseen templates |
+| **Overall Holdout (Current `test.jsonl`)** | **133** | **75** | **56.39%** (56.4%) | **[47.90%, 64.52%]** | Full holdout split |
+| **Unexposed Slice A (Handwritten counted EXPOSED)** | **70** | **27** | **38.57%** (38.6%) | **[28.00%, 50.30%]** | Conservative: 20 handwritten tickets treated as exposed |
+| ↳ *Rule Path x CLEAN (Slice A)* | 8 | 6 | 75.00% | [40.93%, 92.85%] | Deterministic rules on strictly unexposed tickets |
+| ↳ *ML Model x CLEAN (Slice A)* | 62 | 21 | 33.87% (33.9%) | [23.33%, 46.26%] | TF-IDF + LR on strictly unexposed tickets |
+| **Unexposed Slice B (Handwritten counted UNEXPOSED)** | **90** | **42** | **46.67%** (46.7%) | **[36.71%, 56.90%]** | Alternative: 20 handwritten tickets treated as unexposed |
+| ↳ *Rule Path x CLEAN (Slice B)* | 15 | 11 | 73.33% | [48.05%, 89.10%] | Deterministic rules on unexposed slice B |
+| ↳ *ML Model x CLEAN (Slice B)* | 75 | 31 | 41.33% | [30.88%, 52.63%] | TF-IDF + LR on unexposed slice B |
+| **Exposed Slice (Slice A definition: 43 synth + 20 HW)** | **63** | **48** | **76.19%** | [64.21%, 85.12%] | Overlapping or pre-rule committed tickets |
+
+*Dual Accounting Definitions:* Both definitions of the unexposed subset are explicitly reported without choosing:
+1. **38.6% (27/70, Wilson 28.0–50.3%):** Counts the 20 handwritten tickets as exposed because they were committed before the last rule commit (`75e037b`), leaving 70 strictly unexposed tickets. On this slice, Rule $\times$ CLEAN achieves **6/8** (75.0%) and ML $\times$ CLEAN achieves **21/62** (33.9%, Wilson 23.3–46.3%).
+2. **46.7% (42/90, Wilson 36.7–56.9%):** Counts handwritten tickets as unexposed (treating only synthetic template near-duplicates as exposed).
+
+*Historical Rule Code Invariance (`ecadb94` vs HEAD):* Running the rule engine as of commit `ecadb94` versus HEAD on the 133 holdout tickets produces **75/133 accuracy on both**, exactly **0 prediction flips**, and only **1 path change** (old code ran with current ML artifacts).
 
 *Historical note:* The earlier ID-based overlap count (30 in test and 86 in dev) was an artifact of reused sequential ticket IDs. True byte-identical overlap is only 2 tickets across the entire 133 holdout.
 ---

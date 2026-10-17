@@ -72,3 +72,7 @@ Agentic AI Challenge*.md
 
 # Graphify local cache
 graphify-out/cache/
+
+# Audit learning & batch runs (keep .gitkeep tracked)
+data/audit_learning/*.jsonl
+results/batch_*

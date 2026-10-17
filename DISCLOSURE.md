@@ -35,7 +35,7 @@
 - **100% Synthetic Data:** No real customer names, phone numbers, account identifiers, or transaction histories were collected, accessed, or used in this project.
 - **Dataset Size:** 352 total labeled tickets in authentic Iraqi and Kurdish dialects (219 development tickets in `data/splits/dev.jsonl` and 133 holdout tickets in `data/splits/test.jsonl`).
 - **Generation Method:** Synthetic tickets were generated using structured LLM prompts designed with Iraqi dialect colloquialisms, common fintech failure modes, and deliberate edge cases, partitioned by template family (`GroupShuffleSplit`).
-- **PII Hygiene:** All synthetic phone numbers and account identifiers strictly adhere to non-routable fictional formats. An automated regex scrubber and phone mask (`mask_phone_number`) conceals sensitive digits prior to storage and UI presentation.
+- **PII Hygiene & Outbound Scrubbing:** All synthetic phone numbers and account identifiers strictly adhere to non-routable fictional formats. An automated regex scrubber and phone mask (`mask_pii`, `scrub_outbound_text`) conceals phone numbers and card/national IDs prior to storage and in every outbound LLM call. Customer names and physical addresses are not masked by regex; all dataset records and tickets are strictly synthetic only.
 - **Provider Policy Notice:** Testing using free-tier LLM endpoints was conducted solely on synthetic data to prevent any unintended data retention risks.
 
 ## 4. Software Libraries & External Tools

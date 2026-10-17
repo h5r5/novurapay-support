@@ -5,11 +5,11 @@
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/)
 [![Tests: 106/106 Passed](https://img.shields.io/badge/tests-106%2F106%20passing-brightgreen.svg)]()
-[![Holdout 56.4% | Unexposed 46.7%](https://img.shields.io/badge/holdout-56.4%25%20(unexposed%2046.7%25)-blue.svg)]()
+[![Holdout: 56.4% | Unexposed: 38.6%–46.7%](https://img.shields.io/badge/holdout-56.4%25%20(unexposed%2038.6%25--46.7%25)-blue.svg)]()
 [![Adversarial Breaking Points: 0/100](https://img.shields.io/badge/adversarial_breaking_points-0%2F100%20(100%25)-purple.svg)]()
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
-> **Evaluated Accuracy:** holdout 56.4% (75/133, includes exposed tickets); unexposed subset 46.7% (42/90, Wilson 36.7-56.9).
+> **Evaluated Accuracy:** Holdout **56.4%** (75/133). Unexposed subset: **38.6%** (27/70, Wilson 95% CI [28.0%, 50.3%]) with the 20 handwritten tickets counted exposed (committed before the last rule commit); or **46.7%** (42/90, Wilson 95% CI [36.7%, 56.9%]) if handwritten tickets are counted unexposed (both definitions presented). Stratified breakdown on clean slice: Rule $\times$ CLEAN: **6/8** (75.0%), ML $\times$ CLEAN: **21/62** (33.9%, Wilson 95% CI [23.3%, 46.3%]). Historical rule provenance comparison (`ecadb94` rule code vs HEAD on holdout): 75/133 both, 0 flips, 1 path change (old code ran with current ML artifacts).
 
 ---
 

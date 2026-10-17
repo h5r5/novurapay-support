@@ -6,6 +6,7 @@ import httpx
 
 from supportpipe.classify.providers.base import BaseClassifierProvider
 from supportpipe.config import settings
+from supportpipe.logging_store import scrub_outbound_text
 from supportpipe.schemas import ClassificationResult, ExtractedFields, PriorityType
 from supportpipe.taxonomy.loader import taxonomy
 
@@ -72,13 +73,14 @@ class JevClassifierProvider(BaseClassifierProvider):
             if dt:
                 facts_summary.append(f"التاريخ: {dt}")
             if phone:
-                facts_summary.append(f"الهاتف: {phone}")
+                facts_summary.append(f"الهاتف: {scrub_outbound_text(str(phone), endpoint=endpoint)}")
 
         facts_clause = f"\nالحقائق المالية المستخرجة: {' | '.join(facts_summary)}" if facts_summary else ""
+        outbound_text = scrub_outbound_text(ticket_text, endpoint=endpoint)
 
         payload: dict[str, Any] = {
             "model": self.model,
-            "state": f"القناة: {channel}\nنص التذكرة: {ticket_text}{facts_clause}",
+            "state": f"القناة: {channel}\nنص التذكرة: {outbound_text}{facts_clause}",
             "questions": {
                 "category": {
                     "type": "choice",

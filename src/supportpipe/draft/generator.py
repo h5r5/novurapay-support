@@ -6,6 +6,7 @@ from typing import Any
 import httpx
 
 from supportpipe.config import settings
+from supportpipe.logging_store import scrub_outbound_text
 from supportpipe.schemas import ExtractedFields
 from supportpipe.taxonomy.loader import taxonomy
 
@@ -45,18 +46,19 @@ def generate_candidate_draft(
     else:
         amount_str = "غير محدد"
     ref_str = extracted.transaction_ref or "غير مذكور"
+    model = settings.gemini_model or "gemini-1.5-flash"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+    outbound_ticket_text = scrub_outbound_text(ticket_raw_text, endpoint=url)
 
     prompt_context = (
         f"فئة المشكلة: {cat_name}\n"
         f"مستوى الأولوية: {priority}\n"
         f"المبلغ المستخرج: {amount_str}\n"
         f"رقم العملية: {ref_str}\n"
-        f"نص رسالة العميل: {ticket_raw_text}\n\n"
+        f"نص رسالة العميل: {outbound_ticket_text}\n\n"
         f"اكتب الرد المقترح:"
     )
 
-    model = settings.gemini_model or "gemini-1.5-flash"
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     headers = {"x-goog-api-key": settings.gemini_api_key}
     payload: dict[str, Any] = {
         "contents": [

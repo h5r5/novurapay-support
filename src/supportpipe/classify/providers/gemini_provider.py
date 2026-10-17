@@ -10,6 +10,7 @@ import httpx
 
 from supportpipe.classify.providers.base import BaseClassifierProvider
 from supportpipe.config import settings
+from supportpipe.logging_store import scrub_outbound_text
 from supportpipe.schemas import ClassificationResult, ExtractedFields
 from supportpipe.taxonomy.loader import taxonomy
 
@@ -119,20 +120,26 @@ class GeminiClassifierProvider(BaseClassifierProvider):
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent"
         headers = {"x-goog-api-key": self.api_key}
 
+        outbound_text = scrub_outbound_text(ticket_text, endpoint=url)
+
         if fast_extracted:
             # Audit mode
             sys_prompt = SYSTEM_AUDIT_PROMPT.format(
                 categories_text=taxonomy.format_categories_for_prompt()
             )
-            facts_dict = (
+            raw_facts = (
                 fast_extracted.model_dump()
                 if hasattr(fast_extracted, "model_dump")
                 else (fast_extracted if isinstance(fast_extracted, dict) else {})
             )
+            facts_dict = dict(raw_facts)
+            if "phone_number" in facts_dict and facts_dict["phone_number"]:
+                facts_dict["phone_number"] = scrub_outbound_text(str(facts_dict["phone_number"]), endpoint=url)
+
             user_content = (
                 f"Channel: {channel}\n"
                 f"Local Extractor Facts: {json.dumps(facts_dict, ensure_ascii=False)}\n"
-                f"<<<TICKET_TEXT>>>\n{ticket_text}\n<<<END_TICKET_TEXT>>>"
+                f"<<<TICKET_TEXT>>>\n{outbound_text}\n<<<END_TICKET_TEXT>>>"
             )
         else:
             # Standard classification mode
@@ -140,7 +147,7 @@ class GeminiClassifierProvider(BaseClassifierProvider):
                 categories_text=taxonomy.format_categories_for_prompt()
             )
             user_content = (
-                f"Channel: {channel}\n<<<TICKET_TEXT>>>\n{ticket_text}\n<<<END_TICKET_TEXT>>>"
+                f"Channel: {channel}\n<<<TICKET_TEXT>>>\n{outbound_text}\n<<<END_TICKET_TEXT>>>"
             )
 
         payload = {

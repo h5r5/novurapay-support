@@ -506,17 +506,22 @@ st.sidebar.markdown(
     unsafe_allow_html=True,
 )
 
-st.sidebar.markdown("### مؤشرات أداء الأيجنت (Frozen Benchmark)")
+st.sidebar.markdown("### مؤشرات أداء الأيجنت (Dev benchmark (tuned))")
+correct_eval = (
+    eval_metrics.get("classification", {}).get("correct_tickets", int(round(cls_acc * tot_eval / 100.0)))
+    if eval_metrics
+    else int(round(cls_acc * tot_eval / 100.0))
+)
 st.sidebar.markdown(
     f"""
-    * **دقة الفرز الكلية:** `{cls_acc:.1f}%` ({tot_eval}/{tot_eval})
-    * **دقة الفرز الذاتي:** `{auto_acc:.1f}%`
+    * **دقة الفرز الكلية (dev/tuned):** `{cls_acc:.1f}%` ({correct_eval}/{tot_eval})
+    * **دقة الفرز الذاتي (dev/tuned):** `{auto_acc:.1f}%`
     * **دقة استخراج المرجع:** `{ref_match:.1f}%`
     * **دقة استخراج المبالغ:** `{amt_match:.1f}%`
     * **دقة استخراج التاريخ:** `{date_match:.1f}%`
     * **معدل التصعيد للبشر:** `{esc_rate:.1f}%` ({esc_count}/{tot_eval})
     * **سرعة المعالجة:** `{avg_lat:.2f} ms` ({tps:.0f} tps)
-    * **بوابة الحماية:** `100% Guarded`
+    * **بوابة الحماية:** `100% Guarded (dev/tuned)`
     """
 )
 
@@ -527,12 +532,12 @@ st.sidebar.markdown(
     - **الخط المعتمد:** `Vazirmatn` (دعم كردي وعراقي)
     - **خط الأرقام:** `JetBrains Mono`
     - **الرموز:** Phosphor SVG Icons
-    - **البيانات:** 100% حقيقية (Zero-Mock)
+    - **البيانات:** 100% اصطناعية (Zero-Mock)
     """
 )
 
 # -----------------------------------------------------------------------------
-# 4. Helper Functions for Real Data Access (Clean Scenario Names)
+# 4. Helper Functions for Synthetic Data Access (Clean Scenario Names)
 # -----------------------------------------------------------------------------
 PRESET_SCENARIOS = {
     "لهجة عراقية معقدة ومبالغ مركبة": "اني البارحه قبل اولت البارحه حولت ملييونين وربعع وماتحول الفلوس شلقصه ؟",
@@ -553,7 +558,7 @@ PRESET_SCENARIOS = {
 
 @st.cache_data
 def load_split_tickets(split_name: str = "dev") -> list[Ticket]:
-    """Load tickets from real dataset splits (dev.jsonl or test.jsonl)."""
+    """Load tickets from synthetic dataset splits (dev.jsonl or test.jsonl)."""
     split_file = settings.project_root / "data" / "splits" / f"{split_name}.jsonl"
     tickets = []
     if split_file.exists():
@@ -1166,10 +1171,11 @@ with tab_queue:
     # Source radio
     q_src_col1, q_src_col2 = st.columns([2, 1])
     recent_runs_list = load_recent_runs()
+    dev_count = len(load_split_tickets("dev")) or 219
     with q_src_col1:
         q_source = st.radio(
             "مصدر بيانات الطابور:",
-            ["تحميل حزمة التطوير (dev.jsonl - 215 تذكرة حقيقية)", "استعراض دفعة محفوظة من results/"],
+            [f"تحميل حزمة التطوير (dev.jsonl - {dev_count} تذكرة اصطناعية)", "استعراض دفعة محفوظة من results/"],
             horizontal=True,
         )
 
@@ -1341,7 +1347,7 @@ with tab_queue:
 with tab_metrics:
     eval_name = latest_eval_dir.name if latest_eval_dir else "eval_test"
     st.subheader("مراقبة أداء النماذج وأدلة التقييم الرسمية (AI Observability & Evidence)")
-    st.caption(f"أرقام حقيقية مستخرجة مباشرة من نتائج التقييم المجمدة results/{eval_name}/metrics.json.")
+    st.caption(f"أرقام اصطناعية مستخرجة مباشرة من نتائج التقييم results/{eval_name}/metrics.json (dev/tuned).")
 
     prio_acc_val = (
         eval_metrics.get("classification", {}).get("priority_accuracy", 0.991) * 100
@@ -1352,7 +1358,7 @@ with tab_metrics:
     # 6 Top Key Performance Cards
     bk1, bk2, bk3, bk4, bk5, bk6 = st.columns(6)
     with bk1:
-        st.markdown(f'<div class="cockpit-card"><div class="mono-code" style="color:#10b981; font-size:1.6rem; font-weight:700;">{cls_acc:.1f}%</div><div style="font-size:0.8rem; color:#a1a1aa; margin-top:4px;">دقة الفرز الكلية (F1: 1.0)</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="cockpit-card"><div class="mono-code" style="color:#10b981; font-size:1.6rem; font-weight:700;">{cls_acc:.1f}%</div><div style="font-size:0.8rem; color:#a1a1aa; margin-top:4px;">دقة الفرز الكلية (dev/tuned)</div></div>', unsafe_allow_html=True)
     with bk2:
         st.markdown(f'<div class="cockpit-card"><div class="mono-code" style="color:#38bdf8; font-size:1.6rem; font-weight:700;">{auto_acc:.1f}%</div><div style="font-size:0.8rem; color:#a1a1aa; margin-top:4px;">دقة الفرز الذاتي</div></div>', unsafe_allow_html=True)
     with bk3:
@@ -1427,7 +1433,7 @@ with tab_outage:
     st.subheader("ذكاء كشف الأعطال والأنماط النظامية (Outage Intelligence)")
     st.caption("تحليل إحصائي فوري لاكتشاف الأعطال العامة في بوابات الدفع وبوابات رسائل التحقق (OTP) وتصدير تقارير الإدارة.")
 
-    out_split = st.selectbox("حزمة التذاكر للتحليل المتقدم:", ["حزمة التطوير (dev.jsonl - 215 تذكرة)", "حزمة الاختبار (test.jsonl - 116 تذكرة)"])
+    out_split = st.selectbox("حزمة التذاكر للتحليل المتقدم:", [f"حزمة التطوير (dev.jsonl - {dev_count} تذكرة اصطناعية)", "حزمة الاختبار (test.jsonl - 116 تذكرة)"])
     s_name = "dev" if "dev" in out_split else "test"
     spl_tickets = load_split_tickets(s_name)
 

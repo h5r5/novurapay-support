@@ -7,7 +7,7 @@
 ---
 
 > [!NOTE]
-> **Repository Rename Notice:** In compliance with Rule 14 (Simulated Iraqi Digital Wallet - NovuraPay), the repo is tracking [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support). Owner should rename the repository in GitHub.com Settings to `novurapay-support`.
+> **Repository Rename Notice:** In compliance with project policy, AGENTS.md (Simulated Iraqi Digital Wallet - NovuraPay), the repo is tracking [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support). Owner should rename the repository in GitHub.com Settings to `novurapay-support`.
 
 | Gate ID | Requirement | Where Satisfied (File / Module / Test) | Verification Method | Status |
 |---|---|---|---|---|

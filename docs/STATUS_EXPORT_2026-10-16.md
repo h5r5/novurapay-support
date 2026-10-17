@@ -17,7 +17,7 @@
   - **Design Brief (22/10/2026):** **6 days remaining**.
   - **MVP Semi-Final (08/11/2026):** **23 days remaining**.
 - **Repository Path:** `c:\Users\heyder\Desktop\dev\zine` (Git remote tracking `https://github.com/h5r5/novurapay-support`).
-  - *Repository Rename Notice:* Updated to `https://github.com/h5r5/novurapay-support` under Rule 14 (Simulated Iraqi Digital Wallet - NovuraPay). Owner instructed to rename repo settings on GitHub.com to `novurapay-support`.
+  - *Repository Rename Notice:* Updated to `https://github.com/h5r5/novurapay-support` under project policy, AGENTS.md (Simulated Iraqi Digital Wallet - NovuraPay). Owner instructed to rename repo settings on GitHub.com to `novurapay-support`.
 - **Coding Assistant & Model:** Google Antigravity IDE running Gemini 3.8 Flash (High-Reasoning Configuration).
 
 ---
