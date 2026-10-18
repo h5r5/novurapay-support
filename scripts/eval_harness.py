@@ -1,7 +1,8 @@
 """CLI Runner for Evaluation Matrix Harness (Task C4 & C5).
 
 Usage:
-    python scripts/eval_harness.py --config offline_rule_ml --split data/splits/dev.jsonl
+    python scripts/eval_harness.py --config offline_rule_ml_oof --split data/splits/dev.jsonl
+    python scripts/eval_harness.py --config offline_rule_ml_insample --split data/splits/dev.jsonl
 """
 
 from __future__ import annotations
@@ -40,7 +41,7 @@ def main() -> None:
         "--config",
         type=str,
         default=None,
-        help="Target config ID to evaluate (e.g., offline_rule_ml)",
+        help="Target config ID to evaluate (e.g., offline_rule_ml_oof, offline_rule_ml_insample)",
     )
     parser.add_argument(
         "--override-reason",
@@ -68,6 +69,8 @@ def main() -> None:
     print("\n=== Evaluation Summary Results ===")
     for cfg_id, res in summary.get("configs", {}).items():
         print(f"[{cfg_id}] {res.get('name')}")
+        if res.get("notes"):
+            print(f"  Notes:         {res.get('notes')}")
         print(f"  Accuracy:      {res.get('accuracy'):.4f} (Wilson 95% CI: [{res['wilson_95_ci'][0]:.4f}, {res['wilson_95_ci'][1]:.4f}])")
         print(f"  Correct:       {res.get('correct_count')}/{res.get('total_tickets')}")
         print(f"  Errors:        {res.get('error_count')}")

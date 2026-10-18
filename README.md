@@ -149,7 +149,7 @@ All figures below originate directly from reproducible runs on the current parti
   - *Clean Slice (90 tickets, zero near-duplicate overlap or verbatim template families):* **46.67%** (42 / 90, Wilson 95% CI: **[36.71%, 56.90%]**) — the cleanest estimate available prior to `test_v2`.
   - *Partly Exposed Slice (43 tickets):* **76.74%** (33 / 43, Wilson 95% CI: **[62.26%, 86.85%]**).
   - *Path Breakdown:* 34 tickets handled by deterministic dialect rules (19 exposed, 15 clean; 84.21% vs 73.33%); 99 tickets handled by offline ML model (24 exposed, 75 clean; 70.83% vs 41.33%).
-  - *Historical Split Context:* Earlier ID-based overlap counts (30 in test and 86 in dev) were an artifact of reused sequential IDs. Past 100% and 92.24% claims on the old 116-ticket split were **tuned on the development set, not held-out**.
+  - *Historical Split Context:* Earlier ID-based overlap counts (30 in test and 86 in dev) were an artifact of reused sequential IDs. Past 100% and 92.24% claims on the old 116-ticket split were **in-sample (tuned on the development set, not held-out performance)**.
 * **Auto-Handled Safety:** Zero erroneous automated responses dispatched to customers.
 * **Transaction Ref Exact Match:** **100.0%** (synthetic reference strings).
 * **Date Match Rate:** **100.0%** (calendar-accurate normalized event dates).

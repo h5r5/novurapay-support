@@ -15,6 +15,10 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import GroupKFold
+from sklearn.pipeline import Pipeline
 
 from supportpipe.classify.classify import get_classifier_provider
 from supportpipe.classify.providers.base import BaseClassifierProvider
@@ -30,6 +34,7 @@ from supportpipe.evaluation.metrics import (
     validate_dataset_path,
 )
 from supportpipe.evaluation.sealed_guard import check_sealed_test_guard
+from supportpipe.extract.normalize import normalize_arabizi_and_slang, normalize_digits
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +58,7 @@ def instantiate_matrix_provider(config: dict[str, Any]) -> BaseClassifierProvide
     provider_type = config.get("provider", "mock").lower()
     model_id = config.get("model_id")
 
-    if provider_type in ["mock", "offline_mock", "offline_rule_ml"]:
+    if provider_type in ["mock", "offline_mock", "offline_rule_ml", "offline_rule_ml_insample"]:
         return MockClassifierProvider()
     elif provider_type in ["gemini_flash_lite", "flash_lite"]:
         model = settings.gemini_flash_lite_model if model_id == "OWNER_CONFIRM" else model_id
@@ -74,6 +79,151 @@ def instantiate_matrix_provider(config: dict[str, Any]) -> BaseClassifierProvide
         return get_classifier_provider(provider_type)
 
 
+def extract_groups(items: list[dict[str, Any]]) -> list[str]:
+    """Extract grouping labels by template_id.
+
+    Hand-written tickets without template_id each receive their own unique group.
+    """
+    groups: list[str] = []
+    for idx, item in enumerate(items):
+        t_id = item.get("label", {}).get("template_id")
+        if t_id and str(t_id).strip():
+            groups.append(str(t_id).strip())
+        else:
+            ticket_id = item.get("ticket", {}).get("ticket_id") or f"handwritten_{idx}"
+            groups.append(f"unique_handwritten_{ticket_id}")
+    return groups
+
+
+def run_eval_config_oof(
+    config: dict[str, Any],
+    dataset_items: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Execute out-of-fold evaluation using GroupKFold splits.
+
+    ML pipeline retrained inside each fold, rules unchanged.
+    Preserves exact dataset item ordering and per_ticket.csv schema.
+    """
+    config_hash = compute_config_hash(config)
+    provider_name = config.get("provider", "offline_rule_ml_oof")
+    cfg_model_id = config.get("model_id", "offline_mock_oof")
+
+    raw_texts = [str(it.get("ticket", {}).get("raw_text", "")) for it in dataset_items]
+    norm_texts = [normalize_arabizi_and_slang(normalize_digits(t)) for t in raw_texts]
+    categories = [str(it.get("label", {}).get("category", "")) for it in dataset_items]
+    channels = [str(it.get("ticket", {}).get("channel", "app")) for it in dataset_items]
+
+    groups = extract_groups(dataset_items)
+    total_samples = len(dataset_items)
+    unique_groups = len(set(groups))
+    n_splits = min(5, unique_groups) if unique_groups >= 2 else 1
+
+    prio_base_pipe = Pipeline([
+        ("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=1, sublinear_tf=True)),
+        ("lr", LogisticRegression(C=2.0, max_iter=300, random_state=42)),
+    ])
+
+    rows: list[dict[str, Any]] = [{} for _ in range(total_samples)]
+
+    if n_splits < 2:
+        provider = MockClassifierProvider()
+        for idx, item in enumerate(dataset_items):
+            start_time = time.perf_counter()
+            try:
+                res = provider.classify(ticket_text=raw_texts[idx], channel=channels[idx])
+                latency_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
+                pred = res.category
+                gold = categories[idx]
+                rows[idx] = {
+                    "ticket_id": item.get("ticket", {}).get("ticket_id", ""),
+                    "gold": gold,
+                    "pred": pred,
+                    "correct": bool(pred == gold),
+                    "provider_path": provider_name,
+                    "degraded": getattr(res, "degraded", False),
+                    "model_id": cfg_model_id,
+                    "latency_ms": latency_ms,
+                    "error": "",
+                    "config_hash": config_hash,
+                }
+            except Exception as exc:
+                latency_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
+                rows[idx] = {
+                    "ticket_id": item.get("ticket", {}).get("ticket_id", ""),
+                    "gold": categories[idx],
+                    "pred": "",
+                    "correct": False,
+                    "provider_path": provider_name,
+                    "degraded": False,
+                    "model_id": cfg_model_id,
+                    "latency_ms": latency_ms,
+                    "error": str(exc),
+                    "config_hash": config_hash,
+                }
+        return rows
+
+    gkf = GroupKFold(n_splits=n_splits)
+
+    for _fold, (train_idx, test_idx) in enumerate(gkf.split(norm_texts, categories, groups)):
+        X_train = [norm_texts[i] for i in train_idx]
+        y_train = [categories[i] for i in train_idx]
+        y_train_prio = [str(dataset_items[i].get("label", {}).get("priority", "medium")) for i in train_idx]
+
+        fold_cat_pipe = Pipeline([
+            ("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=1, sublinear_tf=True)),
+            ("lr", LogisticRegression(C=2.5, max_iter=300, random_state=42)),
+        ])
+        fold_cat_pipe.fit(X_train, y_train)
+
+        fold_prio_pipe = Pipeline(prio_base_pipe.steps)
+        fold_prio_pipe.fit(X_train, y_train_prio)
+
+        provider = MockClassifierProvider()
+        provider.cat_pipe = fold_cat_pipe
+        provider.prio_pipe = fold_prio_pipe
+
+        for idx in test_idx:
+            item = dataset_items[idx]
+            tkt_id = item.get("ticket", {}).get("ticket_id", "")
+            gold = categories[idx]
+            start_time = time.perf_counter()
+            try:
+                res = provider.classify(ticket_text=raw_texts[idx], channel=channels[idx])
+                latency_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
+                pred = res.category
+                correct = bool(pred == gold)
+                degraded = getattr(res, "degraded", False)
+
+                rows[idx] = {
+                    "ticket_id": tkt_id,
+                    "gold": gold,
+                    "pred": pred,
+                    "correct": correct,
+                    "provider_path": provider_name,
+                    "degraded": degraded,
+                    "model_id": cfg_model_id,
+                    "latency_ms": latency_ms,
+                    "error": "",
+                    "config_hash": config_hash,
+                }
+            except Exception as exc:
+                latency_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
+                rows[idx] = {
+                    "ticket_id": tkt_id,
+                    "gold": gold,
+                    "pred": "",
+                    "correct": False,
+                    "provider_path": provider_name,
+                    "degraded": False,
+                    "model_id": cfg_model_id,
+                    "latency_ms": latency_ms,
+                    "error": str(exc),
+                    "config_hash": config_hash,
+                }
+
+    return rows
+
+
 def run_eval_config(
     config: dict[str, Any],
     dataset_items: list[dict[str, Any]],
@@ -82,10 +232,14 @@ def run_eval_config(
 
     In isolated mode: ONE provider, NO fallback. A failed call is an error row.
     """
+    cfg_id = config.get("id", "")
+    provider_name = config.get("provider", "unknown")
+    if cfg_id == "offline_rule_ml_oof" or provider_name == "offline_rule_ml_oof":
+        return run_eval_config_oof(config, dataset_items)
+
     config_hash = compute_config_hash(config)
     isolated = config.get("isolated", True)
     provider = instantiate_matrix_provider(config)
-    provider_name = config.get("provider", "unknown")
     cfg_model_id = config.get("model_id", "")
 
     rows: list[dict[str, Any]] = []
@@ -254,7 +408,7 @@ def run_evaluation_harness(
         # Wilson 95% Confidence Interval
         acc, low_ci, high_ci = compute_wilson_ci(correct_count, total_tickets)
 
-        config_results[cfg_id] = {
+        config_entry: dict[str, Any] = {
             "name": cfg.get("name"),
             "provider": cfg.get("provider"),
             "model_id": cfg.get("model_id"),
@@ -268,6 +422,10 @@ def run_evaluation_harness(
             "avg_latency_ms": round(avg_latency, 2),
             "csv_path": str(csv_path),
         }
+        if cfg.get("notes") or cfg_id in ["offline_rule_ml_insample", "offline_rule_ml"]:
+            config_entry["notes"] = cfg.get("notes") or "IN-SAMPLE, not a performance number"
+
+        config_results[cfg_id] = config_entry
 
     # Paired McNemar tests between all evaluated active config pairs
     mcnemar_tests: list[dict[str, Any]] = []
@@ -289,12 +447,19 @@ def run_evaluation_harness(
                 "is_significant_at_05": is_sig,
             })
 
+    summary_notes: dict[str, str] = {}
+    for cid, c_data in config_results.items():
+        if "notes" in c_data:
+            summary_notes[cid] = str(c_data["notes"])
+
     summary: dict[str, Any] = {
         "split": str(valid_split),
         "total_tickets": total_tickets,
         "configs": config_results,
         "paired_mcnemar_comparisons": mcnemar_tests,
     }
+    if summary_notes:
+        summary["notes"] = summary_notes
 
     summary_file = out_dir / "summary.json"
     summary_file.write_text(json.dumps(summary, indent=2), encoding="utf-8")

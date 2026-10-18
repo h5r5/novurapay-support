@@ -15,7 +15,7 @@
 
 | Metric | Point Estimate | 95% Bootstrap CI (1,000 Resamples) | Benchmark Context |
 | :--- | :---: | :---: | :--- |
-| **Overall Category Accuracy** | **92.24%** (107/116) *(tuned on development set, not held-out)* | **[87.07%, 96.55%]** | **7.6x uplift** over majority class baseline (12.07%) |
+| **Overall Category Accuracy** | **92.24%** (107/116) *(in-sample, tuned on development set, not held-out performance)* | **[87.07%, 96.55%]** | **7.6x uplift** over majority class baseline (12.07%) |
 | **Macro Average F1-Score** | **0.9130** | **[0.8381, 0.9628]** | Balanced performance across all 14 categories |
 | **Auto-Handled Accuracy** | **100.00%** (92/92) | **[100.00%, 100.00%]** | Zero misclassifications reach customers without human review |
 | **Priority Classification Accuracy** | **87.93%** (102/116) | **[81.90%, 93.97%]** | Accurate triage into `high`, `medium`, `low` queues |
@@ -141,7 +141,7 @@ BOOTSTRAP CONFIDENCE INTERVALS (1,000 Resamples, Alpha = 0.05)
 ================================================================================
 Metric                  Point Estimate   Bootstrap Mean   95% CI Lower   95% CI Upper
 --------------------------------------------------------------------------------
-Overall Accuracy            92.24%           92.29%          87.07%         96.55%
+Overall Accuracy (In-Sample) 92.24%          92.29%          87.07%         96.55%
 Macro Average F1            0.9130           0.9068          0.8381         0.9628
 Auto-Handled Accuracy      100.00%          100.00%         100.00%        100.00%
 Priority Accuracy           87.93%           87.89%          81.90%         93.97%

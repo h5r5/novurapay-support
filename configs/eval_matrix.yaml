@@ -4,15 +4,26 @@
 # data/splits/test.jsonl is a burned diagnostic holdout and is strictly NEVER opened.
 
 configs:
-  - id: offline_rule_ml
-    name: "Offline Heuristics + ML Baseline"
+  - id: offline_rule_ml_insample
+    name: "Offline Heuristics + ML Baseline (In-Sample)"
     provider: mock
     model_id: "offline_mock"
     isolated: true
     status: active
     temperature: 0.0
     prompt_id: "system_prompt_v1"
-    description: "System 1 regex/keyword heuristics combined with offline ML baseline without cloud calls"
+    notes: "IN-SAMPLE, not a performance number"
+    description: "System 1 regex/keyword heuristics combined with offline ML baseline without cloud calls (IN-SAMPLE, not a performance number)"
+
+  - id: offline_rule_ml_oof
+    name: "Offline Heuristics + ML Baseline (Out-of-Fold)"
+    provider: offline_rule_ml_oof
+    model_id: "offline_mock_oof"
+    isolated: true
+    status: active
+    temperature: 0.0
+    prompt_id: "system_prompt_v1"
+    description: "GroupKFold out-of-fold predictions with ML retrained inside each fold and unchanged deterministic rules"
 
   - id: flash_lite
     name: "Gemini Flash-Lite"

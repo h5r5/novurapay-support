@@ -10,16 +10,16 @@
 ---
 
 ## 1. AI Coding Assistants & Development Tools
-- **Antigravity AI Assistant:** Google DeepMind Antigravity IDE (model as shown in developer console).
+- **Antigravity AI Assistant:** Google DeepMind Antigravity IDE (model: OWNER_CONFIRM (as shown in the Antigravity console)).
   - Used for code pair-programming, refactoring, test authoring, and documentation generation.
 - **Claude (Anthropic, via claude.ai):**
   - Used for technical architecture review, evaluation audit, prompt authoring, and planned generation of sealed `test_v2` dataset (September–October 2026).
 - All architecture decisions, prompt definitions, and business logic are reviewed and verified by the system owner.
 
 ## 2. Machine Learning & Language Models Used in Pipeline
-- **TypeSafe AI Jev 1.13 / `jev-latest` (Active Production Decision Model):**
+- **TypeSafe AI Jev 1.13 / `jev-latest` (intended primary decision model; not yet measured on a held-out set):**
   - Endpoint: `https://api.typesafe.ai/v1/systemone`
-  - Role: Primary production classifier for Iraqi Arabic support tickets into 14 closed categories, priority assignment (`high`, `medium`, `low`), and calibrated decision confidence scoring via RLCD logit probabilities (Section 7.1 & 7.5). Verified with +26.6% accuracy gain over baseline in live 15-ticket spike.
+  - Role: intended primary decision model; not yet measured on a held-out set for Iraqi Arabic support tickets into 14 closed categories, priority assignment (`high`, `medium`, `low`), and decision confidence scoring via RLCD logit probabilities (Section 7.1 & 7.5, confidence calibration not yet measured). Spike result was anecdotal, n=15, not statistically meaningful.
   - Data-use terms: *not verified by owner*.
 - **Google Gemini (General LLM Provider):**
   - Model ID: `OWNER_CONFIRM: model id from provider console` (Console display names: Gemini 3.6 Flash / Gemini 2.5 Flash).

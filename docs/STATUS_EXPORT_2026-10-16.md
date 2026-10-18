@@ -77,12 +77,12 @@ Full evaluation was executed live on the frozen test set on 2026-10-16:
   Starting evaluation on frozen split: TEST (Mode: OFFLINE)...
   ============================================================
   EVALUATION RESULTS (Split: TEST)
-    Run ID:                eval_test_20261015_214839 (tuned on the development set, not held-out)
-    Overall Accuracy:      92.24% (tuned on the development set, not held-out)
+    Run ID:                eval_test_20261015_214839 (in-sample / tuned on the development set, not held-out)
+    Overall Accuracy:      92.24% (in-sample, not a performance number; tuned on the development set, not held-out)
     Priority Accuracy:     87.93%
     Macro Avg F1:          0.9130
     Baseline (Majority):   12.07%
-    Auto-Handled Accuracy: 100.00% (tuned on the development set, not held-out)
+    Auto-Handled Accuracy: 100.00% (in-sample / tuned on the development set, not held-out)
     Escalation Rate:       20.7%
     Ref Exact Match:       100.0%
     Amount Exact Match:    86.7%
@@ -92,7 +92,7 @@ Full evaluation was executed live on the frozen test set on 2026-10-16:
   Detailed artifacts written to results/eval_test_20261015_214839/
   ```
 - **95% Bootstrap Confidence Intervals (1,000 Resamples, Alpha = 0.05):**
-  - Overall Accuracy: `92.24%` (tuned on the development set, not held-out) $\rightarrow$ **[87.07%, 96.55%]**
+  - Overall Accuracy: `92.24%` (in-sample, not a performance number; tuned on the development set, not held-out) $\rightarrow$ **[87.07%, 96.55%]**
   - Macro Average F1: `0.9130` $\rightarrow$ **[0.8381, 0.9628]**
   - Auto-Handled Accuracy: `100.00%` (tuned on the development set, not held-out) $\rightarrow$ **[100.00%, 100.00%]**
 - **Mathematical Explanation of Auto-Handled Accuracy (100.00%):**
@@ -167,7 +167,7 @@ Summary of Architecture Decision Records (ADRs):
   - *What Needs Finalizing:* Compiling into the final 5-slide / 2-page format, and documenting a week-by-week calendar plan leading to MVP.
 - **MVP Semi-Final (Deadline: 08/11/2026 — 23 Days Remaining):**
   - **Readiness: 75% (Functional Core Complete).**
-  - *What Works:* Batch CLI, frozen test benchmark (92.2% acc, 100% auto-handled acc — tuned on the development set, not held-out), 106 unit tests, Streamlit UI review queue, live Jev and Gemini inference.
+  - *What Works:* Batch CLI, frozen test benchmark (92.2% in-sample acc, 100% in-sample auto-handled acc — in-sample, not a performance number; tuned on the development set, not held-out), 106 unit tests, Streamlit UI review queue, live Jev and Gemini inference.
   - *Gaps to Fill Before 08/11:*
     1. Implementing and wiring the **Groq provider** for free high-volume runs.
     2. Deploying the Streamlit UI to a free hosting service (e.g. Streamlit Community Cloud) for remote judge access.

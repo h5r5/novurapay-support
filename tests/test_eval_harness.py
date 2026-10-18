@@ -190,3 +190,82 @@ configs:
     assert comp["config_a"] == "cfg_mock_1"
     assert comp["config_b"] == "cfg_mock_2"
     assert comp["p_value"] == 1.0  # Identical mock outputs
+
+
+def test_offline_rule_ml_oof_equals_grouped_cv_accuracy(tmp_path: Path) -> None:
+    """Verify offline_rule_ml_oof accuracy equals grouped-CV Rules+ML result (78/219).
+
+    Verifies exact equality to 78/219 (0.3562), in-sample stamping on offline_rule_ml_insample (202/219),
+    identical per_ticket.csv columns, and valid paired McNemar testing.
+    """
+    matrix_yaml = tmp_path / "matrix_offline.yaml"
+    matrix_yaml.write_text(
+        """
+configs:
+  - id: offline_rule_ml_insample
+    name: "Offline Heuristics + ML Baseline (In-Sample)"
+    provider: mock
+    model_id: "offline_mock"
+    isolated: true
+    status: active
+    notes: "IN-SAMPLE, not a performance number"
+  - id: offline_rule_ml_oof
+    name: "Offline Heuristics + ML Baseline (Out-of-Fold)"
+    provider: offline_rule_ml_oof
+    model_id: "offline_mock_oof"
+    isolated: true
+    status: active
+""",
+        encoding="utf-8",
+    )
+
+    out_dir = tmp_path / "eval_dev_results"
+    summary = run_evaluation_harness(
+        matrix_config_path=matrix_yaml,
+        split_path="data/splits/dev.jsonl",
+        output_dir=out_dir,
+    )
+
+    # 1. Out-of-Fold Rules+ML exact match to grouped-CV
+    oof_res = summary["configs"]["offline_rule_ml_oof"]
+    assert oof_res["total_tickets"] == 219
+    assert oof_res["correct_count"] == 78
+    assert oof_res["accuracy"] == round(78 / 219, 4)
+    assert oof_res["error_count"] == 0
+
+    # 2. In-sample baseline check & stamping
+    insample_res = summary["configs"]["offline_rule_ml_insample"]
+    assert insample_res["total_tickets"] == 219
+    assert insample_res["correct_count"] == 202
+    assert insample_res["accuracy"] == round(202 / 219, 4)
+    assert insample_res["notes"] == "IN-SAMPLE, not a performance number"
+    assert summary["notes"]["offline_rule_ml_insample"] == "IN-SAMPLE, not a performance number"
+
+    # 3. Identical 10 columns in per_ticket.csv
+    expected_cols = [
+        "ticket_id",
+        "gold",
+        "pred",
+        "correct",
+        "provider_path",
+        "degraded",
+        "model_id",
+        "latency_ms",
+        "error",
+        "config_hash",
+    ]
+    for cfg_id in ["offline_rule_ml_oof", "offline_rule_ml_insample"]:
+        csv_p = Path(summary["configs"][cfg_id]["csv_path"])
+        assert csv_p.exists()
+        with open(csv_p, encoding="utf-8") as f:
+            reader = csv.reader(f)
+            header = next(reader)
+            rows = list(reader)
+        assert header == expected_cols
+        assert len(rows) == 219
+
+    # 4. Paired McNemar test presence and validity
+    assert len(summary["paired_mcnemar_comparisons"]) == 1
+    comp = summary["paired_mcnemar_comparisons"][0]
+    assert {comp["config_a"], comp["config_b"]} == {"offline_rule_ml_insample", "offline_rule_ml_oof"}
+    assert comp["p_value"] < 0.001  # Significant difference between in-sample and out-of-fold
