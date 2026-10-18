@@ -10,7 +10,7 @@ from supportpipe.schemas import BatchSummary, PipelineResult
 
 # Regex for Iraqi mobile phones (07XX-XXX-XXXX, +964 7XX XXX XXXX, 07XXXXXXXX)
 PHONE_REGEX = re.compile(
-    r"(?:\+?964[\s\-]?|00964[\s\-]?|0)?7[3-9](?:[\s\-]?\d){8}\b",
+    r"(?<!\d)(?:\+?964[\s\-]?|00964[\s\-]?|0)?7[3-9](?:[\s\-]?\d){8}\b",
     re.IGNORECASE,
 )
 # Regex for National ID / Card numbers (12-16 digits)
@@ -23,6 +23,38 @@ def mask_pii(text: str) -> str:
     masked = PHONE_REGEX.sub("[PHONE_SCRUBBED]", norm_text)
     masked = CARD_ID_REGEX.sub("[ID_SCRUBBED]", masked)
     return masked
+
+
+LOOPBACK_HOSTS: frozenset[str] = frozenset({"localhost", "127.0.0.1", "::1", "0.0.0.0"})
+
+
+def is_loopback_host(url_or_host: str | None) -> bool:
+    """Check if the given URL or hostname resolves to a local loopback interface."""
+    if not url_or_host:
+        return False
+    target = url_or_host.strip()
+    if "://" in target:
+        try:
+            from urllib.parse import urlparse
+
+            parsed = urlparse(target)
+            target = parsed.hostname or ""
+        except Exception:
+            return False
+    elif ":" in target:
+        target = target.split(":")[0]
+    return target.strip().lower() in LOOPBACK_HOSTS
+
+
+def scrub_outbound_text(text: str, endpoint: str | None = None) -> str:
+    """Central scrubber applying phone and card/national ID masking to outbound text.
+
+    Skips scrubbing ONLY when the destination endpoint host is a loopback address.
+    """
+    if is_loopback_host(endpoint):
+        return text
+    return mask_pii(text)
+
 
 
 class ReviewQueueStore:

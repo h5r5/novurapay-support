@@ -3,16 +3,19 @@
 **Agentic AI Challenge Iraq — Topic 06: Support Pipeline Automation**  
 **Evaluation Target:** NovuraPay Support Pipeline (`supportpipe`)  
 **Evaluation Run ID:** `eval_test_20261015_214839`  
-**Dataset Split:** Frozen Held-Out Test Set (`data/splits/test.jsonl`, 116 tickets)  
+**Dataset Split:** Historical 116-ticket split (`data/splits/test.jsonl` prior to 75e037b, **tuned on the development set, not held-out**)  
 **Verification Hash (SHA-256):** `f99cc0029239debb9043814059927d6fe48ac9d8c5a7a7b1df04eb4c989f6b0b`
 
 ---
 
-## 1. Executive Evaluation Summary
+## 1. Executive Evaluation Summary (Historical 116-Ticket Development Benchmark)
+
+> [!NOTE]
+> **Provenance & Labeling:** The 116-ticket benchmark below reflects historical offline engine tuning (`eval_test_20261015_214839`). Because dialect heuristics were iteratively optimized on this split (see commit `bf10a3c`), these figures represent **in-sample development performance, not a held-out test**. For current partitioned evaluation with template-family isolation, see Section 1.1 below.
 
 | Metric | Point Estimate | 95% Bootstrap CI (1,000 Resamples) | Benchmark Context |
 | :--- | :---: | :---: | :--- |
-| **Overall Category Accuracy** | **92.24%** (107/116) | **[87.07%, 96.55%]** | **7.6x uplift** over majority class baseline (12.07%) |
+| **Overall Category Accuracy** | **92.24%** (107/116) *(tuned on development set, not held-out)* | **[87.07%, 96.55%]** | **7.6x uplift** over majority class baseline (12.07%) |
 | **Macro Average F1-Score** | **0.9130** | **[0.8381, 0.9628]** | Balanced performance across all 14 categories |
 | **Auto-Handled Accuracy** | **100.00%** (92/92) | **[100.00%, 100.00%]** | Zero misclassifications reach customers without human review |
 | **Priority Classification Accuracy** | **87.93%** (102/116) | **[81.90%, 93.97%]** | Accurate triage into `high`, `medium`, `low` queues |
@@ -22,6 +25,30 @@
 | **Amount Exact Match Rate** | **86.67%** (26/30) | **[73.33%, 96.67%]** | Disambiguates transaction vs balance vs fee amounts |
 | **Batch Processing Throughput** | **317.1 tickets/sec** | — | Offline execution with 3.14ms average ticket latency |
 
+---
+
+## 1.1 Current Partitioned Holdout Benchmark (133 Tickets)
+
+Measured directly on the current template-isolated holdout split (`data/splits/test.jsonl`, 133 tickets):
+
+| Stratum / Slice | n | Correct | Accuracy | Wilson 95% CI | Context / Exposure Status |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **Overall Holdout (Current `test.jsonl`)** | **133** | **75** | **56.39%** (56.4%) | **[47.90%, 64.52%]** | Full holdout split |
+| **Unexposed Slice A (Handwritten counted EXPOSED)** | **70** | **27** | **38.57%** (38.6%) | **[28.00%, 50.30%]** | Conservative: 20 handwritten tickets treated as exposed |
+| ↳ *Rule Path x CLEAN (Slice A)* | 8 | 6 | 75.00% | [40.93%, 92.85%] | Deterministic rules on strictly unexposed tickets |
+| ↳ *ML Model x CLEAN (Slice A)* | 62 | 21 | 33.87% (33.9%) | [23.33%, 46.26%] | TF-IDF + LR on strictly unexposed tickets |
+| **Unexposed Slice B (Handwritten counted UNEXPOSED)** | **90** | **42** | **46.67%** (46.7%) | **[36.71%, 56.90%]** | Alternative: 20 handwritten tickets treated as unexposed |
+| ↳ *Rule Path x CLEAN (Slice B)* | 15 | 11 | 73.33% | [48.05%, 89.10%] | Deterministic rules on unexposed slice B |
+| ↳ *ML Model x CLEAN (Slice B)* | 75 | 31 | 41.33% | [30.88%, 52.63%] | TF-IDF + LR on unexposed slice B |
+| **Exposed Slice (Slice A definition: 43 synth + 20 HW)** | **63** | **48** | **76.19%** | [64.21%, 85.12%] | Overlapping or pre-rule committed tickets |
+
+*Dual Accounting Definitions:* Both definitions of the unexposed subset are explicitly reported without choosing:
+1. **38.6% (27/70, Wilson 28.0–50.3%):** Counts the 20 handwritten tickets as exposed because they were committed before the last rule commit (`75e037b`), leaving 70 strictly unexposed tickets. On this slice, Rule $\times$ CLEAN achieves **6/8** (75.0%) and ML $\times$ CLEAN achieves **21/62** (33.9%, Wilson 23.3–46.3%).
+2. **46.7% (42/90, Wilson 36.7–56.9%):** Counts handwritten tickets as unexposed (treating only synthetic template near-duplicates as exposed).
+
+*Historical Rule Code Invariance (`ecadb94` vs HEAD):* Running the rule engine as of commit `ecadb94` versus HEAD on the 133 holdout tickets produces **75/133 accuracy on both**, exactly **0 prediction flips**, and only **1 path change** (old code ran with current ML artifacts).
+
+*Historical note:* The earlier ID-based overlap count (30 in test and 86 in dev) was an artifact of reused sequential ticket IDs. True byte-identical overlap is only 2 tickets across the entire 133 holdout.
 ---
 
 ## 2. Full 14x14 Confusion Matrix Analysis

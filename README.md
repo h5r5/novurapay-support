@@ -4,20 +4,22 @@
 *A reproducible, auditable, high-throughput batch support pipeline tailored for Iraqi Arabic and Kurdish customer tickets. Engineered with a Tri-Engine Hybrid Architecture, calibrated confidence escalation, deterministic routing, grounded response drafting, and an active learning discrepancy store.*
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/)
-[![Tests: 84/84 Passed](https://img.shields.io/badge/tests-84%2F84%20passing-brightgreen.svg)]()
-[![Frozen Test Accuracy: 100%](https://img.shields.io/badge/frozen_test_accuracy-100%25-success.svg)]()
+[![Tests: 106/106 Passed](https://img.shields.io/badge/tests-106%2F106%20passing-brightgreen.svg)]()
+[![Holdout: 56.4% | Unexposed: 38.6%–46.7%](https://img.shields.io/badge/holdout-56.4%25%20(unexposed%2038.6%25--46.7%25)-blue.svg)]()
 [![Adversarial Breaking Points: 0/100](https://img.shields.io/badge/adversarial_breaking_points-0%2F100%20(100%25)-purple.svg)]()
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+
+> **Evaluated Accuracy:** Holdout **56.4%** (75/133). Unexposed subset: **38.6%** (27/70, Wilson 95% CI [28.0%, 50.3%]) with the 20 handwritten tickets counted exposed (committed before the last rule commit); or **46.7%** (42/90, Wilson 95% CI [36.7%, 56.9%]) if handwritten tickets are counted unexposed (both definitions presented). Stratified breakdown on clean slice: Rule $\times$ CLEAN: **6/8** (75.0%), ML $\times$ CLEAN: **21/62** (33.9%, Wilson 95% CI [23.3%, 46.3%]). Historical rule provenance comparison (`ecadb94` rule code vs HEAD on holdout): 75/133 both, 0 flips, 1 path change (old code ran with current ML artifacts).
 
 ---
 
 ## ⚡ 60-Second Judge Demo Pitch
 
-> "In Iraqi digital wallets (such as simulated wallet NovuraPay, Qi Card, and FIB), thousands of customer support inquiries arrive daily written in colloquial Iraqi Arabic and Kurdish dialects, interspersed with Arabizi, slang, and emotion. Human triage agents are overwhelmed, response times lag, and manual routing leads to costly financial misdirection.
+> "In Iraqi digital wallets (such as simulated wallet NovuraPay), thousands of customer support inquiries arrive daily written in colloquial Iraqi Arabic and Kurdish dialects, interspersed with Arabizi, slang, and emotion. Human triage agents are overwhelmed, response times lag, and manual routing leads to costly financial misdirection.
 >
 > **SupportPipe is an enterprise back-office batch pipeline, not a chatbot.** It processes ticket queues with deterministic precision through typed stages:
 >
-> 1. **Tri-Engine Hybrid Architecture:** Combines an ultra-fast offline dialect engine (~0.5ms), a specialized decision classifier (TypeSafe Jev 1.13), and a cloud auditor (Google Gemini 3.6 Flash) with a real-time consensus matrix and continuous discrepancy logging.
+> 1. **Tri-Engine Hybrid Architecture:** Combines an ultra-fast offline dialect engine (~0.5ms offline execution), a specialized decision classifier (TypeSafe Jev 1.13), and a cloud auditor (Google Gemini 3.6 Flash) with a real-time consensus matrix and continuous discrepancy logging *(tri-engine end-to-end consensus accuracy and live latency: design, not yet measured; offline single-engine baseline measured)*.
 > 2. **Deep Iraqi & Kurdish Dialect Grounding:** Automatically strips repetitive character elongation (*"ملييووونين وربععع"* $\rightarrow$ *"مليونين وربع"*), understands provincial currency conventions (*"دفتر"* = $100,000, *"شدة"* = $10,000, *"ورقة"* = $100, *"طابوقة"* = 25M IQD), and parses calendar-accurate relative dates (*"صارلي شهر"*, *"قبل اولت اولت البارحة"*).
 > 3. **Deterministic Operational Routing:** Eliminates LLM department hallucinations by mapping closed categories directly to operational squads via an auditable lookup table (`routing_table.yaml`).
 > 4. **Calibrated Escalation Gate:** Automatically escalates incomplete requests, missing mandatory transaction references, low-confidence predictions, and hostile injection payloads to human triage with clear, auditable reasoning tags.
@@ -30,7 +32,7 @@
 SupportPipe strictly complies with all mandatory pre-scoring challenge criteria:
 
 > [!NOTE]
-> **Repository Rename Notice:** To maintain strict competition Rule 14 brand neutrality (Simulated Iraqi Digital Wallet - NovuraPay), the repository has been updated to [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support). Please ensure the repository is renamed under GitHub.com Settings to match `novurapay-support`.
+> **Repository Branding Notice:** Adhering to internal repository brand neutrality guidelines (Simulated Iraqi Digital Wallet - NovuraPay), the repository is tracking [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support).
 
 | Gate | Requirement | Submission Status & Evidence |
 | :--- | :--- | :--- |
@@ -67,7 +69,7 @@ flowchart TD
         E1 --> F{"Consensus Matrix<br>Evaluator"}
         E2 --> F
         E3 --> F
-        F -->|Triple Agreement| G1["High Confidence Consensus (99%)"]
+        F -->|Triple Agreement| G1["High Confidence Consensus<br>(Design Specification)"]
         F -->|Cloud Override| G2["Cloud Consensus Override"]
         F -->|Irreconcilable Conflict| G3["Trigger Escalation Gate"]
         G2 -.->|Log Conflict| H["Active Learning Discrepancy Store<br>(data/audit_learning/discrepancies.jsonl)"]
@@ -76,8 +78,8 @@ flowchart TD
     subgraph SafetyGate["4. Routing & Escalation Gate"]
         G1 --> I{"Escalation Policy Check"}
         G2 --> I
-        G3 --> J["Escalate to Human Triage<br>(Missing Fields / Low Conf / BiDi Trojan)"]
-        I -->|Missing Required Ref| J
+        G3 --> I
+        I -->|Missing Required Ref| J["Escalate to Human Triage<br>(Missing Fields / Low Conf / BiDi Trojan)"]
         I -->|Confidence < Threshold| J
         I -->|Hostile Injection / BiDi| J
         I -->|Pass| K["Deterministic Routing Table<br>(routing_table.yaml)"]
@@ -101,7 +103,7 @@ flowchart TD
 ## 💎 Key Innovations & Competitive Strengths
 
 ### 1. Tri-Engine Hybrid Architecture with Active Learning
-Rather than relying on a single fallible LLM, SupportPipe employs a tiered consensus structure:
+Rather than relying on a single fallible LLM, SupportPipe employs a tiered consensus structure *(tri-engine end-to-end consensus accuracy and live latency: design, not yet measured; current measurements reflect offline single-engine baseline)*:
 * **System 1 (Offline Heuristic & Fast ML):** Instant offline execution (<1ms) using cached TF-IDF + Logistic Regression and deterministic pattern trees.
 * **System 1.5 (TypeSafe Jev 1.13):** Production-grade specialized decision classifier outputting calibrated RLCD probabilities across 14 closed classes.
 * **System 2 (Google Gemini 3.6 Flash):** Cloud-based auditor, trilingual reasoner, and dialect first-response drafter.
@@ -139,13 +141,17 @@ Drafts are strictly validated against extracted entities before submission to th
 
 ---
 
-## 📊 Evaluation Benchmarks on Frozen Test Set (116 Tickets)
+## 📊 Evaluation Benchmarks on Current Holdout Set (133 Tickets)
 
-All figures below originate directly from reproducible runs (`supportpipe eval --split test`):
+All figures below originate directly from reproducible runs on the current partitioned split (`supportpipe eval --split test`):
 
-* **Classification Accuracy vs Baseline:** **100.00%** vs **12.07%** majority baseline (**8.3x uplift**, Macro F1: **1.0000**).
-* **Auto-Handled Accuracy:** **100.00%** (zero misclassifications on auto-handled tickets).
-* **Transaction Ref Exact Match:** **100.0%** (35 / 35 tickets).
+* **Overall Holdout Accuracy:** **56.39%** (75 / 133 tickets, Wilson 95% CI: **[47.90%, 64.52%]**), labeled as *holdout, possibly partly exposed*.
+  - *Clean Slice (90 tickets, zero near-duplicate overlap or verbatim template families):* **46.67%** (42 / 90, Wilson 95% CI: **[36.71%, 56.90%]**) — the cleanest estimate available prior to `test_v2`.
+  - *Partly Exposed Slice (43 tickets):* **76.74%** (33 / 43, Wilson 95% CI: **[62.26%, 86.85%]**).
+  - *Path Breakdown:* 34 tickets handled by deterministic dialect rules (19 exposed, 15 clean; 84.21% vs 73.33%); 99 tickets handled by offline ML model (24 exposed, 75 clean; 70.83% vs 41.33%).
+  - *Historical Split Context:* Earlier ID-based overlap counts (30 in test and 86 in dev) were an artifact of reused sequential IDs. Past 100% and 92.24% claims on the old 116-ticket split were **tuned on the development set, not held-out**.
+* **Auto-Handled Safety:** Zero erroneous automated responses dispatched to customers.
+* **Transaction Ref Exact Match:** **100.0%** (synthetic reference strings).
 * **Date Match Rate:** **100.0%** (calendar-accurate normalized event dates).
 * **Processing Throughput:** **333+ tickets/sec** in offline batch execution.
 
@@ -207,7 +213,7 @@ uv run streamlit run src/supportpipe/ui/app.py
 
 ### 8. Run Full Regression Test Suite & Linters
 ```bash
-# Run all 84 automated tests
+# Run all 106 automated tests
 uv run pytest tests/ -v
 
 # Run code style & static analysis
@@ -253,7 +259,7 @@ novurapay-support/
 ├── data/
 │   ├── manifest.json              # Frozen SHA-256 test set hashes
 │   ├── QA_NOTES.md                # 65-ticket manual inspection notes
-│   ├── splits/                    # dev.jsonl (215 tickets) and test.jsonl (116 tickets)
+│   ├── splits/                    # dev.jsonl (219 tickets) and test.jsonl (133 tickets)
 │   ├── stress_test_100_adversarial.jsonl # 100 extreme adversarial stress-test tickets
 │   └── audit_learning/            # discrepancies.jsonl (Active Learning discrepancy store)
 ├── scripts/                       # Adversarial generators, stress-test runners & report generators
@@ -262,7 +268,7 @@ novurapay-support/
 │   ├── generate_breaking_report.py# Breaking points markdown report builder
 │   └── test_hybrid_on_failures.py # Tri-engine verification script
 ├── results/                       # Reproducible run outputs (metrics.json, adversarial_stress_test/)
-└── tests/                         # 84 unit, integration, trilingual, capacity, failure mode, & hybrid tests (100% pass)
+└── tests/                         # 106 unit, integration, trilingual, capacity, failure mode, & hybrid tests (100% pass)
 ```
 
 ---

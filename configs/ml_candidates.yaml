@@ -1,0 +1,118 @@
+# configs/ml_candidates.yaml
+# Machine Learning Candidate Configurations for Grouped Cross-Validation (Phase 3 Block B)
+# Evaluated strictly on data/splits/dev.jsonl using GroupKFold(n_splits=5) grouped by template_id.
+# data/splits/test.jsonl is held out as a burned diagnostic set and NEVER accessed.
+# Fixed random seeds for strict determinism and zero cloud API dependency.
+
+candidates:
+  - id: cand_1_char_wb_logreg
+    name: Character N-Gram Subword Logistic Regression
+    description: "Char_wb (3,5) TF-IDF capturing Iraqi dialect root and affix morphology + Logistic Regression (C=2.5)"
+    vectorizer:
+      type: char_wb
+      ngram_range: [3, 5]
+      sublinear_tf: true
+      min_df: 1
+    classifier:
+      type: logistic_regression
+      C: 2.5
+      max_iter: 300
+      random_state: 42
+
+  - id: cand_2_word_char_union_logreg
+    name: Word + Char FeatureUnion Logistic Regression
+    description: "FeatureUnion combining word n-grams (1,2) with char_wb n-grams (3,5) + Logistic Regression (C=2.5)"
+    vectorizer:
+      type: union_word_char
+      word_ngram_range: [1, 2]
+      char_ngram_range: [3, 5]
+      sublinear_tf: true
+      min_df: 1
+    classifier:
+      type: logistic_regression
+      C: 2.5
+      max_iter: 300
+      random_state: 42
+
+  - id: cand_3_word_logreg_balanced
+    name: Class-Balanced Word Logistic Regression
+    description: "Word n-grams (1,2) with inverse class weighting to improve minority category recall + Logistic Regression (C=2.0)"
+    vectorizer:
+      type: word
+      ngram_range: [1, 2]
+      sublinear_tf: true
+      min_df: 1
+    classifier:
+      type: logistic_regression
+      C: 2.0
+      class_weight: balanced
+      max_iter: 300
+      random_state: 42
+
+  - id: cand_4_multinomial_nb
+    name: Multinomial Naive Bayes (Laplace Smoothed)
+    description: "Word n-grams (1,2) with Multinomial Naive Bayes (alpha=0.5) for small-sample inductive bias"
+    vectorizer:
+      type: word
+      ngram_range: [1, 2]
+      sublinear_tf: true
+      min_df: 1
+    classifier:
+      type: multinomial_nb
+      alpha: 0.5
+
+  - id: cand_5_complement_nb
+    name: Complement Naive Bayes (Class-Imbalance Tuned)
+    description: "Word n-grams (1,2) with Complement Naive Bayes (alpha=0.5) designed for skewed category distributions"
+    vectorizer:
+      type: word
+      ngram_range: [1, 2]
+      sublinear_tf: true
+      min_df: 1
+    classifier:
+      type: complement_nb
+      alpha: 0.5
+
+  - id: cand_6_sgd_modified_huber
+    name: SGD Classifier with Modified Huber Loss
+    description: "Word n-grams (1,2) with SGDClassifier using smooth modified Huber loss and L2 regularization"
+    vectorizer:
+      type: word
+      ngram_range: [1, 2]
+      sublinear_tf: true
+      min_df: 1
+    classifier:
+      type: sgd
+      loss: modified_huber
+      alpha: 0.0001
+      penalty: l2
+      max_iter: 1000
+      random_state: 42
+
+  - id: cand_7_random_forest
+    name: Random Forest Classifier
+    description: "Word n-grams (1,2) with Random Forest (150 trees, max_depth=20, min_samples_split=3)"
+    vectorizer:
+      type: word
+      ngram_range: [1, 2]
+      sublinear_tf: true
+      min_df: 1
+    classifier:
+      type: random_forest
+      n_estimators: 150
+      max_depth: 20
+      min_samples_split: 3
+      random_state: 42
+
+  - id: cand_8_soft_voting_ensemble
+    name: Soft Voting Ensemble (Logistic Regression + Multinomial NB)
+    description: "FeatureUnion (word 1-2 + char_wb 3-5) with soft probability voting between Logistic Regression and Naive Bayes"
+    vectorizer:
+      type: union_word_char
+      word_ngram_range: [1, 2]
+      char_ngram_range: [3, 5]
+      sublinear_tf: true
+      min_df: 1
+    classifier:
+      type: voting_ensemble
+      random_state: 42

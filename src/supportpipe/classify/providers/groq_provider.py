@@ -10,7 +10,8 @@ from typing import Any
 import httpx
 
 from supportpipe.classify.providers.base import BaseClassifierProvider
-from supportpipe.config import settings
+from supportpipe.config import ConfigError, settings
+from supportpipe.logging_store import scrub_outbound_text
 from supportpipe.schemas import ClassificationResult, ExtractedFields, PriorityType
 from supportpipe.taxonomy.loader import taxonomy
 
@@ -74,8 +75,17 @@ class GroqClassifierProvider(BaseClassifierProvider):
                 "[CIRCUIT_BREAKER] Cloud provider quota exceeded (HTTP 429). Fast-failing Groq request."
             )
 
+        if not self.model or str(self.model).strip().upper() == "OWNER_CONFIRM":
+            raise ConfigError(f"Model ID for {self.__class__.__name__} is OWNER_CONFIRM or unconfigured")
+
         if not self.api_key:
             raise ValueError("GROQ_API_KEY is not configured")
+
+        if settings.llm_mode == "live":
+            from supportpipe.budget import budget_limiter
+
+            if not budget_limiter.acquire("groq"):
+                raise RuntimeError("[BUDGET_EXHAUSTED] Tier 'groq' reached call budget limit.")
 
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
@@ -86,7 +96,8 @@ class GroqClassifierProvider(BaseClassifierProvider):
         sys_prompt = SYSTEM_PROMPT.format(
             categories_text=taxonomy.format_categories_for_prompt()
         )
-        user_content = f"Channel: {channel}\n<<<TICKET_TEXT>>>\n{ticket_text}\n<<<END_TICKET_TEXT>>>"
+        outbound_text = scrub_outbound_text(ticket_text, endpoint=url)
+        user_content = f"Channel: {channel}\n<<<TICKET_TEXT>>>\n{outbound_text}\n<<<END_TICKET_TEXT>>>"
 
         payload = {
             "model": self.model,
@@ -179,17 +190,18 @@ def generate_groq_draft(
     else:
         amount_str = "غير محدد"
     ref_str = extracted.transaction_ref or "غير مذكور"
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    outbound_ticket_text = scrub_outbound_text(ticket_raw_text, endpoint=url)
 
     prompt_context = (
         f"فئة المشكلة: {cat_name}\n"
         f"مستوى الأولوية: {priority}\n"
         f"المبلغ المستخرج: {amount_str}\n"
         f"رقم العملية: {ref_str}\n"
-        f"نص رسالة العميل: {ticket_raw_text}\n\n"
+        f"نص رسالة العميل: {outbound_ticket_text}\n\n"
         f"اكتب الرد المقترح:"
     )
 
-    url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {settings.groq_api_key}",
         "Content-Type": "application/json",

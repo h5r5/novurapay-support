@@ -37,7 +37,7 @@ _INIT_LOCK = threading.Lock()
 def _init_offline_pipelines() -> tuple[Pipeline | None, Pipeline | None]:
     """Initialize and fit in-memory TF-IDF + Logistic Regression models on development data.
 
-    Training on data/splits/dev.jsonl (215 tickets) takes ~30ms once and is cached in memory.
+    Training on data/splits/dev.jsonl (219 tickets) takes ~30ms once and is cached in memory.
     The frozen test set (data/splits/test.jsonl) is strictly held out and never used for training.
     """
     global _CAT_PIPE, _PRIO_PIPE, _INIT_ATTEMPTED

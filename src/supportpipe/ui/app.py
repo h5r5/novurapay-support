@@ -6,6 +6,7 @@ Phosphor SVG icons (No Emojis Policy), and Zero-Mock Data Rule.
 
 from __future__ import annotations
 
+import html
 import json
 import random
 from datetime import datetime
@@ -32,6 +33,12 @@ from supportpipe.ui.engine_settings import (
     sync_runtime_settings,
 )
 from supportpipe.ui.icons import svg_icon
+
+
+def safe_html(val: Any) -> str:
+    """Escape dynamic values before interpolating into HTML strings to prevent XSS."""
+    return html.escape(str(val) if val is not None else "")
+
 
 # -----------------------------------------------------------------------------
 # 1. Page Configuration (Strict No-Emoji Policy)
@@ -499,17 +506,22 @@ st.sidebar.markdown(
     unsafe_allow_html=True,
 )
 
-st.sidebar.markdown("### مؤشرات أداء الأيجنت (Frozen Benchmark)")
+st.sidebar.markdown("### مؤشرات أداء الأيجنت (Dev benchmark (tuned))")
+correct_eval = (
+    eval_metrics.get("classification", {}).get("correct_tickets", int(round(cls_acc * tot_eval / 100.0)))
+    if eval_metrics
+    else int(round(cls_acc * tot_eval / 100.0))
+)
 st.sidebar.markdown(
     f"""
-    * **دقة الفرز الكلية:** `{cls_acc:.1f}%` ({tot_eval}/{tot_eval})
-    * **دقة الفرز الذاتي:** `{auto_acc:.1f}%`
+    * **دقة الفرز الكلية (dev/tuned):** `{cls_acc:.1f}%` ({correct_eval}/{tot_eval})
+    * **دقة الفرز الذاتي (dev/tuned):** `{auto_acc:.1f}%`
     * **دقة استخراج المرجع:** `{ref_match:.1f}%`
     * **دقة استخراج المبالغ:** `{amt_match:.1f}%`
     * **دقة استخراج التاريخ:** `{date_match:.1f}%`
     * **معدل التصعيد للبشر:** `{esc_rate:.1f}%` ({esc_count}/{tot_eval})
     * **سرعة المعالجة:** `{avg_lat:.2f} ms` ({tps:.0f} tps)
-    * **بوابة الحماية:** `100% Guarded`
+    * **بوابة الحماية:** `100% Guarded (dev/tuned)`
     """
 )
 
@@ -520,12 +532,12 @@ st.sidebar.markdown(
     - **الخط المعتمد:** `Vazirmatn` (دعم كردي وعراقي)
     - **خط الأرقام:** `JetBrains Mono`
     - **الرموز:** Phosphor SVG Icons
-    - **البيانات:** 100% حقيقية (Zero-Mock)
+    - **البيانات:** 100% اصطناعية (Zero-Mock)
     """
 )
 
 # -----------------------------------------------------------------------------
-# 4. Helper Functions for Real Data Access (Clean Scenario Names)
+# 4. Helper Functions for Synthetic Data Access (Clean Scenario Names)
 # -----------------------------------------------------------------------------
 PRESET_SCENARIOS = {
     "لهجة عراقية معقدة ومبالغ مركبة": "اني البارحه قبل اولت البارحه حولت ملييونين وربعع وماتحول الفلوس شلقصه ؟",
@@ -546,7 +558,7 @@ PRESET_SCENARIOS = {
 
 @st.cache_data
 def load_split_tickets(split_name: str = "dev") -> list[Ticket]:
-    """Load tickets from real dataset splits (dev.jsonl or test.jsonl)."""
+    """Load tickets from synthetic dataset splits (dev.jsonl or test.jsonl)."""
     split_file = settings.project_root / "data" / "splits" / f"{split_name}.jsonl"
     tickets = []
     if split_file.exists():
@@ -761,7 +773,7 @@ with tab_ai:
                 with col_g2:
                     st.write("")
                     st.write("")
-                    st.markdown(f'<span class="telemetry-tag {groq_cls}" style="margin-top:8px;">{groq_badge}</span>', unsafe_allow_html=True)
+                    st.markdown(f'<span class="telemetry-tag {safe_html(groq_cls)}" style="margin-top:8px;">{safe_html(groq_badge)}</span>', unsafe_allow_html=True)
 
                 # 2. Google Gemini
                 _m_eff, gemini_badge, gemini_cls = get_key_status("gemini")
@@ -777,7 +789,7 @@ with tab_ai:
                 with col_m2:
                     st.write("")
                     st.write("")
-                    st.markdown(f'<span class="telemetry-tag {gemini_cls}" style="margin-top:8px;">{gemini_badge}</span>', unsafe_allow_html=True)
+                    st.markdown(f'<span class="telemetry-tag {safe_html(gemini_cls)}" style="margin-top:8px;">{safe_html(gemini_badge)}</span>', unsafe_allow_html=True)
 
                 # 3. TypeSafe Jev
                 _j_eff, jev_badge, jev_cls = get_key_status("jev")
@@ -793,7 +805,7 @@ with tab_ai:
                 with col_j2:
                     st.write("")
                     st.write("")
-                    st.markdown(f'<span class="telemetry-tag {jev_cls}" style="margin-top:8px;">{jev_badge}</span>', unsafe_allow_html=True)
+                    st.markdown(f'<span class="telemetry-tag {safe_html(jev_cls)}" style="margin-top:8px;">{safe_html(jev_badge)}</span>', unsafe_allow_html=True)
 
                 st.divider()
                 st.markdown("##### 🎛️ ضبط عتبة الثقة والتصعيد (Confidence Threshold):")
@@ -1026,10 +1038,11 @@ with tab_ai:
         res_j, res_o = st.session_state["live_duel"]
         speed_ratio = (res_j.latency_ms / res_o.latency_ms) if res_o.latency_ms > 0 else 1.0
 
+        match_status_text = 'تطابق كامل في الفئة والأولوية' if res_j.category == res_o.category else 'اختلاف في الفئة (تم تفضيل مسار الأمان الأوفلاين)'
         st.markdown(
             f"""
             <div style="background: rgba(56, 189, 248, 0.08); border:1px solid rgba(56,189,248,0.25); border-radius:8px; padding:10px 16px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
-                <span><strong>حالة التطابق:</strong> {'تطابق كامل في الفئة والأولوية' if res_j.category == res_o.category else 'اختلاف في الفئة (تم تفضيل مسار الأمان الأوفلاين)'}</span>
+                <span><strong>حالة التطابق:</strong> {safe_html(match_status_text)}</span>
                 <span class="mono-code" style="color:#38bdf8; font-weight:700;">الأوفلاين أسرع بـ {speed_ratio:.0f} ضعفاً من السحابة</span>
             </div>
             """,
@@ -1043,15 +1056,15 @@ with tab_ai:
                 f"""
                 <div class="cockpit-card" style="border-top: 3px solid #818cf8;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <strong style="color:#818cf8; font-size:1rem;">Cloud Engine ({cloud_title})</strong>
+                        <strong style="color:#818cf8; font-size:1rem;">Cloud Engine ({safe_html(cloud_title)})</strong>
                         <span class="mono-code" style="color:#818cf8; font-weight:700;">{res_j.latency_ms:.1f} ms</span>
                     </div>
                     <hr style="border-color: rgba(255,255,255,0.06); margin:8px 0;">
-                    <p>الفئة: <strong class="mono-code">{res_j.category}</strong> ({res_j.category_confidence*100:.1f}%)</p>
-                    <p>الأولوية: <strong class="mono-code">{res_j.priority.upper()}</strong></p>
-                    <p>الفريق: <strong>{res_j.team}</strong></p>
-                    <p>المسار: <span class="mono-code" style="font-size:0.8rem; color:#a1a1aa;">{res_j.provider_path}</span></p>
-                    <p>الحالة: <span class="telemetry-tag {'tag-escalate' if res_j.escalated else 'tag-auto'}">{'مصعدة للبشر' if res_j.escalated else 'معالجة ذاتية'}</span></p>
+                    <p>الفئة: <strong class="mono-code">{safe_html(res_j.category)}</strong> ({res_j.category_confidence*100:.1f}%)</p>
+                    <p>الأولوية: <strong class="mono-code">{safe_html(res_j.priority.upper())}</strong></p>
+                    <p>الفريق: <strong>{safe_html(res_j.team)}</strong></p>
+                    <p>المسار: <span class="mono-code" style="font-size:0.8rem; color:#a1a1aa;">{safe_html(res_j.provider_path)}</span></p>
+                    <p>الحالة: <span class="telemetry-tag {'tag-escalate' if res_j.escalated else 'tag-auto'}">{safe_html('مصعدة للبشر' if res_j.escalated else 'معالجة ذاتية')}</span></p>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -1065,11 +1078,11 @@ with tab_ai:
                         <span class="mono-code" style="color:#10b981; font-weight:700;">{res_o.latency_ms:.2f} ms</span>
                     </div>
                     <hr style="border-color: rgba(255,255,255,0.06); margin:8px 0;">
-                    <p>الفئة: <strong class="mono-code">{res_o.category}</strong> ({res_o.category_confidence*100:.1f}%)</p>
-                    <p>الأولوية: <strong class="mono-code">{res_o.priority.upper()}</strong></p>
-                    <p>الفريق: <strong>{res_o.team}</strong></p>
-                    <p>المسار: <span class="mono-code" style="font-size:0.8rem; color:#a1a1aa;">{res_o.provider_path}</span></p>
-                    <p>الحالة: <span class="telemetry-tag {'tag-escalate' if res_o.escalated else 'tag-auto'}">{'مصعدة للبشر' if res_o.escalated else 'معالجة ذاتية'}</span></p>
+                    <p>الفئة: <strong class="mono-code">{safe_html(res_o.category)}</strong> ({res_o.category_confidence*100:.1f}%)</p>
+                    <p>الأولوية: <strong class="mono-code">{safe_html(res_o.priority.upper())}</strong></p>
+                    <p>الفريق: <strong>{safe_html(res_o.team)}</strong></p>
+                    <p>المسار: <span class="mono-code" style="font-size:0.8rem; color:#a1a1aa;">{safe_html(res_o.provider_path)}</span></p>
+                    <p>الحالة: <span class="telemetry-tag {'tag-escalate' if res_o.escalated else 'tag-auto'}">{safe_html('مصعدة للبشر' if res_o.escalated else 'معالجة ذاتية')}</span></p>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -1090,7 +1103,7 @@ with tab_ai:
         st.markdown(
             f"""
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;">
-                <span class="telemetry-tag tag-auto">المزود الفعلي: <strong class="mono-code">{active_res.provider_path}</strong></span>
+                <span class="telemetry-tag tag-auto">المزود الفعلي: <strong class="mono-code">{safe_html(active_res.provider_path)}</strong></span>
                 <span class="telemetry-tag tag-review">زمن الاستجابة: <strong class="mono-code">{active_res.latency_ms:.2f} ms</strong></span>
                 {cb_html}
             </div>
@@ -1158,10 +1171,11 @@ with tab_queue:
     # Source radio
     q_src_col1, q_src_col2 = st.columns([2, 1])
     recent_runs_list = load_recent_runs()
+    dev_count = len(load_split_tickets("dev")) or 219
     with q_src_col1:
         q_source = st.radio(
             "مصدر بيانات الطابور:",
-            ["تحميل حزمة التطوير (dev.jsonl - 215 تذكرة حقيقية)", "استعراض دفعة محفوظة من results/"],
+            [f"تحميل حزمة التطوير (dev.jsonl - {dev_count} تذكرة اصطناعية)", "استعراض دفعة محفوظة من results/"],
             horizontal=True,
         )
 
@@ -1246,15 +1260,15 @@ with tab_queue:
                     f"""
                     <div class="cockpit-card">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <h4 style="margin:0; color:#38bdf8;" class="mono-code">{target_res.ticket_id}</h4>
+                            <h4 style="margin:0; color:#38bdf8;" class="mono-code">{safe_html(target_res.ticket_id)}</h4>
                             <span class="telemetry-tag {'tag-escalate' if target_res.escalated else 'tag-auto'}">
-                                {'مصعدة للبشر' if target_res.escalated else 'معالجة ذاتية'}
+                                {safe_html('مصعدة للبشر' if target_res.escalated else 'معالجة ذاتية')}
                             </span>
                         </div>
                         <div style="font-size:0.85rem; color:#a1a1aa; margin-top:6px;">
-                            الفئة: <strong style="color:#fafafa;">{target_res.category}</strong> ({target_res.category_confidence*100:.1f}%) &nbsp;|&nbsp;
-                            الأولوية: <strong class="mono-code" style="color:#f59e0b;">{target_res.priority.upper()}</strong> &nbsp;|&nbsp;
-                            الفريق: <strong style="color:#fafafa;">{target_res.team}</strong>
+                            الفئة: <strong style="color:#fafafa;">{safe_html(target_res.category)}</strong> ({target_res.category_confidence*100:.1f}%) &nbsp;|&nbsp;
+                            الأولوية: <strong class="mono-code" style="color:#f59e0b;">{safe_html(target_res.priority.upper())}</strong> &nbsp;|&nbsp;
+                            الفريق: <strong style="color:#fafafa;">{safe_html(target_res.team)}</strong>
                         </div>
                     </div>
                     """,
@@ -1263,15 +1277,19 @@ with tab_queue:
 
                 # Entity badges
                 e_obj = target_res.extracted_fields
+                ref_txt = safe_html(e_obj.transaction_ref or 'غير متوفر')
+                amt_txt = safe_html(f'{e_obj.amount_iqd:,} د.ع' if e_obj.amount_iqd else 'غير متوفر')
+                date_txt = safe_html(e_obj.event_date_resolved or e_obj.event_date_text or 'غير محدد')
+                phone_txt = safe_html(mask_phone_number(e_obj.phone_number) or 'محجوب')
                 st.markdown(
                     f"""
                     <div class="trace-step">
                         <strong>الكيانات المستخرجة:</strong>
                         <div style="margin-top:6px; display:flex; gap:8px; flex-wrap:wrap;">
-                            <span class="span-ref">المرجع: {e_obj.transaction_ref or 'غير متوفر'}</span>
-                            <span class="span-amount">المبلغ: {f'{e_obj.amount_iqd:,} د.ع' if e_obj.amount_iqd else 'غير متوفر'}</span>
-                            <span class="span-date">التاريخ: {e_obj.event_date_resolved or e_obj.event_date_text or 'غير محدد'}</span>
-                            <span class="span-phone">الهاتف: {mask_phone_number(e_obj.phone_number) or 'محجوب'}</span>
+                            <span class="span-ref">المرجع: {ref_txt}</span>
+                            <span class="span-amount">المبلغ: {amt_txt}</span>
+                            <span class="span-date">التاريخ: {date_txt}</span>
+                            <span class="span-phone">الهاتف: {phone_txt}</span>
                         </div>
                     </div>
                     """,
@@ -1329,7 +1347,7 @@ with tab_queue:
 with tab_metrics:
     eval_name = latest_eval_dir.name if latest_eval_dir else "eval_test"
     st.subheader("مراقبة أداء النماذج وأدلة التقييم الرسمية (AI Observability & Evidence)")
-    st.caption(f"أرقام حقيقية مستخرجة مباشرة من نتائج التقييم المجمدة results/{eval_name}/metrics.json.")
+    st.caption(f"أرقام اصطناعية مستخرجة مباشرة من نتائج التقييم results/{eval_name}/metrics.json (dev/tuned).")
 
     prio_acc_val = (
         eval_metrics.get("classification", {}).get("priority_accuracy", 0.991) * 100
@@ -1340,7 +1358,7 @@ with tab_metrics:
     # 6 Top Key Performance Cards
     bk1, bk2, bk3, bk4, bk5, bk6 = st.columns(6)
     with bk1:
-        st.markdown(f'<div class="cockpit-card"><div class="mono-code" style="color:#10b981; font-size:1.6rem; font-weight:700;">{cls_acc:.1f}%</div><div style="font-size:0.8rem; color:#a1a1aa; margin-top:4px;">دقة الفرز الكلية (F1: 1.0)</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="cockpit-card"><div class="mono-code" style="color:#10b981; font-size:1.6rem; font-weight:700;">{cls_acc:.1f}%</div><div style="font-size:0.8rem; color:#a1a1aa; margin-top:4px;">دقة الفرز الكلية (dev/tuned)</div></div>', unsafe_allow_html=True)
     with bk2:
         st.markdown(f'<div class="cockpit-card"><div class="mono-code" style="color:#38bdf8; font-size:1.6rem; font-weight:700;">{auto_acc:.1f}%</div><div style="font-size:0.8rem; color:#a1a1aa; margin-top:4px;">دقة الفرز الذاتي</div></div>', unsafe_allow_html=True)
     with bk3:
@@ -1415,7 +1433,7 @@ with tab_outage:
     st.subheader("ذكاء كشف الأعطال والأنماط النظامية (Outage Intelligence)")
     st.caption("تحليل إحصائي فوري لاكتشاف الأعطال العامة في بوابات الدفع وبوابات رسائل التحقق (OTP) وتصدير تقارير الإدارة.")
 
-    out_split = st.selectbox("حزمة التذاكر للتحليل المتقدم:", ["حزمة التطوير (dev.jsonl - 215 تذكرة)", "حزمة الاختبار (test.jsonl - 116 تذكرة)"])
+    out_split = st.selectbox("حزمة التذاكر للتحليل المتقدم:", [f"حزمة التطوير (dev.jsonl - {dev_count} تذكرة اصطناعية)", "حزمة الاختبار (test.jsonl - 116 تذكرة)"])
     s_name = "dev" if "dev" in out_split else "test"
     spl_tickets = load_split_tickets(s_name)
 
@@ -1431,14 +1449,14 @@ with tab_outage:
                     f"""
                     <div style="background:var(--status-outage-bg); border:1px solid var(--status-outage); border-radius:8px; padding:16px 20px; margin-bottom:14px;">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <h4 style="margin:0; color:#ef4444;">رصد حادثة نظامية: {inc['incident_type_ar']}</h4>
-                            <span class="telemetry-tag tag-outage">خطورة: {inc['severity']}</span>
+                            <h4 style="margin:0; color:#ef4444;">رصد حادثة نظامية: {safe_html(inc['incident_type_ar'])}</h4>
+                            <span class="telemetry-tag tag-outage">خطورة: {safe_html(inc['severity'])}</span>
                         </div>
                         <div style="margin-top:8px; color:#fafafa; font-size:0.9rem;">
-                            <strong>عدد التذاكر المتأثرة:</strong> <span class="mono-code">{inc['affected_tickets_count']}</span> تذكرة
+                            <strong>عدد التذاكر المتأثرة:</strong> <span class="mono-code">{safe_html(inc['affected_tickets_count'])}</span> تذكرة
                         </div>
                         <div style="margin-top:4px; color:#a1a1aa; font-size:0.85rem;">
-                            <strong>التوصية التشغيلية:</strong> {inc['recommendation_ar']}
+                            <strong>التوصية التشغيلية:</strong> {safe_html(inc['recommendation_ar'])}
                         </div>
                     </div>
                     """,

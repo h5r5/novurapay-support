@@ -17,7 +17,7 @@
   - **Design Brief (22/10/2026):** **6 days remaining**.
   - **MVP Semi-Final (08/11/2026):** **23 days remaining**.
 - **Repository Path:** `c:\Users\heyder\Desktop\dev\zine` (Git remote tracking `https://github.com/h5r5/novurapay-support`).
-  - *Repository Rename Notice:* Updated to `https://github.com/h5r5/novurapay-support` under Rule 14 (Simulated Iraqi Digital Wallet - NovuraPay). Owner instructed to rename repo settings on GitHub.com to `novurapay-support`.
+  - *Repository Rename Notice:* Updated to `https://github.com/h5r5/novurapay-support` under project policy, AGENTS.md (Simulated Iraqi Digital Wallet - NovuraPay). Owner instructed to rename repo settings on GitHub.com to `novurapay-support`.
 - **Coding Assistant & Model:** Google Antigravity IDE running Gemini 3.8 Flash (High-Reasoning Configuration).
 
 ---
@@ -77,12 +77,12 @@ Full evaluation was executed live on the frozen test set on 2026-10-16:
   Starting evaluation on frozen split: TEST (Mode: OFFLINE)...
   ============================================================
   EVALUATION RESULTS (Split: TEST)
-    Run ID:                eval_test_20261015_214839
-    Overall Accuracy:      92.24%
+    Run ID:                eval_test_20261015_214839 (tuned on the development set, not held-out)
+    Overall Accuracy:      92.24% (tuned on the development set, not held-out)
     Priority Accuracy:     87.93%
     Macro Avg F1:          0.9130
     Baseline (Majority):   12.07%
-    Auto-Handled Accuracy: 100.00%
+    Auto-Handled Accuracy: 100.00% (tuned on the development set, not held-out)
     Escalation Rate:       20.7%
     Ref Exact Match:       100.0%
     Amount Exact Match:    86.7%
@@ -92,9 +92,9 @@ Full evaluation was executed live on the frozen test set on 2026-10-16:
   Detailed artifacts written to results/eval_test_20261015_214839/
   ```
 - **95% Bootstrap Confidence Intervals (1,000 Resamples, Alpha = 0.05):**
-  - Overall Accuracy: `92.24%` $\rightarrow$ **[87.07%, 96.55%]**
+  - Overall Accuracy: `92.24%` (tuned on the development set, not held-out) $\rightarrow$ **[87.07%, 96.55%]**
   - Macro Average F1: `0.9130` $\rightarrow$ **[0.8381, 0.9628]**
-  - Auto-Handled Accuracy: `100.00%` $\rightarrow$ **[100.00%, 100.00%]**
+  - Auto-Handled Accuracy: `100.00%` (tuned on the development set, not held-out) $\rightarrow$ **[100.00%, 100.00%]**
 - **Mathematical Explanation of Auto-Handled Accuracy (100.00%):**
   - Total test tickets = 116.
   - Escalated tickets = 24 (20.69% escalation rate).
@@ -167,7 +167,7 @@ Summary of Architecture Decision Records (ADRs):
   - *What Needs Finalizing:* Compiling into the final 5-slide / 2-page format, and documenting a week-by-week calendar plan leading to MVP.
 - **MVP Semi-Final (Deadline: 08/11/2026 — 23 Days Remaining):**
   - **Readiness: 75% (Functional Core Complete).**
-  - *What Works:* Batch CLI, frozen test benchmark (92.2% acc, 100% auto-handled acc), 84 unit tests, Streamlit UI review queue, live Jev and Gemini inference.
+  - *What Works:* Batch CLI, frozen test benchmark (92.2% acc, 100% auto-handled acc — tuned on the development set, not held-out), 106 unit tests, Streamlit UI review queue, live Jev and Gemini inference.
   - *Gaps to Fill Before 08/11:*
     1. Implementing and wiring the **Groq provider** for free high-volume runs.
     2. Deploying the Streamlit UI to a free hosting service (e.g. Streamlit Community Cloud) for remote judge access.

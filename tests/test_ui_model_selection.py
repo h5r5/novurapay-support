@@ -295,3 +295,14 @@ def test_batch_execution_with_gemini_and_groq_providers() -> None:
             assert summary.total_tickets == 1
             assert "gemini" in results[0].provider_path
 
+
+def test_safe_html_escapes_xss_vectors() -> None:
+    """Verify safe_html neutralizes script injection, tags, and handles None."""
+    from supportpipe.ui.app import safe_html
+
+    assert safe_html("<script>alert('xss')</script>") == "&lt;script&gt;alert(&#x27;xss&#x27;)&lt;/script&gt;"
+    assert safe_html("Hello & World <foo>") == "Hello &amp; World &lt;foo&gt;"
+    assert safe_html(None) == ""
+    assert safe_html(12345) == "12345"
+
+

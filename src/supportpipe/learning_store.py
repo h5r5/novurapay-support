@@ -42,13 +42,7 @@ class DiscrepancyStore:
     """Thread-safe persistent JSONL store for audit discrepancy logs."""
 
     def __init__(self, store_path: Path | None = None) -> None:
-        if store_path is not None:
-            self.file_path = store_path
-        else:
-            learning_dir = settings.data_dir / "audit_learning"
-            learning_dir.mkdir(parents=True, exist_ok=True)
-            self.file_path = learning_dir / "discrepancies.jsonl"
-
+        self.file_path = store_path or settings.discrepancy_store_path
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
 
     def record_discrepancy(

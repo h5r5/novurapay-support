@@ -16,7 +16,12 @@ from supportpipe.classify.providers.groq_provider import GroqClassifierProvider
 from supportpipe.classify.providers.jev_provider import JevClassifierProvider
 from supportpipe.classify.providers.mock_provider import MockClassifierProvider
 from supportpipe.config import settings
-from supportpipe.learning_store import discrepancy_store
+from supportpipe.learning_store import (
+    DiscrepancyStore,
+)
+from supportpipe.learning_store import (
+    discrepancy_store as default_discrepancy_store,
+)
 from supportpipe.schemas import ClassificationResult, ExtractedFields, PriorityType
 from supportpipe.taxonomy.loader import taxonomy
 
@@ -33,8 +38,10 @@ class HybridClassifierProvider(BaseClassifierProvider):
         gemini_provider: GeminiClassifierProvider | None = None,
         groq_provider: GroqClassifierProvider | None = None,
         audit_sampling_rate: float = 0.05,
+        discrepancy_store: DiscrepancyStore | None = None,
     ) -> None:
         self.mock_provider = mock_provider or MockClassifierProvider()
+        self.discrepancy_store = discrepancy_store or default_discrepancy_store
 
         has_jev = bool(settings.jev_api_key or settings.typesafe_api_key)
         self.jev_provider = (
@@ -143,6 +150,7 @@ class HybridClassifierProvider(BaseClassifierProvider):
             )
         )
 
+        cloud_fallback_occurred = False
         if should_call_gemini and self.gemini_provider:
             try:
                 res_gemini = self.gemini_provider.classify(
@@ -153,6 +161,7 @@ class HybridClassifierProvider(BaseClassifierProvider):
             except Exception as gem_err:
                 logger.warning("Gemini engine failed in hybrid pass: %s", gem_err)
                 res_gemini = None
+                cloud_fallback_occurred = True
 
         # Cloud fallback: Try Groq if Gemini failed or unavailable
         if not res_gemini and self.groq_provider and (
@@ -168,11 +177,16 @@ class HybridClassifierProvider(BaseClassifierProvider):
                     channel=channel,
                     fast_extracted=fast_extracted,
                 )
+                if res_gemini and cloud_fallback_occurred:
+                    res_gemini.degraded = True
             except Exception as groq_err:
                 logger.warning("Groq engine failed in hybrid pass: %s", groq_err)
 
         # If cloud engines failed or unavailable, fallback safely to System 1
         if not res_jev and not res_gemini:
+            if self.jev_provider or self.gemini_provider or self.groq_provider:
+                res_mock.degraded = True
+                res_mock.reasoning_summary = f"[DEGRADED_FALLBACK] {res_mock.reasoning_summary}"[:300]
             return res_mock
 
         # 4. Process Gemini Audit Discrepancies (Active Learning Loop)
@@ -192,7 +206,7 @@ class HybridClassifierProvider(BaseClassifierProvider):
                     elif isinstance(fast_extracted, dict):
                         offline_val = fast_extracted.get(disc_field)
 
-                discrepancy_store.record_discrepancy(
+                self.discrepancy_store.record_discrepancy(
                     ticket_id=ticket_id,
                     channel=channel,
                     raw_text=ticket_text,
@@ -234,7 +248,7 @@ class HybridClassifierProvider(BaseClassifierProvider):
                 reasoning = (
                     f"Cloud Consensus (Jev + Gemini: '{final_cat}') overrules local heuristic ('{res_mock.category}')"
                 )
-                discrepancy_store.record_discrepancy(
+                self.discrepancy_store.record_discrepancy(
                     ticket_id=ticket_id,
                     channel=channel,
                     raw_text=ticket_text,

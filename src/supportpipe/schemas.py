@@ -78,6 +78,7 @@ class ClassificationResult(BaseModel):
     reasoning_summary: str = Field(..., max_length=300)
     sentiment_tags: list[str] = Field(default_factory=list)
     audit_details: dict[str, Any] | None = None
+    degraded: bool = False
 
     @field_validator("priority", mode="before")
     @classmethod
@@ -129,6 +130,7 @@ class PipelineResult(BaseModel):
     urgency_level: str = "normal"  # 'critical', 'high', 'normal'
     audit_status: str | None = None  # 'verified', 'discrepancy_detected', 'offline_heuristic'
     audit_discrepancy_details: dict[str, Any] | None = None
+    degraded: bool = False
 
 
 class BatchSummary(BaseModel):
