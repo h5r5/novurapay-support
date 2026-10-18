@@ -948,3 +948,29 @@ def mask_phone_number(phone: str | None) -> str | None:
         return f"{prefix}****{suffix}"
     return f"{phone[:2]}****"
 
+
+def normalize_arabic_v2(text: str) -> str:
+    """Enhanced Arabic text normalization for Offline V2 classification.
+
+    Applies:
+    - Diacritics (tashkeel/harakat) and tatweel (kashida) removal
+    - Alef unification: [إأآٱ] -> ا
+    - Ya / Alif Maqsura unification: [ى] -> ي
+    - Ta-Marbuta unification: [ة] -> ه
+    - Repeated letter squeezing (3+ consecutive identical characters -> 2)
+    - Arabizi digit-letter normalization when adjacent to Latin letters
+    """
+    if not text:
+        return text
+    t = text.replace("\u0640", "")
+    t = re.sub(r"[\u064B-\u065F\u0670]", "", t)
+    t = re.sub(r"[إأآٱ]", "ا", t)
+    t = re.sub(r"[ى]", "ي", t)
+    t = re.sub(r"[ة]", "ه", t)
+    t = re.sub(r"(.)\1{2,}", r"\1\1", t)
+    t = re.sub(r"(?<=[a-zA-Z])7|7(?=[a-zA-Z])", "h", t)
+    t = re.sub(r"(?<=[a-zA-Z])3|3(?=[a-zA-Z])", "e", t)
+    t = re.sub(r"(?<=[a-zA-Z])5|5(?=[a-zA-Z])", "kh", t)
+    t = re.sub(r"(?<=[a-zA-Z])8|8(?=[a-zA-Z])", "gh", t)
+    return t
+

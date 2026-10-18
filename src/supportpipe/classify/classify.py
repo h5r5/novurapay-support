@@ -18,10 +18,13 @@ from supportpipe.schemas import ClassificationResult, ExtractedFields
 logger = logging.getLogger(__name__)
 
 
-def get_classifier_provider(provider_name: str | None = None) -> BaseClassifierProvider:
+def get_classifier_provider(
+    provider_name: str | None = None,
+    offline_model_version: str | None = None,
+) -> BaseClassifierProvider:
     """Instantiate classifier provider based on settings and availability."""
     if provider_name is None and settings.llm_mode == "offline":
-        return MockClassifierProvider()
+        return MockClassifierProvider(offline_model_version=offline_model_version)
 
     has_jev = bool(settings.jev_api_key or settings.typesafe_api_key)
     has_gemini = bool(settings.gemini_api_key)
@@ -51,14 +54,14 @@ def get_classifier_provider(provider_name: str | None = None) -> BaseClassifierP
     elif name in ["local", "local_llm"]:
         return LocalLLMClassifierProvider()
     elif name == "mock":
-        return MockClassifierProvider()
+        return MockClassifierProvider(offline_model_version=offline_model_version)
 
     # Fallback to deterministic mock
     logger.warning(
         "Requested provider '%s' not fully configured or offline mode active; falling back to MockClassifierProvider",
         name,
     )
-    return MockClassifierProvider()
+    return MockClassifierProvider(offline_model_version=offline_model_version)
 
 
 def classify_ticket(

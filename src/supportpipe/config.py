@@ -21,6 +21,7 @@ class Settings(BaseSettings):
 
     # Execution Mode
     llm_mode: Literal["live", "cached", "offline", "hybrid"] = "offline"
+    offline_model_version: Literal["v1", "v2"] = "v1"
 
     # API Keys & Endpoints (One model ID per role from config)
     gemini_api_key: str = ""

@@ -11,14 +11,18 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import FeatureUnion, Pipeline
+from sklearn.svm import LinearSVC
 
 from supportpipe.classify.providers.base import BaseClassifierProvider
 from supportpipe.classify.sentiment import analyze_iraqi_sentiment_and_intent
+from supportpipe.config import settings
 from supportpipe.extract.language import detect_ticket_language
 from supportpipe.extract.normalize import (
+    normalize_arabic_v2,
     normalize_arabizi_and_slang,
     normalize_digits,
     strip_arabic_diacritics_and_tatweel,
@@ -27,90 +31,136 @@ from supportpipe.schemas import ClassificationResult
 
 logger = logging.getLogger(__name__)
 
-# Module-level cache for fitted pipelines
+# Module-level cache for fitted pipelines by version
+_PIPELINES_CACHE: dict[str, tuple[Pipeline | None, Pipeline | None]] = {}
 _CAT_PIPE: Pipeline | None = None
 _PRIO_PIPE: Pipeline | None = None
-_INIT_ATTEMPTED = False
 _INIT_LOCK = threading.Lock()
 
 
-def _init_offline_pipelines() -> tuple[Pipeline | None, Pipeline | None]:
-    """Initialize and fit in-memory TF-IDF + Logistic Regression models on development data.
+def _init_offline_pipelines(
+    model_version: str | None = None,
+) -> tuple[Pipeline | None, Pipeline | None]:
+    """Initialize and fit in-memory models on development data.
 
-    Training on data/splits/dev.jsonl (219 tickets) takes ~30ms once and is cached in memory.
-    The frozen test set (data/splits/test.jsonl) is strictly held out and never used for training.
+    Supports 'v1' (baseline word TF-IDF + Logistic Regression) and
+    'v2' (full Arabic normalization + Word-Char FeatureUnion + Calibrated LinearSVC).
+    Cached in memory. The frozen test set (data/splits/test.jsonl) is strictly held out.
     """
-    global _CAT_PIPE, _PRIO_PIPE, _INIT_ATTEMPTED
-    if _INIT_ATTEMPTED:
-        return _CAT_PIPE, _PRIO_PIPE
+    global _CAT_PIPE, _PRIO_PIPE
+    raw_version = model_version or getattr(settings, "offline_model_version", "v1") or "v1"
+    version = str(raw_version).lower()
+
+    if version in _PIPELINES_CACHE:
+        return _PIPELINES_CACHE[version]
 
     with _INIT_LOCK:
-        if _INIT_ATTEMPTED:
-            return _CAT_PIPE, _PRIO_PIPE
+        if version in _PIPELINES_CACHE:
+            return _PIPELINES_CACHE[version]
 
-        _INIT_ATTEMPTED = True
+        candidate_paths = [
+            Path(__file__).resolve().parents[4] / "data" / "splits" / "dev.jsonl",
+            Path("data/splits/dev.jsonl"),
+            Path(__file__).resolve().parents[3] / "data" / "splits" / "dev.jsonl",
+        ]
 
-    candidate_paths = [
-        Path(__file__).resolve().parents[4] / "data" / "splits" / "dev.jsonl",
-        Path("data/splits/dev.jsonl"),
-        Path(__file__).resolve().parents[3] / "data" / "splits" / "dev.jsonl",
-    ]
+        dev_file: Path | None = None
+        for p in candidate_paths:
+            if p.exists():
+                dev_file = p
+                break
 
-    dev_file: Path | None = None
-    for p in candidate_paths:
-        if p.exists():
-            dev_file = p
-            break
+        if not dev_file:
+            logger.warning("dev.jsonl not found; falling back to heuristic rules only")
+            _PIPELINES_CACHE[version] = (None, None)
+            return None, None
 
-    if not dev_file:
-        logger.warning("dev.jsonl not found; falling back to heuristic rules only")
-        return None, None
+        train_texts: list[str] = []
+        train_cats: list[str] = []
+        train_prios: list[str] = []
 
-    train_texts: list[str] = []
-    train_cats: list[str] = []
-    train_prios: list[str] = []
+        try:
+            with open(dev_file, encoding="utf-8") as f:
+                for line in f:
+                    line_str = line.strip()
+                    if not line_str:
+                        continue
+                    item: dict[str, Any] = json.loads(line_str)
+                    raw = str(item["ticket"]["raw_text"])
+                    norm = normalize_arabizi_and_slang(normalize_digits(raw))
+                    train_texts.append(norm)
+                    train_cats.append(str(item["label"]["category"]))
+                    train_prios.append(str(item["label"]["priority"]))
 
-    try:
-        with open(dev_file, encoding="utf-8") as f:
-            for line in f:
-                line_str = line.strip()
-                if not line_str:
-                    continue
-                item: dict[str, Any] = json.loads(line_str)
-                raw = str(item["ticket"]["raw_text"])
-                norm = normalize_arabizi_and_slang(normalize_digits(raw))
-                train_texts.append(norm)
-                train_cats.append(str(item["label"]["category"]))
-                train_prios.append(str(item["label"]["priority"]))
+            if version == "v2":
+                # Candidate V2 Winner: Normalization + Word-Char Union + Calibrated LinearSVC
+                cat_pipe = Pipeline([
+                    (
+                        "vectorizer",
+                        FeatureUnion([
+                            (
+                                "w",
+                                TfidfVectorizer(
+                                    ngram_range=(1, 2),
+                                    min_df=1,
+                                    sublinear_tf=True,
+                                    preprocessor=normalize_arabic_v2,
+                                ),
+                            ),
+                            (
+                                "c",
+                                TfidfVectorizer(
+                                    analyzer="char_wb",
+                                    ngram_range=(3, 5),
+                                    min_df=1,
+                                    sublinear_tf=True,
+                                    preprocessor=normalize_arabic_v2,
+                                ),
+                            ),
+                        ]),
+                    ),
+                    (
+                        "classifier",
+                        CalibratedClassifierCV(
+                            LinearSVC(C=1.0, max_iter=2000, random_state=42),
+                            cv=3,
+                        ),
+                    ),
+                ])
+                cat_pipe.fit(train_texts, train_cats)
+            else:
+                # Baseline V1
+                cat_pipe = Pipeline([
+                    ("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=1, sublinear_tf=True)),
+                    ("lr", LogisticRegression(C=2.5, max_iter=300, random_state=42)),
+                ])
+                cat_pipe.fit(train_texts, train_cats)
 
-        cat_pipe = Pipeline([
-            ("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=1, sublinear_tf=True)),
-            ("lr", LogisticRegression(C=2.5, max_iter=300, random_state=42)),
-        ])
-        cat_pipe.fit(train_texts, train_cats)
+            prio_pipe = Pipeline([
+                ("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=1, sublinear_tf=True)),
+                ("lr", LogisticRegression(C=2.0, max_iter=300, random_state=42)),
+            ])
+            prio_pipe.fit(train_texts, train_prios)
 
-        prio_pipe = Pipeline([
-            ("tfidf", TfidfVectorizer(ngram_range=(1, 2), min_df=1, sublinear_tf=True)),
-            ("lr", LogisticRegression(C=2.0, max_iter=300, random_state=42)),
-        ])
-        prio_pipe.fit(train_texts, train_prios)
+            _PIPELINES_CACHE[version] = (cat_pipe, prio_pipe)
+            if version == "v1":
+                _CAT_PIPE = cat_pipe
+                _PRIO_PIPE = prio_pipe
+            logger.info("Fitted offline dialect ML pipelines (%s) on %d dev tickets", version, len(train_texts))
+        except Exception as exc:
+            logger.error("Failed to train offline ML pipelines: %s; falling back to heuristic", exc)
+            _PIPELINES_CACHE[version] = (None, None)
 
-        _CAT_PIPE = cat_pipe
-        _PRIO_PIPE = prio_pipe
-        logger.info("Fitted offline dialect ML pipelines on %d dev tickets", len(train_texts))
-    except Exception as exc:
-        logger.error("Failed to train offline ML pipelines: %s; falling back to heuristic", exc)
-        _CAT_PIPE = None
-        _PRIO_PIPE = None
-
-    return _CAT_PIPE, _PRIO_PIPE
+        return _PIPELINES_CACHE[version]
 
 
 class MockClassifierProvider(BaseClassifierProvider):
     """Deterministic & ML hybrid classifier with Arabizi, English, and Iraqi dialect recognition."""
 
-    def __init__(self) -> None:
-        self.cat_pipe, self.prio_pipe = _init_offline_pipelines()
+    def __init__(self, offline_model_version: str | None = None) -> None:
+        raw_version = offline_model_version or getattr(settings, "offline_model_version", "v1") or "v1"
+        self.version = str(raw_version).lower()
+        self.cat_pipe, self.prio_pipe = _init_offline_pipelines(model_version=self.version)
 
     def classify(
         self,
