@@ -318,9 +318,9 @@
     "semantic_hash": "9de76d1befa4f6c4b8b824cd148c127b"
   },
   "src/supportpipe/evaluation/metrics.py": {
-    "mtime": 1792103663.7905765,
-    "seen": 1792104111.887685,
-    "ast_hash": "7624b53efb4b9316fcb7d763179435fe",
+    "mtime": 1792272404.5291188,
+    "seen": 1792272603.8465018,
+    "ast_hash": "b2d8bfc7fe350b7cbf878d1366c4959e",
     "semantic_hash": ""
   },
   "src/supportpipe/evaluation/run_eval.py": {
@@ -861,6 +861,42 @@
     "mtime": 1792272171.8564832,
     "seen": 1792272220.7745326,
     "ast_hash": "658c9ad656926e5436958aae7645e229",
+    "semantic_hash": ""
+  },
+  "scripts/eval_harness.py": {
+    "mtime": 1792272536.8215356,
+    "seen": 1792272603.846463,
+    "ast_hash": "61383654afa9ef6638abe6ba8f1f1125",
+    "semantic_hash": ""
+  },
+  "src/supportpipe/evaluation/eval_harness.py": {
+    "mtime": 1792272544.5614462,
+    "seen": 1792272603.8465004,
+    "ast_hash": "61f33ec16b4026469994aaa85ac61a15",
+    "semantic_hash": ""
+  },
+  "src/supportpipe/evaluation/sealed_guard.py": {
+    "mtime": 1792272285.719744,
+    "seen": 1792272603.8465044,
+    "ast_hash": "af45e4872fefbe568114d7e89e3ca545",
+    "semantic_hash": ""
+  },
+  "tests/test_eval_harness.py": {
+    "mtime": 1792272551.5226808,
+    "seen": 1792272603.8465412,
+    "ast_hash": "871beed877a0e5e677cbc53bb7804582",
+    "semantic_hash": ""
+  },
+  "tests/test_sealed_guard.py": {
+    "mtime": 1792272358.8850906,
+    "seen": 1792272603.8465564,
+    "ast_hash": "44dbcb8df2f5dcf8aef256c1c3cfb1cc",
+    "semantic_hash": ""
+  },
+  "configs/eval_matrix.yaml": {
+    "mtime": 1792272260.8216896,
+    "seen": 1792272603.8465726,
+    "ast_hash": "cef44f560bfe6e7147322722c63e42d4",
     "semantic_hash": ""
   }
 }
