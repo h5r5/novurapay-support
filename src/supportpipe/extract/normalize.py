@@ -1,5 +1,6 @@
 """Deterministic normalization and resolution of extracted fields (dates and amounts)."""
 
+import math
 import re
 from datetime import datetime, timedelta
 
@@ -456,6 +457,8 @@ def parse_currency_amount(amount_input: int | str | None) -> tuple[int | None, i
         return None, None, "IQD"
 
     if isinstance(amount_input, (int, float)):
+        if isinstance(amount_input, float) and not math.isfinite(amount_input):
+            return None, None, "IQD"
         val = int(amount_input)
         if 500 <= val <= 100_000_000:
             return val, None, "IQD"
@@ -508,13 +511,17 @@ def parse_currency_amount(amount_input: int | str | None) -> tuple[int | None, i
         val = int(base_m * 1_000_000)
         if is_usd:
             return val * current_rate, val, "USD"
-        return val, None, "IQD"
+        if 500 <= val <= 100_000_000:
+            return val, None, "IQD"
+        return None, None, "IQD"
 
     # 3.2 Arabizi amount notation (e.g. 100 alf, 50 alf, 25 alf)
     alf_match = re.match(r"^(\d+)\s*alf$", clean_no_curr, re.IGNORECASE)
     if alf_match:
         val = int(alf_match.group(1)) * 1_000
-        return val, None, "IQD"
+        if 500 <= val <= 100_000_000:
+            return val, None, "IQD"
+        return None, None, "IQD"
 
     # 3.3 Dynamic Decimal amount (e.g. 89.50, 0.5)
     dec_match = re.match(r"^(\d+\.\d+)$", clean_no_curr)
@@ -524,13 +531,17 @@ def parse_currency_amount(amount_input: int | str | None) -> tuple[int | None, i
             int_usd = max(1, round(fval)) if fval < 1 else round(fval)
             return int(fval * current_rate), int_usd, "USD"
         val = round(fval)
-        return val, None, "IQD"
+        if 500 <= val <= 100_000_000:
+            return val, None, "IQD"
+        return None, None, "IQD"
 
     # 3.4 Dynamic compound thousands + units: e.g. "50 الف و250"
     compound_k = re.match(r"^(\d+)\s*(?:الف|ألف)\s*و\s*(\d+)$", clean_no_curr)
     if compound_k:
         val = int(compound_k.group(1)) * 1_000 + int(compound_k.group(2))
-        return val, None, "IQD"
+        if 500 <= val <= 100_000_000:
+            return val, None, "IQD"
+        return None, None, "IQD"
 
     # 4. Check connected colloquial verbal amounts (Iraqi Arabic & Kurdish)
     connected_map: dict[str, int] = {
@@ -763,7 +774,8 @@ def parse_currency_amount(amount_input: int | str | None) -> tuple[int | None, i
             val = 250
         else:
             try:
-                val = int(float(prefix) * 1_000)
+                num = float(prefix)
+                val = int(num) if num >= 1_000 else int(num * 1_000)
             except ValueError:
                 return None, None, "IQD"
 
@@ -973,4 +985,35 @@ def normalize_arabic_v2(text: str) -> str:
     t = re.sub(r"(?<=[a-zA-Z])5|5(?=[a-zA-Z])", "kh", t)
     t = re.sub(r"(?<=[a-zA-Z])8|8(?=[a-zA-Z])", "gh", t)
     return t
+
+
+def normalize_arabic_v3(text: str) -> str:
+    """Enhanced normalization for Offline V3-V9 classification.
+
+    Applies:
+    1. Arabizi dual-channel phonetic enrichment (transliterating Latin tokens to Arabic phonemes).
+    2. Kurdish Sorani character unification for subword token sharing (ک->ك, ێ/ی->ي, ۆ->و, ە->ه, etc.).
+    3. Full V2 normalization rules (diacritics/tatweel removal, alef/ya/ta-marbuta unification, letter squeezing).
+    """
+    from supportpipe.extract.arabizi import enrich_text_with_arabizi
+
+    if not text:
+        return text
+    enriched = enrich_text_with_arabizi(text)
+    # Kurdish Sorani character unification for subword n-gram alignment
+    enriched = (
+        enriched.replace("ک", "ك")
+        .replace("ێ", "ي")
+        .replace("ی", "ي")
+        .replace("ۆ", "و")
+        .replace("ە", "ه")
+        .replace("ڕ", "ر")
+        .replace("ڵ", "ل")
+        .replace("ڤ", "ف")
+        .replace("پ", "ب")
+        .replace("چ", "ج")
+        .replace("گ", "ك")
+    )
+    return normalize_arabic_v2(enriched)
+
 

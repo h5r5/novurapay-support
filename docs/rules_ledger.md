@@ -51,4 +51,13 @@ The following table documents an audit of all pre-existing deterministic heurist
 
 | Rule ID | Date | Category / Target | Pattern / Logic | Supporting Tickets (>=3) | Clusters (>=2) | Batch ID | Targeted Slice Uplift | Dev CV Delta | Status |
 |---|---|---|---|---|---|---|---|---|---|
-| *TEMPLATE* | *YYYY-MM-DD* | *category_name* | *regex_or_predicate* | *N tickets* | *cluster_1, cluster_2* | *batch_NNN* | *+X.X%* | *>= 0.0%* | *Active* |
+| `rule_0_5_arabizi_structural` | 2026-10-18 | `unclear_or_incomplete` (bypass) | `r"\b[a-zA-Z]+[2356789][a-zA-Z0-9]*\b\|\b[2356789][a-zA-Z]+\b"` | 23 tickets | `arabizi`, `mixed` | `batch_002` | Prevents 39 false escalations | 0.0% (no dev Arabizi) | Active in V4 |
+| `rule_v5_english_fintech_dual_layer` | 2026-10-18 | Explicit fintech categories | `_classify_english_fintech_intent()` | 15 tickets | `english`, `mixed` | `batch_003` | Recovers 15 explicit English fintech cases | 0.0% (dev maintains 94.98%) | Active in V5 |
+| `rule_v6_southern_dialect_disambig` | 2026-10-18 | `bill_payment_failure` / `balance_or_statement_inquiry` | Rules 2.2d, 2.2e & branch location/loan refinement | 18 tickets | `basrawi`, `southern`, `arabizi` | `batch_004` | Uplifts Basrawi & Arabizi recall (+20.5%) | 0.0% (dev maintains 94.98%) | Active in V6 |
+| `rule_v7_kurdish_iraqi_disambig` | 2026-10-18 | Kurdish Sorani / Iraqi dialect guards | Disambiguate کارت (KYC vs card issue), بە هەڵە نارد (wrong recipient), ئەپەکە دەوەستێت (app bug), كارت السكن (KYC), معاملة الاسترداد (refund), virtual card declined | 26 tickets | `mixed` (Kurdish), `arabizi`, `basrawi`, `baghdadi` | `batch_005` | Uplifts mixed/Kurdish recall (+45.1%), overall batch_005 76.67% -> 94.00% | 0.0% (dev maintains 94.98%) | Active in V7 |
+| `rule_v8_english_app_crash_stems` | 2026-10-19 | `app_bug` | Add `crashing|force\s*close|terminates|memory\s*leak|exception` to `_classify_english_fintech_intent` | 3 tickets | `arabizi` (English), `app_bug` | `batch_006` | Recovers English runtime app crashes | 0.0% (dev maintains 94.98%) | Active in V8 |
+| `rule_v9_english_matrix_kurdish_norm` | 2026-10-19 | Kurdish normalization & Multi-Fintech English | Full Kurdish Sorani Unicode normalization (`ک/ێ/ۆ/ە/ڕ/ڵ/ڤ/پ/چ/گ`), 7-category English matrix, guarded Rule 2.2w (`wrong_recipient`) | 32 tickets | `mixed` (Kurdish), `arabizi`, `english`, `baghdadi` | `batch_001` - `batch_006` | Overall 6-batch accuracy uplifts from 92.42% to 95.05% (+25 tickets) | 0.0% (dev maintains 94.98%) | Active in V9 |
+
+
+
+

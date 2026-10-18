@@ -8,9 +8,9 @@ from supportpipe.config import settings
 from supportpipe.extract.normalize import normalize_digits
 from supportpipe.schemas import BatchSummary, PipelineResult
 
-# Regex for Iraqi mobile phones (07XX-XXX-XXXX, +964 7XX XXX XXXX, 07XXXXXXXX)
+# Regex for Iraqi mobile phones (07XX-XXX-XXXX, +964 7XX XXX XXXX, 07XXXXXXXX) and international E.164 phones
 PHONE_REGEX = re.compile(
-    r"(?<!\d)(?:\+?964[\s\-]?|00964[\s\-]?|0)?7[3-9](?:[\s\-]?\d){8}\b",
+    r"(?<!\d)(?:(?:\+?964[\s\-]?|00964[\s\-]?|0)?7[3-9](?:[\s\-]?\d){8}|\+\d{1,3}[\s\-]?\d{6,14})\b",
     re.IGNORECASE,
 )
 # Regex for National ID / Card numbers (12-16 digits)

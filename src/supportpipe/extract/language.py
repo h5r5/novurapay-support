@@ -65,6 +65,12 @@ def detect_ticket_language(text: str) -> LanguageType:
         # Default Arabic script is Iraqi Arabic
         return "ar"
 
+    # 2.5 Check Arabizi (Romanized Arabic in Latin characters)
+    from supportpipe.extract.arabizi import is_arabizi_text
+
+    if is_arabizi_text(clean):
+        return "ar"
+
     # 3. Check English stopwords
     en_words = re.findall(
         r"\b(the|is|are|was|were|have|has|had|with|my|your|this|that|from|for|"

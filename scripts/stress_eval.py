@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any
 
 from supportpipe.classify.providers.mock_provider import MockClassifierProvider
+from supportpipe.config import settings
 from supportpipe.evaluation.metrics import compute_wilson_ci
 
 logger = logging.getLogger("supportpipe.stress.eval")
@@ -76,6 +77,7 @@ def run_stress_eval(
     batch_arg: str,
     stress_dir: Path | str = "data/stress",
     results_dir: Path | str = "results",
+    model_version: str | None = None,
 ) -> dict[str, Any]:
     """Execute blind stress evaluation on a batch.
 
@@ -135,8 +137,12 @@ def run_stress_eval(
         raise ValueError(f"No tickets found in batch: {batch_file}")
 
     # Offline classifier (dev-trained Rules + ML)
-    provider = MockClassifierProvider()
-    model_id = "rules_dialect_ml_dev"
+    version = (
+        model_version
+        or getattr(settings, "offline_model_version", "v1")
+    )
+    provider = MockClassifierProvider(offline_model_version=version)
+    model_id = f"rules_dialect_ml_{provider.version}"
     provider_path = "mock"
 
     results_dir_blind = results_base / f"stress_{batch_num}_blind"
@@ -362,6 +368,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Blind stress evaluation runner (offline only)")
     parser.add_argument("batch", type=str, help="Batch identifier (e.g. batch_001 or 001)")
     parser.add_argument(
+        "--blind",
+        action="store_true",
+        default=True,
+        help="Run in blind mode (aggregates only, zero ticket text)",
+    )
+    parser.add_argument(
         "--stress-dir",
         type=str,
         default="data/stress",
@@ -373,6 +385,12 @@ def main() -> None:
         default="results",
         help="Directory to save evaluation results (default: results)",
     )
+    parser.add_argument(
+        "--model-version",
+        type=str,
+        default=None,
+        help="Offline model version to evaluate (e.g. v1, v2, v3)",
+    )
 
     args = parser.parse_args()
 
@@ -381,6 +399,7 @@ def main() -> None:
             batch_arg=args.batch,
             stress_dir=args.stress_dir,
             results_dir=args.results_dir,
+            model_version=args.model_version,
         )
     except Exception as e:
         sys.stderr.write(f"\nStress evaluation failed: {e}\n")

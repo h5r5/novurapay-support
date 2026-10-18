@@ -166,6 +166,8 @@ def extract_entities_offline(
 
     # Mask all phones from text to avoid phone digits colliding with references or amounts
     text_clean = re.sub(r"(?:\+964|00964|964)?0?7[3-9](?:[\s\-]?\d){8}", " ", text_no_date)
+    for pm in raw_phone_iter:
+        text_clean = text_clean.replace(pm.group(0), " ")
     if phone_match:
         text_clean = text_clean.replace(phone_match.group(0), " ")
 
@@ -199,12 +201,14 @@ def extract_entities_offline(
             # Standalone 8-16 digit sequence ONLY if NOT followed by currency units
             # and NOT preceded by amount keywords
             cand_ref_match = re.search(
-                r"(?<!مبلغ )(?<!بقيمة )(?<!قدره )(?<!حولت )(?<!دزيت )(?<!ناردم )(?<!بڕی )\b(\d{8,16})\b(?!\s*(?:دينار|دینار|الف|آلاف|ألف|مليون|ملیۆن|هەزار|iqd|د\.ع|\$|دولار|dolar|hezar|milyon))",
+                r"\b(\d{8,16})\b(?!\s*(?:دينار|دینار|الف|آلاف|ألف|مليون|ملیۆن|هەزار|iqd|د\.ع|\$|دولار|dolar|hezar|milyon))",
                 text_clean,
                 re.IGNORECASE,
             )
             if cand_ref_match:
-                found_ref = cand_ref_match.group(1)
+                pre_sub = text_clean[max(0, cand_ref_match.start() - 20) : cand_ref_match.start()]
+                if not re.search(r"(?:مبلغ|بقيمة|قدره|حولت|دزيت|ناردم|بڕی)\s*[:=]?\s*$", pre_sub):
+                    found_ref = cand_ref_match.group(1)
 
     # 4. Amount IQD & USD parsing with contextual disambiguation (Transaction vs Balance vs Fee)
     # Scrub HTML comments, tags, and ALL transaction references from text_for_amt
@@ -212,6 +216,7 @@ def extract_entities_offline(
     text_for_amt = re.sub(r"<[^>]+>", " ", text_for_amt)
     text_for_amt = re.sub(r"\b(?:TXN|REF|WALLET|NOVURA)[-_A-Z0-9]+\b", " ", text_for_amt, flags=re.IGNORECASE)
     text_for_amt = re.sub(r"\bRef#[A-Z0-9_-]+\b", " ", text_for_amt, flags=re.IGNORECASE)
+    text_for_amt = re.sub(r"(?:كود|رمز|otp|sms|کۆدی)\s*[:=]?\s*\d{4,8}\b", " ", text_for_amt, flags=re.IGNORECASE)
     if found_ref:
         text_for_amt = text_for_amt.replace(found_ref, " ")
 

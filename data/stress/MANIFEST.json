@@ -1,0 +1,107 @@
+{
+  "batch_001": {
+    "sha256": "0e68a791f714a00bd166932c6d0d977ff5aae0e6579d444416d8d76e727002f5",
+    "n": 150,
+    "generator": "unknown",
+    "date": "2026-10-18T17:15:19.756372+00:00",
+    "prompt_hash": "none",
+    "status": "consumed",
+    "measured_at": "2026-10-18T17:17:13.233533+00:00",
+    "git_commit": "e4874d2afecf35b4d5ae4d098e27b961040ac6e1",
+    "blind_accuracy": 0.32,
+    "blind_wilson_95_ci": [
+      0.2506,
+      0.3983
+    ]
+  },
+  "batch_002": {
+    "sha256": "427a0fe3aa2c10255f24d3819dc9dfe74bedec70fa5634131eb7613d69e67c27",
+    "n": 150,
+    "generator": "unknown",
+    "date": "2026-10-18T18:16:12.563324+00:00",
+    "prompt_hash": "none",
+    "status": "consumed",
+    "measured_at": "2026-10-18T18:18:34.020009+00:00",
+    "git_commit": "e4874d2afecf35b4d5ae4d098e27b961040ac6e1",
+    "blind_accuracy": 0.5,
+    "blind_wilson_95_ci": [
+      0.421,
+      0.579
+    ]
+  },
+  "batch_003": {
+    "sha256": "66e3851777cccb0de8d3a899f07f0d701917bf5a110b4d73e3a81ddb3f9a426a",
+    "n": 150,
+    "generator": "unknown",
+    "date": "2026-10-18T18:56:24.360121+00:00",
+    "prompt_hash": "none",
+    "status": "consumed",
+    "measured_at": "2026-10-18T18:57:14.088843+00:00",
+    "git_commit": "e4874d2afecf35b4d5ae4d098e27b961040ac6e1",
+    "blind_accuracy": 0.6067,
+    "blind_wilson_95_ci": [
+      0.5268,
+      0.6812
+    ]
+  },
+  "batch_004": {
+    "sha256": "48ebd57290858439bfd36e8bba32ac63c144f2162e08fd82f6cdb4dd03b0c51f",
+    "n": 200,
+    "generator": "unknown",
+    "date": "2026-10-18T19:47:09.937575+00:00",
+    "prompt_hash": "none",
+    "status": "consumed",
+    "measured_at": "2026-10-18T19:47:24.640632+00:00",
+    "git_commit": "e4874d2afecf35b4d5ae4d098e27b961040ac6e1",
+    "blind_accuracy": 0.755,
+    "blind_wilson_95_ci": [
+      0.691,
+      0.8094
+    ]
+  },
+  "batch_005": {
+    "sha256": "0c6092eb25c20be536ed6c5885830d43095d0d48834d11e22788776bd2cdd642",
+    "n": 150,
+    "generator": "unknown",
+    "date": "2026-10-18T20:18:45.985497+00:00",
+    "prompt_hash": "none",
+    "status": "consumed",
+    "measured_at": "2026-10-18T20:19:06.987210+00:00",
+    "git_commit": "e4874d2afecf35b4d5ae4d098e27b961040ac6e1",
+    "blind_accuracy": 0.7667,
+    "blind_wilson_95_ci": [
+      0.6928,
+      0.8272
+    ]
+  },
+  "batch_006": {
+    "sha256": "1304bfdf63df9acbfd0032a6e95557fd9c18c801a0e61fecf58ddb15914482ba",
+    "n": 150,
+    "generator": "unknown",
+    "date": "2026-10-18T21:05:34.432006+00:00",
+    "prompt_hash": "none",
+    "status": "consumed",
+    "measured_at": "2026-10-18T21:05:43.843454+00:00",
+    "git_commit": "e4874d2afecf35b4d5ae4d098e27b961040ac6e1",
+    "blind_accuracy": 0.7267,
+    "blind_wilson_95_ci": [
+      0.6504,
+      0.7917
+    ]
+  },
+  "batch_007": {
+    "sha256": "2b0f9c0ca9fc91d6a405e0841772620fd813745578cdab716c10a3925b744326",
+    "n": 150,
+    "generator": "external Claude (no repo access)",
+    "date": "2026-10-18T21:55:49.589807+00:00",
+    "prompt_hash": "none",
+    "status": "consumed",
+    "measured_at": "2026-10-18T21:56:05.344727+00:00",
+    "git_commit": "e4874d2afecf35b4d5ae4d098e27b961040ac6e1",
+    "blind_accuracy": 0.8067,
+    "blind_wilson_95_ci": [
+      0.7361,
+      0.8619
+    ]
+  }
+}
