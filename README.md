@@ -166,11 +166,15 @@ All figures below originate directly from reproducible runs on the current parti
 
 We evaluated Laya-Ara as a potential offline classifier for Iraqi wallet-support tickets. In our current synthetic benchmark, the existing SupportPipe offline engine consistently outperformed zero-shot and fine-tuned Laya-Ara as a standalone classifier.
 
+### 1. Definitive Offline Benchmarks (MVP Baseline vs. Laya-Ara)
 - **Zero-shot evaluation:** On 950 tickets from stress rounds 001–006, the existing full offline pipeline achieved **73.37%** accuracy, compared with **27.58%** for Laya-Ara.
-- **Fine-tuning evaluation:** On a separate 150-ticket synthetic holdout (Round 9), the existing offline engine achieved **82.00%** accuracy, compared with **36.00%** for fine-tuned Laya-Ara.
-- **Hybrid experiment:** A preliminary cascade reached **83.33%** accuracy on Round 9. This small observed improvement is not yet sufficient to establish a reliable advantage over the existing pipeline.
+- **Fine-tuning evaluation:** On a separate 150-ticket synthetic holdout (Round 9), the existing offline engine achieved **82.00%** accuracy, compared with **36.00%** for fine-tuned Laya-Ara. (An unconstrained statistical ML component without production safety gates achieved 91.33%; see evaluation report for details).
 
-**Decision:** SupportPipe retains its existing offline classifier as the MVP default. Laya-Ara is not enabled in the production path. Further hybrid evaluation remains experimental.
+### 2. Exploratory Hybrid Cascades (Research Only — Not Adopted)
+- **Preliminary cascade:** Routing to fine-tuned Laya when engine confidence fell below 0.70 reached **83.33%** on Round 9.
+- **Statistical assessment:** This observed +1.33 pp lift is preliminary and statistically non-significant ($p = 0.8145$ via paired McNemar test), while on Round 8 the cascade caused a net regression ($82.29\% \to 75.21\%$). It does not establish a reliable general advantage.
+
+**Decision:** SupportPipe retains its existing offline classifier as the MVP default. Laya-Ara is not enabled in the production inference path.
 
 > [!NOTE]
 > These results come from different evaluation sets and should not be interpreted as a direct comparison across rounds. See [`docs/LAYA_ARABIC_SUPPORT_EVALUATION.md`](docs/LAYA_ARABIC_SUPPORT_EVALUATION.md) and [`docs/LAYA_FINETUNING_STRESS_ROUNDS_EVALUATION.md`](docs/LAYA_FINETUNING_STRESS_ROUNDS_EVALUATION.md) for methodology, limitations, and detailed results.

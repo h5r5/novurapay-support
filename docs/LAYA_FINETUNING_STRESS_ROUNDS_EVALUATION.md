@@ -96,6 +96,14 @@ The final candidate model was retrained on Rounds 1–7 ($N=1,100$; 990 train, 1
 | **Round 8**<br>*(4-Cat Slice, N=480)* | **Accuracy**<br>95% Wilson CI<br>Macro-F1<br>Mean Latency | **80.21%**<br>`[76.4%, 83.5%]`<br>0.2400<br>0.3 ms | **82.29%**<br>`[78.6%, 85.5%]`<br>0.2482<br>4.5 ms | **31.25%**<br>`[27.3%, 35.5%]`<br>0.1091<br>489.4 ms | **30.63%**<br>`[26.7%, 34.9%]`<br>0.1086<br>493.8 ms | **75.21%**<br>`[71.2%, 78.9%]`<br>0.2327<br>~14.1 ms |
 | **Combined**<br>*(Rounds 8+9, N=630)* | **Accuracy**<br>95% Wilson CI<br>Macro-F1<br>Mean Latency | **82.86%**<br>`[79.7%, 85.6%]`<br>0.7817<br>0.3 ms | **82.22%**<br>`[79.0%, 85.0%]`<br>0.7435<br>4.4 ms | **32.38%**<br>`[28.8%, 36.1%]`<br>0.2518<br>504.1 ms | **31.90%**<br>`[28.4%, 35.6%]`<br>0.2488<br>511.8 ms | **77.14%**<br>`[73.7%, 80.3%]`<br>0.7236<br>~13.7 ms |
 
+> [!NOTE]
+> **Understanding Baseline ML (91.33%) vs. Baseline Engine (82.00%) on Round 9:**
+> - **Baseline ML (SGDClassifier, 91.33%):** An unconstrained, purely statistical TF-IDF text classifier trained on 1,233 tickets (dev + rounds 1–7). It is forced to emit an `argmax` prediction over the 14 taxonomy classes with **zero safety gates, no language routing, and no abstention**. Having absorbed a large vocabulary of Iraqi dialect and Arabizi n-grams across 7 rounds, it predicted the underlying category on 137/150 tickets.
+> - **Baseline Engine (MockClassifierProvider v10, 82.00%):** The full production orchestrator enforcing real-world fintech safety and routing policies. Specifically:
+>   - **Human Escalation Guard:** 23 English/foreign-language tickets were intentionally demoted to `unclear_or_incomplete` with low confidence so a bilingual human agent can handle them (`"English or foreign language ticket detected; routed to human care for bilingual assistance"`). Under benchmark ground-truth (which labels these tickets under their semantic intent), these deliberate safety escalations are penalized as category misclassifications.
+>   - **Vague / Security Guard:** Short and vague tickets without matching evidence are escalated to human care rather than guessed blindly.
+> - **Exploratory Status of Hybrid Cascade (83.33%):** While the cascade demonstrates a preliminary +1.33 pp lift on Round 9, the paired McNemar test ($p = 0.8145$) confirms this is statistically indistinguishable from noise, and on Round 8 the cascade regressed performance ($82.29\% \to 75.21\%$). It remains an exploratory research artifact and is not adopted for production.
+
 ---
 
 ### B. Dialect & Attack Slice Performance on Round 9 ($N = 150$)
