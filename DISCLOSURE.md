@@ -31,10 +31,27 @@
 - **Local Rule-Based & Offline Mock Providers (Arabizi & Dialect Enhanced):**
   - Role: Zero-network deterministic test execution, offline judge demo, Arabized English normalization, and instant reproducible benchmarks.
 
+### Evaluated Research Candidates (Not Adopted in Production)
+- **Wouze/laya-ara (ModernBERT-based Typed Decision Model):**
+  - Architecture: ModernBERT encoder with 14-class typed choice head (`agent.predict`).
+  - License: Code is Apache 2.0; released v48 weights are encumbered by **CC BY-NC 4.0 (Non-Commercial)** due to upstream fine-tuning on `facebook/xnli`.
+  - Role & Status: Evaluated as a potential offline classifier for Iraqi wallet tickets. Zero-shot scored 27.58% (vs 73.37% baseline) on Rounds 1–6 ($N=950$); fine-tuned scored 36.00% (vs 82.00% baseline) on Round 9 ($N=150$). Preliminary hybrid cascade reached 83.33% on Round 9. **Not adopted for production MVP**. SupportPipe retains its existing offline classifier as default.
+  - Detailed Evidence: See [`docs/LAYA_ARABIC_SUPPORT_EVALUATION.md`](docs/LAYA_ARABIC_SUPPORT_EVALUATION.md) and [`docs/LAYA_FINETUNING_STRESS_ROUNDS_EVALUATION.md`](docs/LAYA_FINETUNING_STRESS_ROUNDS_EVALUATION.md).
+- **convaiinnovations/laya-multilingual (Alternative Candidate):**
+  - Architecture: Multilingual mmBERT base model under permissive **Apache 2.0** license. Evaluated as an unencumbered alternative to `laya-ara`.
+
 ## 3. Data Provenance & Privacy
 - **100% Synthetic Data:** No real customer names, phone numbers, account identifiers, or transaction histories were collected, accessed, or used in this project.
-- **Dataset Size:** 352 total labeled tickets in authentic Iraqi and Kurdish dialects (219 development tickets in `data/splits/dev.jsonl` and 133 holdout tickets in `data/splits/test.jsonl`).
-- **Generation Method:** Synthetic tickets were generated using structured LLM prompts designed with Iraqi dialect colloquialisms, common fintech failure modes, and deliberate edge cases, partitioned by template family (`GroupShuffleSplit`).
+- **Dataset Size & Stress Batches:** 
+  - Baseline labeled tickets: 352 tickets in authentic Iraqi and Kurdish dialects (219 development tickets in `data/splits/dev.jsonl` and 133 holdout tickets in `data/splits/test.jsonl`).
+  - Stress testing suite in `data/stress_test/`:
+    - `data/stress_test/stress_test_100_adversarial.jsonl` (100 adversarial tickets).
+    - `data/stress_test/novurapay_tickets_round1.jsonl` through `novurapay_tickets_round9.jsonl` (Rounds 1–9 evaluation batches, ~1,730 synthetic tickets total).
+    - `data/stress_test/gen2.py` through `gen9.py` (Generation scripts and template specifications).
+    - *Round 9 Holdout Notice:* Round 9 ($N=150$ tickets across all 14 categories, 0 exact duplicates or 4-gram overlaps with Rounds 1–8) was evaluated during the Laya fine-tuning benchmark and transitioned to `consumed` status in `data/stress/MANIFEST.json`. Future model changes must be assessed on a fresh, unexposed test set.
+- **Generation Method & External Multi-LLM Generators:**
+  - The stress testing datasets in `data/stress_test/` were generated externally using **Google Gemini 3.8 Flash** and **Anthropic Claude 3.5 Sonnet**.
+  - These frontier generator models operated externally with **zero repository or rule access** to enforce genuine blind, out-of-distribution adversarial testing across regional Iraqi dialects (Baghdadi, Basrawi, Mosuli), Kurdish Sorani, Arabizi, BiDi Unicode Trojans, and prompt injections.
 - **PII Hygiene & Outbound Scrubbing:** All synthetic phone numbers and account identifiers strictly adhere to non-routable fictional formats. An automated regex scrubber and phone mask (`mask_pii`, `scrub_outbound_text`) conceals phone numbers and card/national IDs prior to storage and in every outbound LLM call. Customer names and physical addresses are not masked by regex; all dataset records and tickets are strictly synthetic only.
 - **Provider Policy Notice:** Testing using free-tier LLM endpoints was conducted solely on synthetic data to prevent any unintended data retention risks.
 

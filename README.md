@@ -162,6 +162,21 @@ All figures below originate directly from reproducible runs on the current parti
 
 ---
 
+## 🔬 Offline Model Evaluation
+
+We evaluated Laya-Ara as a potential offline classifier for Iraqi wallet-support tickets. In our current synthetic benchmark, the existing SupportPipe offline engine consistently outperformed zero-shot and fine-tuned Laya-Ara as a standalone classifier.
+
+- **Zero-shot evaluation:** On 950 tickets from stress rounds 001–006, the existing full offline pipeline achieved **73.37%** accuracy, compared with **27.58%** for Laya-Ara.
+- **Fine-tuning evaluation:** On a separate 150-ticket synthetic holdout (Round 9), the existing offline engine achieved **82.00%** accuracy, compared with **36.00%** for fine-tuned Laya-Ara.
+- **Hybrid experiment:** A preliminary cascade reached **83.33%** accuracy on Round 9. This small observed improvement is not yet sufficient to establish a reliable advantage over the existing pipeline.
+
+**Decision:** SupportPipe retains its existing offline classifier as the MVP default. Laya-Ara is not enabled in the production path. Further hybrid evaluation remains experimental.
+
+> [!NOTE]
+> These results come from different evaluation sets and should not be interpreted as a direct comparison across rounds. See [`docs/LAYA_ARABIC_SUPPORT_EVALUATION.md`](docs/LAYA_ARABIC_SUPPORT_EVALUATION.md) and [`docs/LAYA_FINETUNING_STRESS_ROUNDS_EVALUATION.md`](docs/LAYA_FINETUNING_STRESS_ROUNDS_EVALUATION.md) for methodology, limitations, and detailed results.
+
+---
+
 ## 🚀 Quickstart & Command Center
 
 ### 1. Installation
@@ -240,6 +255,8 @@ novurapay-support/
 │   ├── ARCHITECTURE_MAP.md        # Master architectural roadmap & directory layout guide
 │   ├── BRIEF_DIGEST.md            # Master compliance tracking table
 │   ├── CODE_CRITIQUE_2026-09-22.md# Deep code audit & architectural evaluation
+│   ├── LAYA_ARABIC_SUPPORT_EVALUATION.md # Comprehensive zero-shot benchmark on Rounds 1–6 (N=950)
+│   ├── LAYA_FINETUNING_STRESS_ROUNDS_EVALUATION.md # Supervised fine-tuning & hybrid cascade on Round 9 (N=150)
 │   ├── category_taxonomy.md       # Grounded taxonomy with evidence grades (A/B/C)
 │   ├── slides_evidence.md         # Verifiable evidence for Stage 2 presentation slides
 │   ├── sample_drafts_for_review.md# 10 sample pre-drafted Iraqi Arabic responses

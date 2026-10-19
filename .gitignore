@@ -60,6 +60,10 @@ Desktop.ini
 
 # Temporary outputs (keep structured runs via manifest/reports)
 scratch/
+experiments/
+checkpoints/
+*.safetensors
+
 
 # Presentation & Hackathon Stage 2 slides (local only, never push)
 presentation/
