@@ -1,13 +1,13 @@
 # Laya-Ara Fine-Tuning Evaluation on SupportPipe Stress Rounds 1–9
 
-**Document Version**: 2.0 (Final Sealed Evaluation Report)  
-**Evaluation Date**: 2026-10-20  
-**Evaluator**: SupportPipe Autonomous AI Evaluation Suite  
-**Branch**: `experiment/laya-finetune-stress-r1-r9`  
-**Base Model**: `Wouze/laya-ara` (ModernBERT-based typed decision architecture; revision: `c2a0118ce6688e24099feca80643b4075120751c`)  
-**Fine-Tuned Checkpoint**: `experiments/laya/checkpoints/laya_finetuned_final`  
-**Alternative Model Analyzed**: `convaiinnovations/laya-multilingual`  
-**Decision Rule**: Committed and frozen in `experiments/laya/FINETUNE_DECISION_RULE.md` prior to final evaluation.  
+- **Document Version**: 2.0 (Final Sealed Evaluation Report)
+- **Evaluation Date**: 2026-10-20
+- **Evaluator**: SupportPipe Autonomous AI Evaluation Suite
+- **Branch**: `experiment/laya-finetune-stress-r1-r9`
+- **Base Model**: `Wouze/laya-ara` (ModernBERT-based typed decision architecture; revision: `c2a0118ce6688e24099feca80643b4075120751c`)
+- **Fine-Tuned Checkpoint**: `experiments/laya/checkpoints/laya_finetuned_final`
+- **Alternative Model Analyzed**: `convaiinnovations/laya-multilingual`
+- **Decision Rule**: Committed and frozen in `experiments/laya/FINETUNE_DECISION_RULE.md` prior to final evaluation.
 
 ---
 
@@ -159,7 +159,7 @@ Reviewing the conditions committed in `experiments/laya/FINETUNE_DECISION_RULE.m
 | **6. Licensing Clearance** | Permissive commercial deployment | `Wouze/laya-ara` is **CC BY-NC 4.0** | **FAIL** |
 
 ### Final Classification Verdict
-**NO-GO for Primary Classifier Deployment**.  
+**NO-GO for Primary Classifier Deployment**.
 **DEFER for Cascade Evaluation** pending alternative base models (`convaiinnovations/laya-multilingual`) and GPU availability.
 
 ---

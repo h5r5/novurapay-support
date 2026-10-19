@@ -1,10 +1,10 @@
 # Laya-Ara Offline Support Evaluation Report
 
-**Model Evaluated:** `Wouze/laya-ara`  
-**Evaluation Scope:** Offline Arabic NLU typed-decision evaluation for SupportPipe (NovuraPay)  
-**Date:** 2026-10-19  
-**Decision Verdict:** **NO-GO** (Zero-shot Laya degrades pooled accuracy by -45.79 pp vs baseline; license non-commercial)  
-**Next Step:** Retain existing offline classifier; explore fine-tuning on Apache-2.0 `convaiinnovations/laya-multilingual` as a separate research track.
+- **Model Evaluated:** `Wouze/laya-ara`
+- **Evaluation Scope:** Offline Arabic NLU typed-decision evaluation for SupportPipe (NovuraPay)
+- **Date:** 2026-10-19
+- **Decision Verdict:** **NO-GO** (Zero-shot Laya degrades pooled accuracy by -45.79 pp vs baseline; license non-commercial)
+- **Next Step:** Retain existing offline classifier; explore fine-tuning on Apache-2.0 `convaiinnovations/laya-multilingual` as a separate research track.
 
 ---
 

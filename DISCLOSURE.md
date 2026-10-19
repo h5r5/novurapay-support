@@ -42,7 +42,7 @@
 
 ## 3. Data Provenance & Privacy
 - **100% Synthetic Data:** No real customer names, phone numbers, account identifiers, or transaction histories were collected, accessed, or used in this project.
-- **Dataset Size & Stress Batches:** 
+- **Dataset Size & Stress Batches:**
   - Baseline labeled tickets: 352 tickets in authentic Iraqi and Kurdish dialects (219 development tickets in `data/splits/dev.jsonl` and 133 holdout tickets in `data/splits/test.jsonl`).
   - Stress testing suite in `data/stress_test/`:
     - `data/stress_test/stress_test_100_adversarial.jsonl` (100 adversarial tickets).
