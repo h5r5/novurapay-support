@@ -11,7 +11,8 @@ This document tracks blind evaluation scores across sequential stress test batch
 | `batch_004` | 2026-10-18 | `e4874d2` | 200 | external Claude (no repo access) | **75.50%** (151/200) | [69.10%, 80.94%] | mosul: 92.86%, baghdadi: 91.30%, basrawi: 74.68%, arabizi: 60.71%, mixed: 36.84%, prompt_inj: 14.29% | `consumed` |
 | `batch_005` | 2026-10-18 | `e4874d2` | 150 | external Claude (no repo access) | **76.67%** (115/150) | [69.28%, 82.72%] | baghdadi: 100.0%, mosul: 100.0%, basrawi: 84.44%, arabizi: 76.92%, mixed: 48.98%, prompt_inj: 28.57% | `consumed` |
 | `batch_006` | 2026-10-18 | `e4874d2` | 150 | external Claude (no repo access) | **72.67%** (109/150) | [65.04%, 79.17%] | mosul: 87.50%, basrawi: 82.86%, baghdadi: 72.97%, mixed: 68.57%, arabizi: 55.56%, prompt_inj: 0.00% | `consumed` |
-| `batch_007` | 2026-10-19 | `e4874d2` | 150 | external Claude (no repo access) | **80.67%** (121/150) | [73.61%, 86.19%] | mixed: 91.43%, basrawi: 87.50%, mosul: 80.00%, baghdadi: 73.68%, arabizi: 62.50%, prompt_inj: 0.00% | `measured_blind` |
+| `batch_007` | 2026-10-19 | `e4874d2` | 150 | external Claude (no repo access) | **80.67%** (121/150) | [73.61%, 86.19%] | mixed: 91.43%, basrawi: 87.50%, mosul: 80.00%, baghdadi: 73.68%, arabizi: 62.50%, prompt_inj: 0.00% | `consumed` |
+| `batch_008` | 2026-10-20 | `f0ceaaa` | 198 | external Claude (no repo access) | **75.76%** (150/198) | [69.33%, 81.20%] | mixed: 84.62%, arabizi: 81.25%, basrawi: 77.14%, mosul: 76.67%, baghdadi: 66.13%, prompt_inj: 46.15% | `consumed` |
 
 
 

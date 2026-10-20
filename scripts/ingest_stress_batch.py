@@ -299,6 +299,7 @@ def ingest_stress_batch(
     batch_id: str | None = None,
     generator: str = "unknown",
     prompt_hash: str = "none",
+    drop_rejected: bool = False,
 ) -> dict[str, Any]:
     """Ingest, validate, and register a stress test batch.
 
@@ -402,7 +403,9 @@ def ingest_stress_batch(
 
     if batch_failures:
         report_lines = [
-            "=== STRESS BATCH INGESTION FAILED ===",
+            "=== STRESS BATCH INGESTION REPORT: REJECTED ROWS ==="
+            if drop_rejected
+            else "=== STRESS BATCH INGESTION FAILED ===",
             f"Input File: {input_path}",
             f"Total Rows: {len(lines)}",
             f"Invalid Rows: {len(batch_failures)}",
@@ -414,7 +417,10 @@ def ingest_stress_batch(
                 report_lines.append(f"  - {err}")
         err_msg = "\n".join(report_lines)
         sys.stderr.write(err_msg + "\n")
-        raise ValueError(err_msg)
+        if not drop_rejected:
+            raise ValueError(err_msg)
+        if not valid_rows:
+            raise ValueError("All rows were rejected; no valid rows to ingest.")
 
     # Ingestion accepted: Write to target stress directory
     stress_path.mkdir(parents=True, exist_ok=True)
@@ -503,6 +509,11 @@ def main() -> None:
         default="data/splits/test.jsonl",
         help="Path to test.jsonl split",
     )
+    parser.add_argument(
+        "--drop-rejected",
+        action="store_true",
+        help="Drop rejected rows and ingest remaining valid rows",
+    )
 
     args = parser.parse_args()
 
@@ -515,6 +526,7 @@ def main() -> None:
             batch_id=args.batch_id,
             generator=args.generator,
             prompt_hash=args.prompt_hash,
+            drop_rejected=args.drop_rejected,
         )
         print("=== STRESS BATCH INGESTION SUCCESSFUL ===")
         print(f"Batch ID:      {res['batch_id']}")
