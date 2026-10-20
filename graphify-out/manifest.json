@@ -342,8 +342,8 @@
     "semantic_hash": "2d881655845d3d35fc5e5eb1b2d7dd85"
   },
   "src/supportpipe/extract/extract.py": {
-    "mtime": 1792453950.5572536,
-    "seen": 1792454521.958117,
+    "mtime": 1792456168.1211922,
+    "seen": 1792457815.0908105,
     "ast_hash": "680182779aac5b86966da30d098cd477",
     "semantic_hash": ""
   },
@@ -354,8 +354,8 @@
     "semantic_hash": ""
   },
   "src/supportpipe/extract/normalize.py": {
-    "mtime": 1792454500.1803846,
-    "seen": 1792454521.9581199,
+    "mtime": 1792456168.1222959,
+    "seen": 1792457815.0908132,
     "ast_hash": "bc57544549fab502f867b650edbf6862",
     "semantic_hash": ""
   },
@@ -498,9 +498,9 @@
     "semantic_hash": "65ae47b6370037e0e6c261740c49fbc6"
   },
   "tests/test_normalizers.py": {
-    "mtime": 1792453975.2132459,
-    "seen": 1792454521.958162,
-    "ast_hash": "2c03c2da4bf45569d9fa70618d9fe505",
+    "mtime": 1792456168.1233356,
+    "seen": 1792457815.0908556,
+    "ast_hash": "6211c8370fdc046d824984bdc1a95c3f",
     "semantic_hash": ""
   },
   "tests/test_patterns.py": {
@@ -570,8 +570,8 @@
     "semantic_hash": ""
   },
   "DISCLOSURE.md": {
-    "mtime": 1792449743.506899,
-    "seen": 1792450717.9779348,
+    "mtime": 1792456168.0991275,
+    "seen": 1792457815.0908773,
     "ast_hash": "5feecc10dd2848ac6166fd77d71bd644",
     "semantic_hash": ""
   },
@@ -582,9 +582,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1792449090.1132705,
-    "seen": 1792450717.9779372,
-    "ast_hash": "5eef039f48041bbc2cb8a934554fac4c",
+    "mtime": 1792457798.5342672,
+    "seen": 1792457815.0908792,
+    "ast_hash": "abde0fc26ceeb14cad2ae7382176e81a",
     "semantic_hash": ""
   },
   "Topic_Briefs .md": {
@@ -900,8 +900,8 @@
     "semantic_hash": ""
   },
   "scripts/ingest_stress_batch.py": {
-    "mtime": 1792450354.222065,
-    "seen": 1792450717.9778252,
+    "mtime": 1792456168.120679,
+    "seen": 1792457815.0907671,
     "ast_hash": "785168439782a8f5ac3ccd09d5c73af3",
     "semantic_hash": ""
   },
@@ -948,8 +948,8 @@
     "semantic_hash": ""
   },
   "docs/stress_series.md": {
-    "mtime": 1792450640.1783147,
-    "seen": 1792450717.9779832,
+    "mtime": 1792456168.1037762,
+    "seen": 1792457815.0909271,
     "ast_hash": "bf89246768746866abf113591af5e9e8",
     "semantic_hash": ""
   },
@@ -984,8 +984,8 @@
     "semantic_hash": ""
   },
   "data/stress/MANIFEST.json": {
-    "mtime": 1792450627.1214972,
-    "seen": 1792450717.9777718,
+    "mtime": 1792456168.1001544,
+    "seen": 1792457815.0907114,
     "ast_hash": "b7f882a8dfb3b1814c203e0b53bbbc28",
     "semantic_hash": ""
   },
@@ -1134,27 +1134,33 @@
     "semantic_hash": ""
   },
   "docs/LAYA_ARABIC_SUPPORT_EVALUATION.md": {
-    "mtime": 1792449758.1639874,
-    "seen": 1792450717.9779496,
+    "mtime": 1792456168.1022341,
+    "seen": 1792457815.0908918,
     "ast_hash": "4b3e97d894966947358b137bb0e0dd7c",
     "semantic_hash": ""
   },
   "docs/LAYA_FINETUNING_STRESS_ROUNDS_EVALUATION.md": {
-    "mtime": 1792449786.9127963,
-    "seen": 1792450717.977951,
+    "mtime": 1792456168.102749,
+    "seen": 1792457815.090893,
     "ast_hash": "91f7e8161a80c5e564426f98fc3bb506",
     "semantic_hash": ""
   },
   "docs/stress_findings_008.md": {
-    "mtime": 1792450616.1930027,
-    "seen": 1792450717.9779809,
-    "ast_hash": "c69387af3ab7b194b2c9f0b5ea33a585",
+    "mtime": 1792456168.1032624,
+    "seen": 1792457815.0909245,
+    "ast_hash": "543090c0acad727c519eddbe5ea31f86",
     "semantic_hash": ""
   },
   "results/stress_008_blind/summary.md": {
-    "mtime": 1792450416.586223,
-    "seen": 1792450717.9779937,
+    "mtime": 1792456168.1196432,
+    "seen": 1792457815.0909383,
     "ast_hash": "a511703d6e656b5927706594b89aaa60",
+    "semantic_hash": ""
+  },
+  "scripts/audit_all_stress_batches.py": {
+    "mtime": 1792456168.1201656,
+    "seen": 1792457815.0907598,
+    "ast_hash": "eeec838cec5f6db049e8a36357df1790",
     "semantic_hash": ""
   }
 }

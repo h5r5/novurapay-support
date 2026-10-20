@@ -4,17 +4,17 @@
 *A reproducible, auditable, high-throughput batch support pipeline tailored for Iraqi Arabic and Kurdish customer tickets. Engineered with a Tri-Engine Hybrid Architecture, calibrated confidence escalation, deterministic routing, grounded response drafting, and an active learning discrepancy store.*
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/)
-[![Tests: 214/214 Passed](https://img.shields.io/badge/tests-214%2F214%20passing-brightgreen.svg)]()
-[![Stress Rounds 1-7: 95.1% Consumed | 80.7% Blind](https://img.shields.io/badge/stress_rounds_1--7-95.1%25%20consumed%20%7C%2080.7%25%20blind-blue.svg)]()
+[![Tests: 215/215 Passed](https://img.shields.io/badge/tests-215%2F215%20passing-brightgreen.svg)]()
+[![Stress Rounds 1-8: 94.0% Consumed | 75.8% Blind](https://img.shields.io/badge/stress_rounds_1--8-94.0%25%20consumed%20%7C%2075.8%25%20blind-blue.svg)]()
 [![Holdout: 56.4% (Diagnostic)](https://img.shields.io/badge/holdout-56.4%25%20(diagnostic)-orange.svg)]()
 [![Adversarial Breaking Points: 0/100](https://img.shields.io/badge/adversarial_breaking_points-0%2F100%20(100%25)-purple.svg)]()
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
 > **Empirical Performance Ledger (Zero-Hype, Verifiable Metrics):**
-> - **Continuous Stress Rounds 1–7 (650 tickets):** **80.67%** blind zero-shot accuracy on unseen Round 7 (Wilson 95% CI: [73.6%, 86.2%]); **95.05%** cumulative consumed accuracy across all 7 rounds (Wilson 95% CI: [93.1%, 96.5%]).
+> - **Continuous Stress Rounds 1–8 (1,298 tickets):** **75.76%** blind zero-shot accuracy on unseen Round 8 (Wilson 95% CI: [69.3%, 81.2%]); **93.99%** cumulative consumed accuracy across all 8 rounds (Wilson 95% CI: [92.6%, 95.2%]).
 > - **Diagnostic Holdout Set (133 tickets):** **56.39%** (75/133, Wilson 95% CI: [47.9%, 64.5%]). Unexposed slice: **46.7%** (42/90, Wilson 95% CI: [36.7%, 56.9%]).
 > - **Adversarial Torture Test (100 tickets):** **0/100 breaking points** (100% resilience against BiDi Trojans, prompt injections, and complex currency slang).
-> - **Automated Test Suite:** **214/214 unit and integration tests passing** covering Arabic, Kurdish (Sorani/Kurmanji), Arabizi, PII masking, and fault isolation.
+> - **Automated Test Suite:** **215/215 unit and integration tests passing** covering Arabic, Kurdish (Sorani/Kurmanji), Arabizi, PII masking, and fault isolation.
 
 ---
 
@@ -50,57 +50,87 @@ SupportPipe strictly complies with all mandatory pre-scoring challenge criteria:
 
 ## 🏗️ System Architecture & Workflow
 
-SupportPipe follows a resilient layered workflow designed for high throughput, auditable decision-making, and zero-downtime offline autonomy:
+SupportPipe follows a resilient layered workflow designed for high throughput, auditable decision-making, and zero-downtime offline autonomy.
 
+### Executive Overview Rail
+```mermaid
+flowchart LR
+    P1["<b>1. Ingestion</b><br>Dialect Sanitization"] --> P2["<b>2. Fast Extraction</b><br>0.5ms Regex & PII"]
+    P2 --> P3["<b>3. Tiered Waterfall</b><br>Cost-Saving Consensus"]
+    P3 --> P4["<b>4. Safety Gate</b><br>Deterministic Routing"]
+    P4 --> P5["<b>5. Operations Review</b><br>Zero Outbound Auto-Send"]
+```
+
+### Production Tiered Waterfall
 ```mermaid
 flowchart TD
-    subgraph Ingestion["1. Ticket Ingestion & Preprocessing"]
-        A["Raw Customer Ticket<br>(Iraqi Arabic / Kurdish / Arabizi)"] --> B["Character Deduplication & Elongation Strip<br>('ملييونين وربععع' -> 'مليونين وربع')"]
-        B --> C["Dialect Slang & Digit Normalizer<br>(Persian/Eastern Digits -> ASCII, Slang Maps)"]
+    %% Styling Definitions
+    classDef blueBox fill:#0f172a,stroke:#38bdf8,stroke-width:1.5px,color:#f8fafc;
+    classDef purpleBox fill:#2e1065,stroke:#c084fc,stroke-width:1.5px,color:#faf5ff;
+    classDef greenBox fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#ecfdf5;
+    classDef amberBox fill:#451a03,stroke:#fbbf24,stroke-width:2px,color:#fffbeb;
+    classDef zincBox fill:#18181b,stroke:#71717a,stroke-width:1.5px,color:#f4f4f5;
+    classDef diamondBox fill:#27272a,stroke:#e4e4e7,stroke-width:1.5px,color:#ffffff;
+
+    subgraph S1["1. INGESTION & DIALECT SANITIZATION"]
+        direction TB
+        RAW["Raw Customer Ticket Queue<br><i>(Iraqi Arabic • Kurdish Sorani/Kurmanji • Arabizi)</i>"]:::blueBox
+        NORM["Text Sanitizer & Normalizer<br>• Character elongation collapse <i>('ملييونين وربععع' ➔ 'مليونين وربع')</i><br>• Arabizi phoneme enrichment & Eastern digits to ASCII"]:::blueBox
+        RAW --> NORM
     end
 
-    subgraph FastExtraction["2. System 1 Fast Entity Extractor (0.5ms)"]
-        C --> D["Deterministic Regex & Parser Engine"]
-        D --> D1["Transaction Ref (TXN-XXXXXX)"]
-        D --> D2["Amount & Currency (IQD, USD, Daftars, Shiddat)"]
-        D --> D3["Calendar Relative Dates ('قبل شهر', 'اولت البارحة')"]
-        D --> D4["PII Masker & Phone Extractor"]
+    subgraph S2["2. ULTRA-FAST DETERMINISTIC EXTRACTION (~0.5ms)"]
+        direction TB
+        EXT["Entity Extraction & Privacy Sanitizer Engine"]:::blueBox
+        EXT --> ENT1["<b>Reference:</b> Canonical TXN-XXXXXX patterns"]:::zincBox
+        EXT --> ENT2["<b>Amount & Slang:</b> IQD, USD <i>(daftar, shidda, warqa, tabouqa)</i>"]:::zincBox
+        EXT --> ENT3["<b>Dates:</b> Relative & Syriac <i>('15 Nisan', 'Tishreen 1', 'sarli shahar')</i>"]:::zincBox
+        EXT --> ENT4["<b>Safety:</b> PII Masking <i>(0780****123)</i> & BiDi Trojan quarantine"]:::amberBox
     end
 
-    subgraph ConsensusEngine["3. Tri-Engine Hybrid Consensus Matrix"]
-        D --> E1["System 1: In-Memory Offline ML & Heuristic"]
-        D --> E2["System 1.5: TypeSafe Jev 1.13 Decision Model"]
-        D --> E3["System 2: Google Gemini 3.6 Flash Auditor"]
-        E1 --> F{"Consensus Matrix<br>Evaluator"}
-        E2 --> F
-        E3 --> F
-        F -->|Triple Agreement| G1["High Confidence Consensus<br>(Design Specification)"]
-        F -->|Cloud Override| G2["Cloud Consensus Override"]
-        F -->|Irreconcilable Conflict| G3["Trigger Escalation Gate"]
-        G2 -.->|Log Conflict| H["Active Learning Discrepancy Store<br>(data/audit_learning/discrepancies.jsonl)"]
+    subgraph S3["3. TIERED WATERFALL DECISION MATRIX (Zero Cloud Waste)"]
+        direction TB
+        M1["Step 1: System 1 Local Offline ML <i>(Engine V9)</i><br>TF-IDF + Calibrated LinearSVC (Latency < 1ms)"]:::zincBox
+        DEC1{"Confidence >= 0.95<br>& Not Audit Sample?"}:::diamondBox
+        M1 --> DEC1
+
+        DEC1 -->|Yes: 80%+ Volume| PASS_FAST["Fast-Exit Offline Prediction<br><i>(Zero Cloud Cost • Sub-millisecond)</i>"]:::greenBox
+        DEC1 -->|No: Lower Confidence| M2["Step 2: System 1.5 TypeSafe Jev 1.13<br>Calibrated RLCD Choice Engine (~580ms)"]:::purpleBox
+
+        M2 --> DEC2{"Jev Agrees &<br>Conf >= 0.80?"}:::diamondBox
+        DEC2 -->|Yes: Preserve Quota| PASS_JEV["2-Engine Consensus Prediction<br><i>(Gemini Quota Preserved)</i>"]:::greenBox
+        DEC2 -->|No: Conflict / Low Conf| M3["Step 3: System 2 Cloud Auditor<br><i>(Google Gemini 3.8 Flash • Failover: Groq Llama-3.3)</i>"]:::purpleBox
+
+        M3 --> PASS_CLOUD["Cloud Consensus Prediction"]:::purpleBox
+        M3 -.->|Conflict Logged| DISC[("Active Learning Discrepancy Store<br><i>data/audit_learning/discrepancies.jsonl</i>")]:::zincBox
     end
 
-    subgraph SafetyGate["4. Routing & Escalation Gate"]
-        G1 --> I{"Escalation Policy Check"}
-        G2 --> I
-        G3 --> I
-        I -->|Missing Required Ref| J["Escalate to Human Triage<br>(Missing Fields / Low Conf / BiDi Trojan)"]
-        I -->|Confidence < Threshold| J
-        I -->|Hostile Injection / BiDi| J
-        I -->|Pass| K["Deterministic Routing Table<br>(routing_table.yaml)"]
+    subgraph S4["4. OPERATIONAL ROUTING & ESCALATION GATE"]
+        direction TB
+        GATE{"Safety Gate Verification"}:::diamondBox
+        PASS_FAST --> GATE
+        PASS_JEV --> GATE
+        PASS_CLOUD --> GATE
+
+        GATE -->|Missing Mandatory Ref / Low Conf / Attack| ESC["Human Triage & Escalation Queue<br><i>(Auditable Reason Codes • Zero Guessing)</i>"]:::amberBox
+        GATE -->|Validated & Confident| ROUTE["Deterministic Routing Table<br><i>(routing_table.yaml ➔ Operational Squads)</i>"]:::greenBox
     end
 
-    subgraph Drafting["5. Grounded First-Response Generator"]
-        K --> L["Template Selector & Dialect Injector"]
-        L --> M["Grounding Validator<br>(Verifies zero invented numbers / dates)"]
-        M --> N["Enriched Ticket Stored in Review Queue<br>(Zero Outbound Auto-Send)"]
+    subgraph S5["5. GROUNDED FIRST-RESPONSE DRAFTING & REVIEW COCKPIT"]
+        direction TB
+        DRAFT["Culturally Grounded Iraqi Response Generator<br><i>(Strictly bounded to extracted entities • Zero invented facts)</i>"]:::zincBox
+        QUEUE["Streamlit Operations Review Queue<br><i>(Approve • Edit • Reject • Outage Heatmap)</i>"]:::blueBox
+        SEND["Zero Outbound Auto-Send Policy<br><i>(Human supervisor approval mandatory)</i>"]:::amberBox
+
+        ROUTE --> DRAFT
+        DRAFT --> QUEUE
+        QUEUE --> SEND
     end
 
-    subgraph OperationsCockpit["6. Operations Cockpit & Oversight"]
-        N --> O["Streamlit Agent Review UI<br>(Approve, Edit, Reject Drafts)"]
-        H --> P["Active Learning & Rule Suggestion Dashboard"]
-        N --> Q["Automated Outage & Anomaly Heatmap"]
-    end
+    S1 --> S2
+    S2 --> S3
+    S3 --> S4
+    S4 --> S5
 ```
 
 ---
@@ -146,7 +176,9 @@ Drafts are strictly validated against extracted entities before submission to th
 
 ---
 
-## 📊 Evaluation Benchmarks on Current Holdout Set (133 Tickets)
+## 📊 Empirical Evaluation Benchmarks & Stress Testing
+
+### 1. Diagnostic Holdout Split (133 Tickets)
 
 All figures below originate directly from reproducible runs on the current partitioned split (`supportpipe eval --split test`):
 
@@ -159,6 +191,22 @@ All figures below originate directly from reproducible runs on the current parti
 * **Transaction Ref Exact Match:** **100.0%** (synthetic reference strings).
 * **Date Match Rate:** **100.0%** (calendar-accurate normalized event dates).
 * **Processing Throughput:** **333+ tickets/sec** in offline batch execution.
+
+### 2. Continuous Adversarial Stress Series (8 Rounds — 1,298 Tickets)
+
+To evaluate real-world generalizability and prevent over-tuning, SupportPipe was evaluated against **8 sequential stress rounds (1,298 unseen tickets)**. Each batch was generated externally using frontier LLMs (**Claude 5.5 / Gemini 3.8 Flash, depending on the batch**) with zero repository access, simulating extreme colloquial Iraqi dialects, Kurdish variants, Arabizi, and financial dispute edge cases:
+
+| Batch ID | Ingestion Date | External Generator | Tickets | Blind Zero-Shot | Consumed (V9 Final) | Wilson 95% CI | Target Dialects & Stress Slices |
+| :--- | :---: | :--- | :---: | :---: | :---: | :---: | :--- |
+| `batch_001` | 2026-10-18 | Claude 5.5 / Gemini 3.8 Flash | 150 | 32.00% (48/150) | **92.67%** (139/150) | [87.3%, 95.9%] | Baghdadi, Basrawi, Arabizi, Prompt Injection |
+| `batch_002` | 2026-10-18 | Claude 5.5 / Gemini 3.8 Flash | 150 | 50.00% (75/150) | **96.67%** (145/150) | [92.4%, 98.6%] | Moslawi, Baghdadi, Basrawi, Market Slang |
+| `batch_003` | 2026-10-18 | Claude 5.5 / Gemini 3.8 Flash | 150 | 60.67% (91/150) | **97.33%** (146/150) | [93.3%, 99.0%] | Dialect Code-Switching, Arabizi Edge Cases |
+| `batch_004` | 2026-10-18 | Claude 5.5 / Gemini 3.8 Flash | 200 | 75.50% (151/200) | **96.00%** (192/200) | [92.3%, 98.0%] | Kurdish Sorani/Kurmanji, Anbari Provincial |
+| `batch_005` | 2026-10-18 | Claude 5.5 / Gemini 3.8 Flash | 150 | 76.67% (115/150) | **94.67%** (142/150) | [89.8%, 97.3%] | Baghdadi, Moslawi, Account Takeover Scams |
+| `batch_006` | 2026-10-18 | Claude 5.5 / Gemini 3.8 Flash | 150 | 72.67% (109/150) | **92.67%** (139/150) | [87.3%, 95.9%] | Multi-Issue Tickets, Extreme Empathy Slang |
+| `batch_007` | 2026-10-19 | Claude 5.5 / Gemini 3.8 Flash | 150 | 80.67% (121/150) | **88.67%** (133/150) | [82.6%, 92.8%] | Rapid Transfer Disputes, Kurdish, Arabizi |
+| `batch_008` | 2026-10-20 | Claude 5.5 / Gemini 3.8 Flash | 198 | 75.76% (150/198) | **92.93%** (184/198) | [88.4%, 95.8%] | Unseen Iraqi Idioms, Hostile Adversarial Slang |
+| **Cumulative Total** | **2026-10-20** | **Claude 5.5 / Gemini 3.8 Flash (Zero Repo Access)** | **1,298** | — | **93.99%** (1,220/1,298) | **[92.56%, 95.16%]** | **1,298 tickets processed in 5.71s (4.40ms/ticket)** |
 
 ---
 
@@ -237,7 +285,7 @@ uv run streamlit run src/supportpipe/ui/app.py
 
 ### 8. Run Full Regression Test Suite & Linters
 ```bash
-# Run all 214 automated tests
+# Run all 215 automated tests
 uv run pytest tests/ -v
 
 # Run code style & static analysis
