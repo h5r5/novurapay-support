@@ -1,1 +1,3 @@
 graphify-out/graph.json merge=graphify
+graphify-out/** linguist-generated=true
+graphify-out/** linguist-vendored=true
