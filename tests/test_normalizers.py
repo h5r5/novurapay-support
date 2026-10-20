@@ -133,3 +133,34 @@ def test_category_extraction_rules() -> None:
     )
     assert valid is True
     assert len(reasons) == 0
+
+
+def test_resolve_mesopotamian_month_dates() -> None:
+    """Verify Mesopotamian (Iraqi) calendar month parsing and extraction."""
+    from supportpipe.extract.extract import extract_entities_offline
+
+    submitted_at = "2026-09-22T14:30:00+03:00"
+
+    # Explicit day + month + year
+    assert resolve_event_date("15 نيسان 2026", submitted_at) == "2026-04-15"
+    assert resolve_event_date("بتاريخ 20 تشرين الأول 2025", submitted_at) == "2025-10-20"
+    assert resolve_event_date("يوم 5 كانون الثاني 2026", submitted_at) == "2026-01-05"
+    assert resolve_event_date("10 شباط 2026", submitted_at) == "2026-02-10"
+    assert resolve_event_date("1 اذار 2026", submitted_at) == "2026-03-01"
+    assert resolve_event_date("25 ايار 2026", submitted_at) == "2026-05-25"
+    assert resolve_event_date("30 حزيران 2026", submitted_at) == "2026-06-30"
+    assert resolve_event_date("7 تموز 2026", submitted_at) == "2026-07-07"
+    assert resolve_event_date("14 اب 2026", submitted_at) == "2026-08-14"
+    assert resolve_event_date("2 أيلول 2026", submitted_at) == "2026-09-02"
+
+    # Month without explicit year: past month relative to Sep 2026 stays 2026
+    assert resolve_event_date("15 نيسان", submitted_at) == "2026-04-15"
+    # Month without explicit year: future month relative to Sep 2026 (e.g. Nov) rolls back to 2025
+    assert resolve_event_date("10 تشرين الثاني", submitted_at) == "2025-11-10"
+
+    # End-to-end extraction from ticket text
+    ticket = "السلام عليكم، حولت 75 الف يوم 15 نيسان 2026 وما وصلت للمستلم ورقم الحوالة TXN-12345678"
+    extracted = extract_entities_offline(ticket, submitted_at, "failed_transfer")
+    assert extracted.event_date_resolved == "2026-04-15"
+    assert extracted.amount_iqd == 75000
+    assert extracted.transaction_ref == "TXN-12345678"

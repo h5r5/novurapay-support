@@ -68,6 +68,46 @@ RELATIVE_DATE_PATTERNS = [
     (re.compile(r"\b(?:قبل|صارلي)\s*([3-9]|10)\s*ايام?\b", re.IGNORECASE), None),  # dynamic extraction
 ]
 
+# Mesopotamian (Syriac) calendar month names -> Gregorian month numbers
+MESOPOTAMIAN_MONTHS: dict[str, int] = {
+    "كانون الثاني": 1,
+    "كانون ثاني": 1,
+    "شباط": 2,
+    "آذار": 3,
+    "اذار": 3,
+    "نيسان": 4,
+    "أيار": 5,
+    "ايار": 5,
+    "حزيران": 6,
+    "تموز": 7,
+    "آب": 8,
+    "اب": 8,
+    "أيلول": 9,
+    "ايلول": 9,
+    "تشرين الأول": 10,
+    "تشرين الاول": 10,
+    "تشرين اول": 10,
+    "تشرين الثاني": 11,
+    "تشرين ثاني": 11,
+    "كانون الأول": 12,
+    "كانون الاول": 12,
+    "كانون اول": 12,
+    "تشرين 1": 10,
+    "تشرين 2": 11,
+    "كانون 1": 12,
+    "كانون 2": 1,
+}
+
+_MESO_MONTHS_NAMES = "|".join(re.escape(k) for k in sorted(MESOPOTAMIAN_MONTHS.keys(), key=len, reverse=True))
+_MESO_DATE_DMY_PATTERN = re.compile(
+    r"(?:بتاريخ\s*|يوم\s*)?\b(\d{1,2})\s*(?:من\s*)?(" + _MESO_MONTHS_NAMES + r")(?:\s*(\d{4}))?\b",
+    re.IGNORECASE,
+)
+_MESO_DATE_MDY_PATTERN = re.compile(
+    r"(?:بتاريخ\s*|يوم\s*)?\b(" + _MESO_MONTHS_NAMES + r")\s*(\d{1,2})(?:[،,\s]+(\d{4}))?\b",
+    re.IGNORECASE,
+)
+
 # Weekday mappings (0=Monday, ..., 6=Sunday) across Arabic and Kurdish dialects
 ARABIC_WEEKDAYS = {
     # Standard Arabic & Dialect
@@ -849,6 +889,36 @@ def resolve_event_date(date_text: str | None, submitted_at_iso: str) -> str | No
         d, m, y = int(dmy_match.group(1)), int(dmy_match.group(2)), int(dmy_match.group(3))
         try:
             return datetime(y, m, d).strftime("%Y-%m-%d")
+        except ValueError:
+            return None
+
+    # 2.2 Mesopotamian / Iraqi calendar named month resolution (e.g. '15 نيسان 2026', '15 نيسان', '20 كانون الثاني')
+    norm_clean = re.sub(r"\s+", " ", norm_text)
+    meso_match = _MESO_DATE_DMY_PATTERN.search(norm_clean)
+    if not meso_match:
+        meso_match = _MESO_DATE_MDY_PATTERN.search(norm_clean)
+        if meso_match:
+            d_cand = int(meso_match.group(2))
+            m_cand_str = meso_match.group(1).strip()
+            y_cand = int(meso_match.group(3)) if meso_match.group(3) else ref_dt.year
+        else:
+            d_cand, m_cand_str, y_cand = None, None, None
+    else:
+        d_cand = int(meso_match.group(1))
+        m_cand_str = meso_match.group(2).strip()
+        y_cand = int(meso_match.group(3)) if meso_match.group(3) else ref_dt.year
+
+    if meso_match is not None and d_cand is not None and y_cand is not None and m_cand_str in MESOPOTAMIAN_MONTHS:
+        m_num = MESOPOTAMIAN_MONTHS[m_cand_str]
+        # If year was not specified and candidate date is in the future relative to submission, roll back 1 year
+        if meso_match.group(3) is None:
+            try:
+                if datetime(y_cand, m_num, d_cand).date() > ref_dt.date():
+                    y_cand -= 1
+            except ValueError:
+                pass
+        try:
+            return datetime(y_cand, m_num, d_cand).strftime("%Y-%m-%d")
         except ValueError:
             return None
 
