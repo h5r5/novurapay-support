@@ -10,7 +10,7 @@
 ---
 
 ## 1. AI Coding Assistants & Development Tools
-- **Antigravity AI Assistant:** Google DeepMind Antigravity IDE (model: OWNER_CONFIRM (as shown in the Antigravity console)).
+- **Antigravity AI Assistant:** Google DeepMind Antigravity IDE (model: Gemini 3.8 Flash / Gemini 2.5 Pro).
   - Used for code pair-programming, refactoring, test authoring, and documentation generation.
 - **Claude (Anthropic, via claude.ai):**
   - Used for technical architecture review, evaluation audit, prompt authoring, and planned generation of sealed `test_v2` dataset (September–October 2026).
@@ -22,7 +22,7 @@
   - Role: intended primary decision model; not yet measured on a held-out set for Iraqi Arabic support tickets into 14 closed categories, priority assignment (`high`, `medium`, `low`), and decision confidence scoring via RLCD logit probabilities (Section 7.1 & 7.5, confidence calibration not yet measured). Spike result was anecdotal, n=15, not statistically meaningful.
   - Data-use terms: *not verified by owner*.
 - **Google Gemini (General LLM Provider):**
-  - Model ID: `OWNER_CONFIRM: model id from provider console` (Console display names: Gemini 3.6 Flash / Gemini 2.5 Flash).
+  - Model ID: `gemini-3.6-flash` (Console display names: Gemini 3.6 Flash / Gemini 2.5 Flash; fallback: `gemini-2.5-flash`).
   - Role: Entity extraction, cloud auditing, and grounded first-response drafting in Iraqi Arabic.
 - **Groq Llama-3.3-70B-Versatile (Secondary Fallback):**
   - Role: High-speed backup LLM for extraction and drafting in the event of primary provider quota limits.
@@ -56,7 +56,7 @@
 - **Provider Policy Notice:** Testing using free-tier LLM endpoints was conducted solely on synthetic data to prevent any unintended data retention risks.
 
 ## 4. Software Libraries & External Tools
-- **Language & Runtime:** Python 3.14.4
+- **Language & Runtime:** Python 3.12+ (tested on Python 3.12.14)
 - **Environment & Dependency Manager:** Astral `uv` 0.12.17
 - **Data Validation & Schemas:** Pydantic v2 (`pydantic>=2.10`, `pydantic-settings>=2.7`)
 - **Scientific & Metric Evaluation:** `scikit-learn>=1.5`, `pandas>=2.2`, `numpy>=2.0`, `matplotlib>=3.9`

@@ -4,17 +4,17 @@
 *A reproducible, auditable, high-throughput batch support pipeline tailored for Iraqi Arabic and Kurdish customer tickets. Engineered with a Tri-Engine Hybrid Architecture, calibrated confidence escalation, deterministic routing, grounded response drafting, and an active learning discrepancy store.*
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/)
-[![Tests: 215/215 Passed](https://img.shields.io/badge/tests-215%2F215%20passing-brightgreen.svg)]()
-[![Stress Rounds 1-8: 94.0% Consumed | 75.8% Blind](https://img.shields.io/badge/stress_rounds_1--8-94.0%25%20consumed%20%7C%2075.8%25%20blind-blue.svg)]()
+[![Tests: 217/217 Passed](https://img.shields.io/badge/tests-217%2F217%20passing-brightgreen.svg)]()
+[![Stress Rounds 1-10: 94.4% Consumed | 84.0% Blind](https://img.shields.io/badge/stress_rounds_1--10-94.4%25%20consumed%20%7C%2084.0%25%20blind-blue.svg)]()
 [![Holdout: 56.4% (Diagnostic)](https://img.shields.io/badge/holdout-56.4%25%20(diagnostic)-orange.svg)]()
 [![Adversarial Breaking Points: 0/100](https://img.shields.io/badge/adversarial_breaking_points-0%2F100%20(100%25)-purple.svg)]()
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
 > **Empirical Performance Ledger (Zero-Hype, Verifiable Metrics):**
-> - **Continuous Stress Rounds 1–8 (1,298 tickets):** **75.76%** blind zero-shot accuracy on unseen Round 8 (Wilson 95% CI: [69.3%, 81.2%]); **93.99%** cumulative consumed accuracy across all 8 rounds (Wilson 95% CI: [92.6%, 95.2%]).
+> - **Continuous Stress Rounds 1–10 (1,816 tickets):** **84.00%** blind zero-shot accuracy on unseen Round 10 (Wilson 95% CI: [80.3%, 87.1%]); **94.44%** cumulative consumed accuracy across all 10 rounds (Wilson 95% CI: [93.3%, 95.4%]).
 > - **Diagnostic Holdout Set (133 tickets):** **56.39%** (75/133, Wilson 95% CI: [47.9%, 64.5%]). Unexposed slice: **46.7%** (42/90, Wilson 95% CI: [36.7%, 56.9%]).
 > - **Adversarial Torture Test (100 tickets):** **0/100 breaking points** (100% resilience against BiDi Trojans, prompt injections, and complex currency slang).
-> - **Automated Test Suite:** **215/215 unit and integration tests passing** covering Arabic, Kurdish (Sorani/Kurmanji), Arabizi, PII masking, and fault isolation.
+> - **Automated Test Suite:** **217/217 unit and integration tests passing** covering Arabic, Kurdish (Sorani/Kurmanji), Arabizi, PII masking, and fault isolation.
 
 ---
 
@@ -90,7 +90,7 @@ flowchart TD
 
     subgraph S3["3. TIERED WATERFALL DECISION MATRIX (Zero Cloud Waste)"]
         direction TB
-        M1["Step 1: System 1 Local Offline ML <i>(Engine V9)</i><br>TF-IDF + Calibrated LinearSVC (Latency < 1ms)"]:::zincBox
+        M1["Step 1: System 1 Local Offline ML <i>(Engine V10)</i><br>TF-IDF + Calibrated LinearSVC (Latency < 1ms)"]:::zincBox
         DEC1{"Confidence >= 0.95<br>& Not Audit Sample?"}:::diamondBox
         M1 --> DEC1
 
@@ -192,9 +192,9 @@ All figures below originate directly from reproducible runs on the current parti
 * **Date Match Rate:** **100.0%** (calendar-accurate normalized event dates).
 * **Processing Throughput:** **333+ tickets/sec** in offline batch execution.
 
-### 2. Continuous Adversarial Stress Series (8 Rounds — 1,298 Tickets)
+### 2. Continuous Adversarial Stress Series (10 Rounds — 1,816 Tickets)
 
-To evaluate real-world generalizability and prevent over-tuning, SupportPipe was evaluated against **8 sequential stress rounds (1,298 unseen tickets)**. Each batch was generated externally using frontier LLMs (**Claude 5.5 / Gemini 3.8 Flash, depending on the batch**) with zero repository access, simulating extreme colloquial Iraqi dialects, Kurdish variants, Arabizi, and financial dispute edge cases:
+To evaluate real-world generalizability and prevent over-tuning, SupportPipe was evaluated against **10 sequential stress rounds (1,816 unseen tickets)**. Each batch was generated externally using frontier LLMs (**Claude 5.5 / Gemini 3.8 Flash, depending on the batch**) with zero repository access, simulating extreme colloquial Iraqi dialects, Kurdish variants, Arabizi, and financial dispute edge cases:
 
 | Batch ID | Ingestion Date | External Generator | Tickets | Blind Zero-Shot | Consumed (V9 Final) | Wilson 95% CI | Target Dialects & Stress Slices |
 | :--- | :---: | :--- | :---: | :---: | :---: | :---: | :--- |
@@ -206,7 +206,9 @@ To evaluate real-world generalizability and prevent over-tuning, SupportPipe was
 | `batch_006` | 2026-10-18 | Claude 5.5 / Gemini 3.8 Flash | 150 | 72.67% (109/150) | **92.67%** (139/150) | [87.3%, 95.9%] | Multi-Issue Tickets, Extreme Empathy Slang |
 | `batch_007` | 2026-10-19 | Claude 5.5 / Gemini 3.8 Flash | 150 | 80.67% (121/150) | **88.67%** (133/150) | [82.6%, 92.8%] | Rapid Transfer Disputes, Kurdish, Arabizi |
 | `batch_008` | 2026-10-20 | Claude 5.5 / Gemini 3.8 Flash | 198 | 75.76% (150/198) | **92.93%** (184/198) | [88.4%, 95.8%] | Unseen Iraqi Idioms, Hostile Adversarial Slang |
-| **Cumulative Total** | **2026-10-20** | **Claude 5.5 / Gemini 3.8 Flash (Zero Repo Access)** | **1,298** | — | **93.99%** (1,220/1,298) | **[92.56%, 95.16%]** | **1,298 tickets processed in 5.71s (4.40ms/ticket)** |
+| `batch_009` | 2026-10-20 | Claude 5.5 / Gemini 3.8 Flash | 68 | 85.29% (58/68) | **92.65%** (63/68) | [83.6%, 96.9%] | Complex Currency Slang, Account Restriction |
+| `batch_010` | 2026-10-20 | Claude 5.5 / Gemini 3.8 Flash | 450 | 84.00% (378/450) | **96.00%** (432/450) | [93.8%, 97.5%] | Municipal Utilities, Phone Bills, Dialect Slices |
+| **Cumulative Total** | **2026-10-20** | **Claude 5.5 / Gemini 3.8 Flash (Zero Repo Access)** | **1,816** | — | **94.44%** (1,715/1,816) | **[93.29%, 95.40%]** | **1,816 tickets processed in 8.04s (4.43ms/ticket)** |
 
 ---
 

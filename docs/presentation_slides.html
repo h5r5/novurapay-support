@@ -1,0 +1,2237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SupportPipe — Stage 2 Design Brief (Topic 06: Support Pipeline Automation)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+Arabic:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #0a0e17;
+      --bg-surface: #111827;
+      --bg-surface-elevated: #162032;
+      --bg-surface-highlight: #1d2a42;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-medium: rgba(255, 255, 255, 0.14);
+      --border-accent: rgba(245, 158, 11, 0.35);
+      
+      --accent-amber: #f59e0b;
+      --accent-amber-glow: rgba(245, 158, 11, 0.12);
+      --accent-emerald: #10b981;
+      --accent-emerald-glow: rgba(16, 185, 129, 0.12);
+      --accent-cyan: #06b6d4;
+      --accent-cyan-glow: rgba(6, 182, 212, 0.12);
+      --accent-rose: #f43f5e;
+      --accent-rose-glow: rgba(244, 63, 94, 0.12);
+      --accent-violet: #8b5cf6;
+      
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      
+      --font-display: 'Outfit', 'Noto Sans Arabic', sans-serif;
+      --font-body: 'Plus Jakarta Sans', 'Noto Sans Arabic', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-arabic: 'Noto Sans Arabic', 'Plus Jakarta Sans', sans-serif;
+      
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 20px;
+      
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+      --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.6);
+      --shadow-ambient: 0 0 50px rgba(245, 158, 11, 0.05);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      line-height: 1.5;
+      overflow-x: hidden;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Ambient background grid */
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.06) 0%, transparent 60%),
+        radial-gradient(circle at 90% 90%, rgba(6, 182, 212, 0.04) 0%, transparent 50%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Presentation Deck Container */
+    .deck-container {
+      position: relative;
+      z-index: 1;
+      width: 100vw;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    /* Fixed Top Navigation Bar */
+    .deck-header {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(1360px, 94vw);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.65rem 1.25rem;
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      z-index: 100;
+      box-shadow: var(--shadow-md);
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .brand-logo {
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, var(--accent-amber), #b45309);
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      color: #0c121e;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+
+    .brand-meta {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.92rem;
+      letter-spacing: -0.01em;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .brand-tag {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-amber);
+      padding: 0.1rem 0.45rem;
+      border-radius: 4px;
+      border: 1px solid rgba(245, 158, 11, 0.25);
+    }
+
+    .brand-sub {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .slide-indicator {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      font-variant-numeric: tabular-nums;
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.35rem 0.75rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.85rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-subtle);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--border-medium);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-amber), #d97706);
+      border-color: rgba(245, 158, 11, 0.5);
+      color: #0c121e;
+      font-weight: 700;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #fbbf24, #d97706);
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-lang {
+      font-family: var(--font-arabic);
+      font-weight: 700;
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.3);
+      color: var(--accent-emerald);
+    }
+
+    .btn-lang:hover {
+      background: rgba(16, 185, 129, 0.2);
+    }
+
+    /* 16:9 Presentation Canvas */
+    .slide-viewport {
+      width: min(1360px, 94vw);
+      aspect-ratio: 16 / 9;
+      position: relative;
+      margin-top: 4.5rem;
+      margin-bottom: 3.5rem;
+      perspective: 1000px;
+    }
+
+    .slide {
+      position: absolute;
+      inset: 0;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 2.25rem 2.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.97) translateY(12px);
+      transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: var(--shadow-lg), var(--shadow-ambient);
+      overflow: hidden;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1) translateY(0);
+      z-index: 10;
+    }
+
+    /* Slide Header Area */
+    .slide-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+
+    .eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-amber);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background-color: var(--accent-amber);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent-amber);
+    }
+
+    .slide-title {
+      font-family: var(--font-display);
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      color: var(--text-primary);
+      text-wrap: balance;
+    }
+
+    .slide-subtitle {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+      max-width: 820px;
+    }
+
+    .slide-badge-num {
+      font-family: var(--font-mono);
+      font-size: 2.75rem;
+      font-weight: 800;
+      color: rgba(255, 255, 255, 0.05);
+      line-height: 1;
+      user-select: none;
+    }
+
+    /* Slide Body (The Grid / Canvas) */
+    .slide-content {
+      flex: 1;
+      display: grid;
+      gap: 1.25rem;
+      min-height: 0; /* Prevents overflow inside flex */
+      position: relative;
+    }
+
+    /* Slide Footer Area */
+    .slide-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+
+    .footer-meta {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .footer-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      color: var(--text-secondary);
+    }
+
+    /* Common Card Styling */
+    .card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.15rem;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .card:hover {
+      border-color: var(--border-medium);
+    }
+
+    .card-title {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-title-icon {
+      width: 18px;
+      height: 18px;
+      color: var(--accent-amber);
+    }
+
+    /* ========================================================
+       SLIDE 1: USER & PROBLEM (Asymmetric Split)
+       ======================================================== */
+    .grid-s1 {
+      grid-template-columns: 1.15fr 0.85fr;
+      align-items: stretch;
+    }
+
+    .persona-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .persona-hero-card {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.07), rgba(17, 24, 39, 0.6));
+      border: 1px solid rgba(245, 158, 11, 0.25);
+      border-radius: var(--radius-lg);
+      padding: 1.1rem;
+    }
+
+    .persona-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      color: var(--accent-amber);
+      background: rgba(245, 158, 11, 0.15);
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-sm);
+      margin-bottom: 0.4rem;
+    }
+
+    .persona-hero-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.35rem;
+    }
+
+    .persona-hero-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.45;
+    }
+
+    .dialect-quotes-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+    }
+
+    .quote-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.85rem;
+      position: relative;
+    }
+
+    .quote-region {
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.3rem;
+    }
+
+    .quote-text-ar {
+      font-family: var(--font-arabic);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      direction: rtl;
+      text-align: right;
+      line-height: 1.4;
+      margin-bottom: 0.35rem;
+    }
+
+    .quote-intent {
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      color: var(--accent-emerald);
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .pain-matrix {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      justify-content: space-between;
+    }
+
+    .pain-item {
+      background: rgba(244, 63, 94, 0.04);
+      border: 1px solid rgba(244, 63, 94, 0.2);
+      border-radius: var(--radius-md);
+      padding: 0.95rem;
+    }
+
+    .pain-header {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent-rose);
+      margin-bottom: 0.25rem;
+    }
+
+    .pain-desc {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .stat-callout-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+    }
+
+    .stat-callout {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.85rem;
+      text-align: center;
+    }
+
+    .stat-val {
+      font-family: var(--font-mono);
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--accent-amber);
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
+
+    .stat-label {
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+      margin-top: 0.2rem;
+    }
+
+    .thesis-banner {
+      background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), rgba(17, 24, 39, 0.6));
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      font-size: 0.78rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    /* ========================================================
+       SLIDE 2: END-TO-END ARCHITECTURE (Pipeline Flow)
+       ======================================================== */
+    .pipeline-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      height: 100%;
+      justify-content: space-between;
+    }
+
+    .pipeline-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.85rem;
+      align-items: stretch;
+      flex: 1;
+    }
+
+    .pipeline-stage {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1rem 0.85rem;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .pipeline-stage:not(:last-child)::after {
+      content: '➔';
+      position: absolute;
+      right: -0.65rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.85rem;
+      color: var(--accent-amber);
+      background: var(--bg-surface);
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--border-medium);
+      z-index: 5;
+    }
+
+    .stage-idx {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      color: var(--accent-amber);
+      font-weight: 700;
+      margin-bottom: 0.3rem;
+      letter-spacing: 0.05em;
+    }
+
+    .stage-name {
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.6rem;
+      line-height: 1.25;
+    }
+
+    .stage-pill-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-top: auto;
+    }
+
+    .stage-chip {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-sm);
+      padding: 0.35rem 0.45rem;
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+      line-height: 1.3;
+    }
+
+    .stage-chip strong {
+      color: var(--text-primary);
+    }
+
+    .stage-chip.highlight {
+      background: rgba(245, 158, 11, 0.08);
+      border-color: rgba(245, 158, 11, 0.25);
+      color: var(--text-primary);
+    }
+
+    .stage-chip.secure {
+      background: rgba(16, 185, 129, 0.08);
+      border-color: rgba(16, 185, 129, 0.25);
+      color: var(--accent-emerald);
+    }
+
+    .arch-bottom-features {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.85rem;
+    }
+
+    .arch-feature-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 0.95rem;
+    }
+
+    .arch-feature-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent-amber);
+      margin-bottom: 0.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .arch-feature-desc {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      line-height: 1.35;
+    }
+
+    /* ========================================================
+       SLIDE 3: MODELS, TOOLS & SYNTHETIC DATA STRATEGY
+       ======================================================== */
+    .grid-s3 {
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 1.25rem;
+    }
+
+    .model-table-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.73rem;
+      margin-top: 0.5rem;
+    }
+
+    .custom-table th {
+      text-align: left;
+      padding: 0.5rem 0.6rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-weight: 600;
+      font-size: 0.65rem;
+      border-bottom: 1px solid var(--border-subtle);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .custom-table td {
+      padding: 0.6rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+      color: var(--text-secondary);
+      vertical-align: middle;
+    }
+
+    .custom-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-primary);
+    }
+
+    .badge-tier {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.15rem 0.45rem;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+
+    .tier-offline {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-emerald);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .tier-hybrid {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-amber);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .tier-cloud {
+      background: rgba(6, 182, 212, 0.15);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+    }
+
+    .latency-val {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent-emerald);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .synthetic-strategy-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .data-pill-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.85rem;
+    }
+
+    .data-pill-title {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .data-pill-desc {
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .data-matrix-box {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin-top: 0.45rem;
+      text-align: center;
+    }
+
+    .matrix-cell {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.35rem;
+    }
+
+    .matrix-val {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--accent-amber);
+    }
+
+    .matrix-lbl {
+      font-size: 0.62rem;
+      color: var(--text-muted);
+    }
+
+    /* ========================================================
+       SLIDE 4: TESTING & EMPIRICAL EVIDENCE
+       ======================================================== */
+    .grid-s4 {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      height: 100%;
+    }
+
+    .kpi-metric-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.85rem;
+    }
+
+    .kpi-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 0.9rem 1rem;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent-emerald), transparent);
+    }
+
+    .kpi-val {
+      font-family: var(--font-mono);
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--accent-emerald);
+      line-height: 1.1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .kpi-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 0.35rem;
+    }
+
+    .kpi-sub {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      margin-top: 0.15rem;
+    }
+
+    .evidence-split-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 0.85rem;
+      flex: 1;
+    }
+
+    .stress-series-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 0.9rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .adversarial-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 0.9rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .progress-bar-wrap {
+      margin: 0.35rem 0;
+    }
+
+    .progress-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.2rem;
+    }
+
+    .progress-track {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-amber), var(--accent-emerald));
+      border-radius: 9999px;
+    }
+
+    .mini-test-pill {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.45rem 0.65rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-size: 0.72rem;
+    }
+
+    /* ========================================================
+       SLIDE 5: RISKS & ROADMAP TO MVP
+       ======================================================== */
+    .grid-s5 {
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    .risk-matrix-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      justify-content: space-between;
+    }
+
+    .risk-row {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 0.85rem;
+      display: flex;
+      gap: 0.65rem;
+      align-items: flex-start;
+    }
+
+    .risk-tag {
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 700;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .tag-vuln { background: rgba(244, 63, 94, 0.15); color: var(--accent-rose); border: 1px solid rgba(244, 63, 94, 0.3); }
+    .tag-drift { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); border: 1px solid rgba(245, 158, 11, 0.3); }
+    .tag-quota { background: rgba(6, 182, 212, 0.15); color: var(--accent-cyan); border: 1px solid rgba(6, 182, 212, 0.3); }
+    .tag-safety { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); border: 1px solid rgba(16, 185, 129, 0.3); }
+
+    .risk-content {
+      flex: 1;
+    }
+
+    .risk-title {
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.15rem;
+    }
+
+    .risk-mitigation {
+      font-size: 0.68rem;
+      color: var(--text-secondary);
+      line-height: 1.35;
+    }
+
+    .roadmap-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      justify-content: space-between;
+    }
+
+    .timeline-card {
+      background: var(--bg-surface-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      position: relative;
+    }
+
+    .timeline-item:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      left: 11px;
+      top: 24px;
+      bottom: -10px;
+      width: 2px;
+      background: var(--border-subtle);
+    }
+
+    .timeline-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--bg-surface);
+      border: 2px solid var(--border-subtle);
+      display: grid;
+      place-items: center;
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--text-muted);
+      flex-shrink: 0;
+      z-index: 2;
+    }
+
+    .timeline-item.done .timeline-dot {
+      border-color: var(--accent-emerald);
+      color: var(--accent-emerald);
+      background: rgba(16, 185, 129, 0.15);
+    }
+
+    .timeline-item.active .timeline-dot {
+      border-color: var(--accent-amber);
+      color: var(--accent-amber);
+      background: rgba(245, 158, 11, 0.15);
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+    }
+
+    .timeline-body {
+      flex: 1;
+    }
+
+    .timeline-week {
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--accent-amber);
+    }
+
+    .timeline-task {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-top: 0.1rem;
+    }
+
+    .timeline-desc {
+      font-size: 0.67rem;
+      color: var(--text-muted);
+      line-height: 1.3;
+      margin-top: 0.15rem;
+    }
+
+    .submission-meta-card {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(6, 182, 212, 0.05));
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .meta-checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
+
+    .meta-checklist span {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .meta-checklist span::before {
+      content: '✓';
+      color: var(--accent-emerald);
+      font-weight: 800;
+    }
+
+    /* Fixed Bottom Presentation Toolbar */
+    .deck-toolbar {
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.45rem 0.85rem;
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      z-index: 100;
+      box-shadow: var(--shadow-md);
+    }
+
+    .nav-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .nav-dot.active {
+      width: 24px;
+      border-radius: 4px;
+      background: var(--accent-amber);
+    }
+
+    /* Presentation Controls */
+    .keyboard-hint {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.68rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      margin-left: 0.5rem;
+    }
+
+    .key-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-medium);
+      border-radius: 4px;
+      padding: 0.05rem 0.35rem;
+      color: var(--text-secondary);
+      font-size: 0.65rem;
+    }
+
+    /* Print Styles (Strict 16:9 PDF Export Mode) */
+    @page {
+      size: landscape;
+      margin: 0;
+    }
+
+    @media print {
+      body, html {
+        background-color: var(--bg-base) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100vw !important;
+        height: auto !important;
+        overflow: visible !important;
+      }
+
+      .bg-grid,
+      .deck-header,
+      .deck-toolbar,
+      .keyboard-hint {
+        display: none !important;
+      }
+
+      .deck-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100vw !important;
+        min-height: auto !important;
+      }
+
+      .slide-viewport {
+        width: 100vw !important;
+        height: auto !important;
+        margin: 0 !important;
+        aspect-ratio: auto !important;
+      }
+
+      .slide {
+        position: relative !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        page-break-after: always !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        opacity: 1 !important;
+        transform: none !important;
+        pointer-events: auto !important;
+        border-radius: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 2.2rem 3rem !important;
+        display: flex !important;
+        box-sizing: border-box !important;
+        overflow: hidden !important;
+      }
+    }
+
+    /* Bilingual Switcher Classes */
+    .lang-ar [data-en] {
+      display: none !important;
+    }
+    .lang-en [data-ar] {
+      display: none !important;
+    }
+    .lang-ar {
+      direction: rtl;
+    }
+    .lang-ar .slide-top {
+      flex-direction: row-reverse;
+    }
+    .lang-ar .slide-title,
+    .lang-ar .slide-subtitle,
+    .lang-ar .card-title,
+    .lang-ar .persona-hero-desc,
+    .lang-ar .pain-desc,
+    .lang-ar .data-pill-desc,
+    .lang-ar .risk-mitigation,
+    .lang-ar .timeline-desc {
+      text-align: right;
+      font-family: var(--font-arabic);
+    }
+    .lang-ar .pipeline-stage:not(:last-child)::after {
+      right: auto;
+      left: -0.65rem;
+      content: '➔';
+      transform: translateY(-50%) rotate(180deg);
+    }
+  </style>
+</head>
+<body class="lang-en">
+  <div class="bg-grid"></div>
+
+  <div class="deck-container">
+    <!-- Top Global Header -->
+    <header class="deck-header">
+      <div class="brand-mark">
+        <div class="brand-logo">S</div>
+        <div class="brand-meta">
+          <div class="brand-title">
+            <span>SupportPipe</span>
+            <span class="brand-tag">NovuraPay v10</span>
+          </div>
+          <div class="brand-sub" data-en>Agentic AI Challenge Iraq • Topic 06: Support Pipeline Automation</div>
+          <div class="brand-sub" data-ar>تحدي الذكاء الاصطناعي العراقي • المحور السادس: أتمتة دعم العملاء</div>
+        </div>
+      </div>
+
+      <div class="controls-group">
+        <button class="btn btn-lang" id="btnLang" title="Toggle Language (English / العربية)">
+          <span data-en>العربية 🇮🇶</span>
+          <span data-ar>English 🇬🇧</span>
+        </button>
+        <div class="slide-indicator" id="slideIndicator">SLIDE 01 / 05</div>
+        <button class="btn" id="btnPrev" title="Previous Slide (Left Arrow)">◀</button>
+        <button class="btn" id="btnNext" title="Next Slide (Right Arrow)">▶</button>
+        <button class="btn btn-primary" id="btnPrint" title="Export as PDF Presentation">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg>
+          <span data-en>Export PDF</span>
+          <span data-ar>تصدير PDF</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 16:9 Presentation Viewport -->
+    <main class="slide-viewport">
+
+      <!-- ===================================================================
+           SLIDE 1: THE USER & THE PROBLEM
+           =================================================================== -->
+      <section class="slide active" id="slide-1" data-slide="1">
+        <div class="slide-top">
+          <div>
+            <div class="eyebrow" data-en>Slide 01 • Target User & Core Problem</div>
+            <div class="eyebrow" data-ar>شريحة 01 • المستخدم المستهدف والمشكلة الجوهرية</div>
+            <h1 class="slide-title" data-en>Redefining Iraqi Digital Wallet Support Triage</h1>
+            <h1 class="slide-title" data-ar>إعادة تعريف فرز تذاكر الدعم للمحافظ الرقمية في العراق</h1>
+            <p class="slide-subtitle" data-en>Automating high-volume customer inquiries across regional Mesopotamian dialects, cash slang, and enterprise banking workflows without hallucination.</p>
+            <p class="slide-subtitle" data-ar>أتمتة الفرز اللحظي لاستفسارات العملاء عبر اللهجات العراقية، مصطلحات الكاش الدارجة، وأنظمة العمليات المصرفية دون أي هلوسة.</p>
+          </div>
+          <div class="slide-badge-num">01</div>
+        </div>
+
+        <div class="slide-content grid-s1">
+          <!-- Left Column: User Persona & Real Dialect Samples -->
+          <div class="persona-container">
+            <div class="persona-hero-card">
+              <span class="persona-badge" data-en>PRIMARY PERSONA</span>
+              <span class="persona-badge" data-ar>المستخدم الأساسي</span>
+              <div class="persona-hero-title" data-en>Tier-1 Customer Operations Supervisor & Triage Specialist</div>
+              <div class="persona-hero-title" data-ar>مشرف عمليات الدعم ومسؤول فرز التذاكر في المحافظ الرقمية</div>
+              <p class="persona-hero-desc" data-en>
+                Operates inside simulated wallet <strong>NovuraPay</strong> (and real Iraqi fintechs: ZainCash, QiCard, FIB). Overwhelmed by thousands of daily inbound messages across App, WhatsApp, and Telegram during peak transaction hours.
+              </p>
+              <p class="persona-hero-desc" data-ar>
+                يعمل ضمن محفظة <strong>نوفورا (NovuraPay)</strong> والمنظومة العراقية. يواجه تدفق آلاف الرسائل اليومية عبر التطبيق والواتساب وتلغرام أثناء ذروة التحويلات والرواتب.
+              </p>
+            </div>
+
+            <div class="dialect-quotes-grid">
+              <div class="quote-card">
+                <div class="quote-region">
+                  <span data-en>Baghdadi Dialect • P2P</span>
+                  <span data-ar>لهجة بغدادية • تحويل رصيد</span>
+                  <span class="badge-tier tier-offline">TXN</span>
+                </div>
+                <div class="quote-text-ar">"حولت رصيد لولد صاحبي قبل ساعتين وما وصل وطارت الفلوس"</div>
+                <div class="quote-intent">
+                  <span>➔</span>
+                  <span data-en>Intent: failed_transfer (High Priority)</span>
+                  <span data-ar>التصنيف: فشل تحويل (أولوية قصوى)</span>
+                </div>
+              </div>
+
+              <div class="quote-card">
+                <div class="quote-region">
+                  <span data-en>Basrawi Dialect • Slang Units</span>
+                  <span data-ar>لهجة بصرية • مسميات النقد</span>
+                  <span class="badge-tier tier-hybrid">CURRENCY</span>
+                </div>
+                <div class="quote-text-ar">"سحبت شدتين من الكشك والوكيل اخذ عمولة فوك حكها"</div>
+                <div class="quote-intent">
+                  <span>➔</span>
+                  <span data-en>Slang: 2 Shidda ($20k) • agent_dispute</span>
+                  <span data-ar>استخراج: شدتين (20 ألف$) • نزاع وكيل</span>
+                </div>
+              </div>
+
+              <div class="quote-card">
+                <div class="quote-region">
+                  <span data-en>Kurdish Sorani • Card Fault</span>
+                  <span data-ar>كردي سوراني • عطل البطاقة</span>
+                  <span class="badge-tier tier-cloud">MULTILINGUAL</span>
+                </div>
+                <div class="quote-text-ar">"کارتەکەم بلۆک بووە لە ATM پارەم بۆ ناگەڕێتەوە"</div>
+                <div class="quote-intent">
+                  <span>➔</span>
+                  <span data-en>Intent: card_issue (ATM retention)</span>
+                  <span data-ar>التصنيف: مشكلة بطاقة (سحب بالصراف)</span>
+                </div>
+              </div>
+
+              <div class="quote-card">
+                <div class="quote-region">
+                  <span data-en>Moslawi Dialect • Utility Bills</span>
+                  <span data-ar>لهجة مصلاوية • دفع فواتير</span>
+                  <span class="badge-tier tier-offline">V10 ENGINE</span>
+                </div>
+                <div class="quote-text-ar">"دفعت قائمة الماي والكهربا والرصيد انخصم وما تسددت"</div>
+                <div class="quote-intent">
+                  <span>➔</span>
+                  <span data-en>Disambiguated: bill_payment_failure</span>
+                  <span data-ar>تصنيف دقيق: تعثر دفع فاتورة</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: The Problem Matrix & The Core Solution -->
+          <div class="pain-matrix">
+            <div class="pain-item">
+              <div class="pain-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <span data-en>The Chatbot Failure in Banking</span>
+                <span data-ar>فشل روبوتات المحادثة التقليدية في الخدمات المالية</span>
+              </div>
+              <div class="pain-desc" data-en>
+                Consumer chatbots hallucinate unauthorized refunds, guess blindly on tickets lacking TXN IDs, and fail to route to internal bank squads.
+              </div>
+              <div class="pain-desc" data-ar>
+                الروبوتات التقليدية تهلوس بوعود استرجاع غير مصرح بها، وتخمن عشوائياً عند غياب رقم المعاملة، وتفتقر للتوجيه الإداري الدقيق للأقسام.
+              </div>
+            </div>
+
+            <div class="stat-callout-row">
+              <div class="stat-callout">
+                <div class="stat-val">70%+</div>
+                <div class="stat-label" data-en>Agent Time Wasted on Manual Triage</div>
+                <div class="stat-label" data-ar>وقت الموظفين الضائع في الفرز اليدوي</div>
+              </div>
+              <div class="stat-callout">
+                <div class="stat-val">24-48h</div>
+                <div class="stat-label" data-en>Average Resolution SLA Lag</div>
+                <div class="stat-label" data-ar>تأخير الاستجابة والتصعيد اليدوي</div>
+              </div>
+            </div>
+
+            <div class="thesis-banner">
+              <div style="font-size: 1.2rem;">⚡</div>
+              <div>
+                <strong data-en>SupportPipe is a back-office batch pipeline, NOT a chatbot.</strong>
+                <strong data-ar>سوبورت بايب خط أنابيب معالجة دفعات خلفي، وليس مجرد شات بوت.</strong>
+                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.15rem;" data-en>
+                  High-speed regex extraction, deterministic routing, calibrated confidence scoring, and strict zero auto-send without supervisor approval.
+                </div>
+                <div style="font-size: 0.72rem; color: var(--text-secondary); margin-top: 0.15rem;" data-ar>
+                  استخراج فوري للكيانات، توجيه قطعي للأقسام، درجات ثقة معايرة، وضمان عدم إرسال أي رد للعميل دون مراجعة وتوقيع المشرف البشري.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-bottom">
+          <div class="footer-meta">
+            <span class="footer-pill">Topic 06: Support Pipeline Automation</span>
+            <span class="footer-pill">Simulated Wallet: NovuraPay</span>
+          </div>
+          <div>Agentic AI Challenge Iraq • Stage 2 Submission</div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SLIDE 2: END-TO-END ARCHITECTURE
+           =================================================================== -->
+      <section class="slide" id="slide-2" data-slide="2">
+        <div class="slide-top">
+          <div>
+            <div class="eyebrow" data-en>Slide 02 • End-to-End System Architecture</div>
+            <div class="eyebrow" data-ar>شريحة 02 • المعمارية المتكاملة للنظام وسير العمل</div>
+            <h1 class="slide-title" data-en>High-Assurance Sequential Pipeline Architecture</h1>
+            <h1 class="slide-title" data-ar>معمارية تسلسلية فائقة الموثوقية لمعالجة التذاكر</h1>
+            <p class="slide-subtitle" data-en>From messy dialect inbound queues to verified back-office sign-off in sub-5ms offline execution.</p>
+            <p class="slide-subtitle" data-ar>من تدفق التذاكر الخام باللهجات المتعددة إلى الاعتماد البشري خلال أقل من 5 ميلي ثانية وبصفر تكلفة سحابية.</p>
+          </div>
+          <div class="slide-badge-num">02</div>
+        </div>
+
+        <div class="slide-content">
+          <div class="pipeline-wrapper">
+            <!-- 5-Stage Interactive Flow -->
+            <div class="pipeline-grid">
+              <!-- Stage 1 -->
+              <div class="pipeline-stage">
+                <div class="stage-idx">STAGE 01</div>
+                <div class="stage-name" data-en>Queue Ingestion & Normalizer</div>
+                <div class="stage-name" data-ar>استقبال الدفعات والمعالجة النصية</div>
+                <div class="stage-pill-list">
+                  <div class="stage-chip" data-en><strong>Multi-Channel:</strong> Mobile App, WhatsApp, Social</div>
+                  <div class="stage-chip" data-ar><strong>متعدد القنوات:</strong> التطبيق، واتساب، وتلغرام</div>
+                  <div class="stage-chip" data-en><strong>Elongation Collapse:</strong> "ملييووون" ➔ "مليون"</div>
+                  <div class="stage-chip" data-ar><strong>إزالة المد والزوائد:</strong> معالجة تكرار الأحرف</div>
+                  <div class="stage-chip" data-en><strong>Arabizi & Kurdish:</strong> Unicode standardization</div>
+                  <div class="stage-chip" data-ar><strong>المعرب والسوراني:</strong> توحيد التراميز الصوتية</div>
+                </div>
+              </div>
+
+              <!-- Stage 2 -->
+              <div class="pipeline-stage">
+                <div class="stage-idx">STAGE 02</div>
+                <div class="stage-name" data-en>Fast Regex Entity Extractor</div>
+                <div class="stage-name" data-ar>المستخرج الفوري للكيانات (0.5ms)</div>
+                <div class="stage-pill-list">
+                  <div class="stage-chip highlight" data-en><strong>Canonical TXN:</strong> TXN-XXXXXX references</div>
+                  <div class="stage-chip highlight" data-ar><strong>أرقام المعاملات:</strong> مطابقة دقيقة 100%</div>
+                  <div class="stage-chip" data-en><strong>Slang Currency:</strong> دفتر، شدة، ورقة ➔ IQD</div>
+                  <div class="stage-chip" data-ar><strong>نقد دارج:</strong> تحويل المصطلحات لأرقام فعلية</div>
+                  <div class="stage-chip secure" data-en><strong>Zero PII Leakage:</strong> Phone masking (0780****123)</div>
+                  <div class="stage-chip secure" data-ar><strong>حماية الخصوصية:</strong> حجب أرقام الهواتف</div>
+                </div>
+              </div>
+
+              <!-- Stage 3 -->
+              <div class="pipeline-stage">
+                <div class="stage-idx">STAGE 03</div>
+                <div class="stage-name" data-en>Tiered Waterfall Decision Matrix</div>
+                <div class="stage-name" data-ar>مصفوفة اتخاذ القرار المتدرجة</div>
+                <div class="stage-pill-list">
+                  <div class="stage-chip highlight" data-en><strong>System 1 (Offline V10):</strong> 4.43ms (80%+ exit)</div>
+                  <div class="stage-chip highlight" data-ar><strong>المستوى 1 (V10 محلي):</strong> معالجة فورية للمجمل</div>
+                  <div class="stage-chip" data-en><strong>System 1.5 (Jev 1.13):</strong> RLCD calibrated logits</div>
+                  <div class="stage-chip" data-ar><strong>المستوى 1.5 (Jev):</strong> احتمالات معايرة للحالات الحرجة</div>
+                  <div class="stage-chip" data-en><strong>System 2 (Gemini 3.8):</strong> Trilingual auditor</div>
+                  <div class="stage-chip" data-ar><strong>المستوى 2 (Gemini):</strong> تدقيق عميق وصياغة الردود</div>
+                </div>
+              </div>
+
+              <!-- Stage 4 -->
+              <div class="pipeline-stage">
+                <div class="stage-idx">STAGE 04</div>
+                <div class="stage-name" data-en>Deterministic Safety Gate</div>
+                <div class="stage-name" data-ar>بوابة الأمان والتحقق الحتمي</div>
+                <div class="stage-pill-list">
+                  <div class="stage-chip secure" data-en><strong>BiDi Trojan Defense:</strong> Strips RTL overrides</div>
+                  <div class="stage-chip secure" data-ar><strong>صد الحقن النصي:</strong> تحييد هجمات BiDi</div>
+                  <div class="stage-chip" data-en><strong>Missing TXN Ref:</strong> Automatic escalation</div>
+                  <div class="stage-chip" data-ar><strong>غياب المعرف:</strong> تصعيد فوري للفرز اليدوي</div>
+                  <div class="stage-chip" data-en><strong>Confidence Floor:</strong> &lt;0.5 ➔ Human triage</div>
+                  <div class="stage-chip" data-ar><strong>حد الثقة:</strong> أي تذبذب يعزل للمراجعة</div>
+                </div>
+              </div>
+
+              <!-- Stage 5 -->
+              <div class="pipeline-stage">
+                <div class="stage-idx">STAGE 05</div>
+                <div class="stage-name" data-en>Operations Review & Sign-Off</div>
+                <div class="stage-name" data-ar>غرفة العمليات والاعتماد البشري</div>
+                <div class="stage-pill-list">
+                  <div class="stage-chip highlight" data-en><strong>Deterministic Routing:</strong> routing_table.yaml</div>
+                  <div class="stage-chip highlight" data-ar><strong>توجيه قطعي:</strong> جدول مسارات ثابت بلا اجتهاد</div>
+                  <div class="stage-chip" data-en><strong>Grounded Arabic Draft:</strong> Zero false promises</div>
+                  <div class="stage-chip" data-ar><strong>مسودة مقيدة بالحقائق:</strong> بلا وعود هلوسة</div>
+                  <div class="stage-chip secure" data-en><strong>Strict Policy:</strong> ZERO auto-send to customer</div>
+                  <div class="stage-chip secure" data-ar><strong>حظر الإرسال التلقائي:</strong> الإنسان صاحب القرار</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Architectural Safeguards Bottom Row -->
+            <div class="arch-bottom-features">
+              <div class="arch-feature-card">
+                <div class="arch-feature-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                  <span data-en>Zero Cloud Dependency Floor</span>
+                  <span data-ar>صفر اعتماد إلزامي على السحابة</span>
+                </div>
+                <div class="arch-feature-desc" data-en>
+                  If internet connection drops or API quotas exhaust, SupportPipe functions 100% offline via Engine V10 at 225+ tickets/sec with zero degradation.
+                </div>
+                <div class="arch-feature-desc" data-ar>
+                  عند انقطاع الإنترنت أو نفاد حصص السحابة، يعمل النظام محلياً بنسبة 100% بسرعة 225 تذكرة/ثانية دون أي توقف لعمليات البنك.
+                </div>
+              </div>
+
+              <div class="arch-feature-card">
+                <div class="arch-feature-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+                  <span data-en>Zero Hallucination Routing</span>
+                  <span data-ar>توجيه إداري خالٍ من الهلوسة</span>
+                </div>
+                <div class="arch-feature-desc" data-en>
+                  Operational squads (Chargeback, Security, Core Banking) are mapped via strict lookup tables, not probabilistic LLM predictions.
+                </div>
+                <div class="arch-feature-desc" data-ar>
+                  توجيه التذاكر لفرق النزاعات والامتثال يتم عبر جداول تكويد معيارية ثابتة، وليس باجتهاد عشوائي من النماذج اللغوية.
+                </div>
+              </div>
+
+              <div class="arch-feature-card">
+                <div class="arch-feature-title">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                  <span data-en>Active Learning Feedback Loop</span>
+                  <span data-ar>حلقة التعلم والتحسين النشط</span>
+                </div>
+                <div class="arch-feature-desc" data-en>
+                  Discrepancies between offline and cloud models are quarantined to an audit store to automatically discover novel dialect slang.
+                </div>
+                <div class="arch-feature-desc" data-ar>
+                  أي تباين بين النموذج المحلي والسحابي يُسجل في مخزن تدقيق خاص لاكتشاف الكلمات والمصطلحات الدارجة المستحدثة باستمرار.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-bottom">
+          <div class="footer-meta">
+            <span class="footer-pill">Architecture: 5-Stage Waterfall</span>
+            <span class="footer-pill">Throughput: &gt;225 tickets/sec</span>
+          </div>
+          <div>Agentic AI Challenge Iraq • Stage 2 Submission</div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SLIDE 3: MODELS, TOOLS & SYNTHETIC DATA
+           =================================================================== -->
+      <section class="slide" id="slide-3" data-slide="3">
+        <div class="slide-top">
+          <div>
+            <div class="eyebrow" data-en>Slide 03 • Models, Engineering Stack & Data Strategy</div>
+            <div class="eyebrow" data-ar>شريحة 03 • حزمة النماذج، الأدوات، واستراتيجية البيانات الاصطناعية</div>
+            <h1 class="slide-title" data-en>Model Portfolio & 100% PII-Free Synthetic Engine</h1>
+            <h1 class="slide-title" data-ar>محفظة النماذج المخصصة ومولد البيانات الاصطناعية الآمن</h1>
+            <p class="slide-subtitle" data-en>Right tool for the right task: sub-millisecond local ML paired with frontier reasoning, backed by combinatorial synthetic generation.</p>
+            <p class="slide-subtitle" data-ar>اختيار الأداة المثلى لكل مهمة: خوارزميات محلية فائقة السرعة مدعومة بنماذج تفكير رائدة وتوليد اصطناعي شامل.</p>
+          </div>
+          <div class="slide-badge-num">03</div>
+        </div>
+
+        <div class="slide-content grid-s3">
+          <!-- Left Column: The Model Portfolio Table -->
+          <div class="model-table-card">
+            <div class="card-title">
+              <svg class="card-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              <span data-en>Model Portfolio: Balanced Cost & Speed Hierarchy</span>
+              <span data-ar>حزمة النماذج: تدرج مدروس في التكلفة والسرعة</span>
+            </div>
+            
+            <table class="custom-table">
+              <thead>
+                <tr>
+                  <th>
+                    <span data-en>Engine / Model</span>
+                    <span data-ar>المحرك / النموذج</span>
+                  </th>
+                  <th>
+                    <span data-en>Role in SupportPipe</span>
+                    <span data-ar>الدور في المنظومة</span>
+                  </th>
+                  <th>
+                    <span data-en>Hosting</span>
+                    <span data-ar>الاستضافة</span>
+                  </th>
+                  <th>
+                    <span data-en>Latency</span>
+                    <span data-ar>زمن الاستجابة</span>
+                  </th>
+                  <th>
+                    <span data-en>Cost / 1k</span>
+                    <span data-ar>التكلفة / 1000</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div style="font-weight: 700; color: var(--text-primary);">Offline Engine V10</div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted);">TF-IDF (word+char) + LinearSVC</div>
+                  </td>
+                  <td>
+                    <span data-en>System 1 Primary Triage (80%+ vol)</span>
+                    <span data-ar>النظام 1: فرز أولي رئيسي (80%+ من الحجم)</span>
+                  </td>
+                  <td>
+                    <span class="badge-tier tier-offline" data-en>Local RAM</span>
+                    <span class="badge-tier tier-offline" data-ar>محلي (RAM)</span>
+                  </td>
+                  <td><span class="latency-val">4.43 ms</span></td>
+                  <td><span class="latency-val">$0.00</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-weight: 700; color: var(--text-primary);">TypeSafe AI Jev 1.13</div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted);">RLCD Calibrated Decision Head</div>
+                  </td>
+                  <td>
+                    <span data-en>System 1.5 Edge Case Resolver</span>
+                    <span data-ar>النظام 1.5: حسم الحالات الحرجة والمتشابهة</span>
+                  </td>
+                  <td>
+                    <span class="badge-tier tier-hybrid" data-en>Cloud API</span>
+                    <span class="badge-tier tier-hybrid" data-ar>سحابي مخصص</span>
+                  </td>
+                  <td><span class="latency-val">~580 ms</span></td>
+                  <td><span class="latency-val">$0.10</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-weight: 700; color: var(--text-primary);">Google Gemini 3.8 Flash</div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted);">Trilingual Frontier LLM</div>
+                  </td>
+                  <td>
+                    <span data-en>System 2 Deep Auditor & Drafter</span>
+                    <span data-ar>النظام 2: تدقيق الحالات المعقدة وصياغة الرد</span>
+                  </td>
+                  <td>
+                    <span class="badge-tier tier-cloud" data-en>Google Cloud</span>
+                    <span class="badge-tier tier-cloud" data-ar>سحابة جوجل</span>
+                  </td>
+                  <td><span class="latency-val">~1,200 ms</span></td>
+                  <td><span class="latency-val">$1.50</span></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div style="font-weight: 700; color: var(--text-primary);">Groq / Llama 3.3 70B</div>
+                    <div style="font-size: 0.65rem; color: var(--text-muted);">Open-Source High-Speed Fallback</div>
+                  </td>
+                  <td>
+                    <span data-en>Free Quota-Safe Live Demo Head</span>
+                    <span data-ar>بديل مجاني لعروض التحكيم الحية</span>
+                  </td>
+                  <td>
+                    <span class="badge-tier tier-cloud" data-en>Groq Hosted</span>
+                    <span class="badge-tier tier-cloud" data-ar>مستضاف (Groq)</span>
+                  </td>
+                  <td><span class="latency-val">~450 ms</span></td>
+                  <td><span class="latency-val" data-en>Free (30 req/m)</span><span class="latency-val" data-ar>مجاني (30 طلب/د)</span></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div style="margin-top: 0.85rem; padding-top: 0.65rem; border-top: 1px solid var(--border-subtle); display: flex; gap: 0.65rem; font-size: 0.7rem; color: var(--text-muted);">
+              <span data-en><strong>Tooling Stack:</strong> Python 3.12+ (uv) • Pydantic v2 schemas • Streamlit Review Console • Graphify Code Graph (2,017 nodes)</span>
+              <span data-ar><strong>أدوات البناء:</strong> بايثون 3.12 (uv) • تحققات Pydantic v2 • واجهة Streamlit • رسم معرفي Graphify</span>
+            </div>
+          </div>
+
+          <!-- Right Column: Synthetic Generation Strategy -->
+          <div class="synthetic-strategy-col">
+            <div class="data-pill-card">
+              <div class="data-pill-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span data-en>Zero-Citizen-PII Guarantee</span>
+                <span data-ar>ضمان الخلو التام من بيانات المواطنين الفعلية (Zero PII)</span>
+              </div>
+              <div class="data-pill-desc" data-en>
+                Zero real citizen names, national IDs, or Iraqi phone numbers are present in the repository. All datasets are 100% synthetically constructed to maintain full ethical and legal compliance.
+              </div>
+              <div class="data-pill-desc" data-ar>
+                لا يحتوي المستودع على أي أسماء حقيقية، أرقام بطاقات موحدة، أو هواتف مواطنين. تم توليد كافة البيانات اصطناعياً بنسبة 100% لضمان أعلى معايير الخصوصية.
+              </div>
+            </div>
+
+            <div class="data-pill-card">
+              <div class="data-pill-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                <span data-en>Combinatorial Synthetic Architecture</span>
+                <span data-ar>توليد توافقي متعدد الأبعاد للهجات</span>
+              </div>
+              <div class="data-pill-desc" data-en>
+                Generates robust dialect variation using a multi-factor grid:
+              </div>
+              <div class="data-matrix-box">
+                <div class="matrix-cell">
+                  <div class="matrix-val">64</div>
+                  <div class="matrix-lbl" data-en>Template Families</div>
+                  <div class="matrix-lbl" data-ar>عائلة قوالب</div>
+                </div>
+                <div class="matrix-cell">
+                  <div class="matrix-val">14</div>
+                  <div class="matrix-lbl" data-en>Fintech Categories</div>
+                  <div class="matrix-lbl" data-ar>فئة مصرفية</div>
+                </div>
+                <div class="matrix-cell">
+                  <div class="matrix-val">5</div>
+                  <div class="matrix-lbl" data-en>Iraqi Dialects</div>
+                  <div class="matrix-lbl" data-ar>لهجات إقليمية</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="data-pill-card">
+              <div class="data-pill-title">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                <span data-en>Frozen Holdout Policy (data/splits/test.jsonl)</span>
+                <span data-ar>حماية البيانات المجمدة وتأمين الاختبارات</span>
+              </div>
+              <div class="data-pill-desc" data-en>
+                Guaranteed by automated SHA-256 integrity tests. Rules and models are strictly isolated from the diagnostic holdout to prevent synthetic overfitting.
+              </div>
+              <div class="data-pill-desc" data-ar>
+                مراقبة تلقائية عبر بصمة التشفير SHA-256، مع عزل صارم لقواعد وتدريب النماذج عن مجاميع الاختبار لمنع الانحياز الإحصائي.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-bottom">
+          <div class="footer-meta">
+            <span class="footer-pill">Data: 100% Synthetic</span>
+            <span class="footer-pill">Security: Zero PII Leakage</span>
+          </div>
+          <div>Agentic AI Challenge Iraq • Stage 2 Submission</div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SLIDE 4: TESTING & EMPIRICAL EVIDENCE
+           =================================================================== -->
+      <section class="slide" id="slide-4" data-slide="4">
+        <div class="slide-top">
+          <div>
+            <div class="eyebrow" data-en>Slide 04 • Testing, Validation & Empirical Evidence</div>
+            <div class="eyebrow" data-ar>شريحة 04 • الاختبارات الصارمة والأدلة التجريبية الواقعية</div>
+            <h1 class="slide-title" data-en>Empirical Results Across 10 External Stress Batches</h1>
+            <h1 class="slide-title" data-ar>نتائج تجريبية مثبتة عبر 10 جولات اختبار ضغط خارجية</h1>
+            <p class="slide-subtitle" data-en>What a good result looks like: verified numbers on disk across 1,816 unseen tickets with zero regressions.</p>
+            <p class="slide-subtitle" data-ar>مقياس النجاح الحقيقي: أرقام دقيقة مقاسة على القرص الصلب لـ 1,816 تذكرة خارجية غير مرئية وبصفر تراجع.</p>
+          </div>
+          <div class="slide-badge-num">04</div>
+        </div>
+
+        <div class="slide-content grid-s4">
+          <!-- 4 Headline KPI Cards -->
+          <div class="kpi-metric-strip">
+            <div class="kpi-card">
+              <div class="kpi-val">94.44%</div>
+              <div class="kpi-label" data-en>Stress Batch Cumulative Accuracy</div>
+              <div class="kpi-label" data-ar>دقة جولات الضغط التراكمية</div>
+              <div class="kpi-sub">1,715 / 1,816 Tickets (Wilson 95% CI: 93.3% - 95.4%)</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-val">0</div>
+              <div class="kpi-label" data-en>Regressions Across All Batches</div>
+              <div class="kpi-label" data-ar>صفر تراجع في كافة الجولات</div>
+              <div class="kpi-sub">Monotonic Non-Regression Gate Verified</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-val">217 / 217</div>
+              <div class="kpi-label" data-en>Automated Unit & System Tests</div>
+              <div class="kpi-label" data-ar>اختبار برمجي آلي ناجح 100%</div>
+              <div class="kpi-sub">pytest • ruff • mypy strict pass</div>
+            </div>
+
+            <div class="kpi-card">
+              <div class="kpi-val">4.43 ms</div>
+              <div class="kpi-label" data-en>Offline Decision Latency</div>
+              <div class="kpi-label" data-ar>زمن استجابة النموذج المحلي</div>
+              <div class="kpi-sub">>225 tickets/second batch speed</div>
+            </div>
+          </div>
+
+          <!-- Comparative Deep Dive -->
+          <div class="evidence-split-grid">
+            <!-- Left: Stress Series Evolution -->
+            <div class="stress-series-card">
+              <div class="card-title">
+                <svg class="card-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                <span data-en>10-Round Blind Stress Progression (Zero Repo Access)</span>
+                <span data-ar>تطور جولات الضغط العمياء (دون وصول للمستودع)</span>
+              </div>
+
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-label">
+                  <span data-en>Round 01 Blind Baseline</span>
+                  <span data-ar>الجولة 01: الأساس الأولي الأعمى</span>
+                  <span class="latency-val" style="color: var(--accent-rose);">32.00%</span>
+                </div>
+                <div class="progress-track">
+                  <div class="progress-fill" style="width: 32%; background: var(--accent-rose);"></div>
+                </div>
+              </div>
+
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-label">
+                  <span data-en>Round 05 Midpoint Progression</span>
+                  <span data-ar>الجولة 05: منتصف التطوير</span>
+                  <span class="latency-val" style="color: var(--accent-amber);">85.33%</span>
+                </div>
+                <div class="progress-track">
+                  <div class="progress-fill" style="width: 85.33%; background: var(--accent-amber);"></div>
+                </div>
+              </div>
+
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-label">
+                  <span data-en>Round 10 Zero-Shot Blind (450 unseen tickets)</span>
+                  <span data-ar>الجولة 10: تقييم أعمى كامل (450 تذكرة)</span>
+                  <span class="latency-val" style="color: var(--accent-amber);">84.00%</span>
+                </div>
+                <div class="progress-track">
+                  <div class="progress-fill" style="width: 84%; background: var(--accent-amber);"></div>
+                </div>
+              </div>
+
+              <div class="progress-bar-wrap">
+                <div class="progress-bar-label">
+                  <span data-en>Round 10 Remediated with Engine V10</span>
+                  <span data-ar>الجولة 10: بعد اعتماد محرك V10</span>
+                  <span class="latency-val" style="color: var(--accent-emerald);">96.00% (432/450)</span>
+                </div>
+                <div class="progress-track">
+                  <div class="progress-fill" style="width: 96%; background: var(--accent-emerald);"></div>
+                </div>
+              </div>
+
+              <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: auto; padding-top: 0.4rem;" data-en>
+                *Note: V10 introduced municipal utility disambiguation, lifting bill recall from 48.48% to 100.0% with zero regressions on previous 9 batches.
+              </div>
+              <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: auto; padding-top: 0.4rem;" data-ar>
+                *ملاحظة: محرك V10 فصل فواتير الماء والكهرباء البلدية فرفع دقة استدعاء الفواتير من 48.48% إلى 100.0% بصفر تراجع في الجولات التسع السابقة.
+              </div>
+            </div>
+
+            <!-- Right: Specialized Sub-Benchmarks -->
+            <div class="adversarial-card">
+              <div class="card-title">
+                <svg class="card-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                <span data-en>Adversarial Robustness & Information Extraction</span>
+                <span data-ar>صلابة صد الهجمات ودقة استخراج البيانات</span>
+              </div>
+
+              <div class="mini-test-pill">
+                <span data-en>Adversarial Torture Test (100 Malicious Tickets)</span>
+                <span data-ar>اختبار التعذيب العدائي (100 هجمة نصية)</span>
+                <strong style="color: var(--accent-emerald);">0 / 100 Failures (100% Secure)</strong>
+              </div>
+
+              <div class="mini-test-pill">
+                <span data-en>Transaction Reference Exact Extraction</span>
+                <span data-ar>استخراج رقم المعاملة المعياري (TXN-XXXXXX)</span>
+                <strong style="color: var(--accent-emerald);">100.0% Exact Match</strong>
+              </div>
+
+              <div class="mini-test-pill">
+                <span data-en>Iraqi Currency Slang Normalization (شدة، دفتر)</span>
+                <span data-ar>معالجة النقد العراقي الدارج (شدة، دفتر، طابوقة)</span>
+                <strong style="color: var(--accent-emerald);">93.1% – 100.0% Match</strong>
+              </div>
+
+              <div class="mini-test-pill">
+                <span data-en>Auto-Handled Slice Accuracy Lift</span>
+                <span data-ar>رفع دقة المعالجة التلقائية بالتصعيد الذكي</span>
+                <strong style="color: var(--accent-amber);">+14.0% Lift via Safety Gate</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-bottom">
+          <div class="footer-meta">
+            <span class="footer-pill">Benchmark: 1,816 External Tickets</span>
+            <span class="footer-pill">Test Suite: 217 Passing</span>
+          </div>
+          <div>Agentic AI Challenge Iraq • Stage 2 Submission</div>
+        </div>
+      </section>
+
+      <!-- ===================================================================
+           SLIDE 5: RISKS & ROADMAP TO MVP
+           =================================================================== -->
+      <section class="slide" id="slide-5" data-slide="5">
+        <div class="slide-top">
+          <div>
+            <div class="eyebrow" data-en>Slide 05 • Risk Mitigation & Execution Roadmap</div>
+            <div class="eyebrow" data-ar>شريحة 05 • إدارة المخاطر وخطة العمل الأسبوعية حتى النموذج النهائي</div>
+            <h1 class="slide-title" data-en>What Could Go Wrong & 6-Week Delivery Roadmap</h1>
+            <h1 class="slide-title" data-ar>إحباط المخاطر المحتملة وخارطة الطريق الأسبوعية للمشروع</h1>
+            <p class="slide-subtitle" data-en>Proactive engineering defense against failure modes, and a battle-tested milestone schedule to production MVP.</p>
+            <p class="slide-subtitle" data-ar>معالجة هندسية استباقية لأوجه القصور المحتملة، مع جدول زمني مرحلي منضبط لتسليم النموذج النهائي.</p>
+          </div>
+          <div class="slide-badge-num">05</div>
+        </div>
+
+        <div class="slide-content grid-s5">
+          <!-- Left Column: Risk & Mitigation Matrix -->
+          <div class="risk-matrix-col">
+            <div class="card-title" style="margin-bottom: 0.1rem;">
+              <svg class="card-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <span data-en>Potential Failure Modes & Engineering Mitigations</span>
+              <span data-ar>المخاطر التشغيلية المحتملة والحلول الهندسية المقابلة</span>
+            </div>
+
+            <div class="risk-row">
+              <span class="risk-tag tag-vuln">SECURITY</span>
+              <div class="risk-content">
+                <div class="risk-title" data-en>BiDi Overrides & Prompt Injections</div>
+                <div class="risk-title" data-ar>هجمات الحقن النصي وتجاوزات اتجاه الكتابة (BiDi)</div>
+                <div class="risk-mitigation" data-en>
+                  Malicious users embedding instructions to force refunds. <strong>Mitigation:</strong> RTL Unicode sanitizer strips control tokens; prompt quarantine routes to human review.
+                </div>
+                <div class="risk-mitigation" data-ar>
+                  محاولة فرض استرجاع أموال خبيث. <strong>الحل:</strong> تطهير تراميز RTL وفلترة أوامر التوجيه وعزلها لقسم مكافحة الاحتيال.
+                </div>
+              </div>
+            </div>
+
+            <div class="risk-row">
+              <span class="risk-tag tag-drift">DIALECT</span>
+              <div class="risk-content">
+                <div class="risk-title" data-en>Dialect Drift & Obscure Local Slang</div>
+                <div class="risk-title" data-ar>تطور اللهجات الدارجة وظهور مصطلحات شعبية جديدة</div>
+                <div class="risk-mitigation" data-en>
+                  Unseen regional idioms degrade classification. <strong>Mitigation:</strong> Dual-channel character n-grams capture subword roots; active learning discrepancy store flags drift.
+                </div>
+                <div class="risk-mitigation" data-ar>
+                  ظهور تعابير نقدية غير مسبوقة. <strong>الحل:</strong> استخدام نموذج n-gram المزدوج لجذور الكلمات مع مخزن تدقيق يكتشف المصطلحات المستجدة.
+                </div>
+              </div>
+            </div>
+
+            <div class="risk-row">
+              <span class="risk-tag tag-quota">INFRA</span>
+              <div class="risk-content">
+                <div class="risk-title" data-en>Cloud API Quotas & Network Outages</div>
+                <div class="risk-title" data-ar>نفاد حصص السحابة أو انقطاع الاتصال الخارجي</div>
+                <div class="risk-mitigation" data-en>
+                  Live evaluation hits rate limits. <strong>Mitigation:</strong> System 1 Engine V10 functions 100% offline in local RAM, processing the full queue with zero internet access.
+                </div>
+                <div class="risk-mitigation" data-ar>
+                  تجاوز حدود الاستهلاك عند التقييم الحي. <strong>الحل:</strong> محرك V10 المحلي يعمل داخل ذاكرة الجهاز دون أي اعتماد على شبكة خارجية.
+                </div>
+              </div>
+            </div>
+
+            <div class="risk-row">
+              <span class="risk-tag tag-safety">COMPLIANCE</span>
+              <div class="risk-content">
+                <div class="risk-title" data-en>Hallucinated Financial Commitments</div>
+                <div class="risk-title" data-ar>هلوسة الوعود المالية أو الأرقام الخاطئة للعملاء</div>
+                <div class="risk-mitigation" data-en>
+                  LLM fabricating refund dates. <strong>Mitigation:</strong> Response templates strictly grounded in extracted facts; <strong>strict zero outbound auto-send policy</strong>.
+                </div>
+                <div class="risk-mitigation" data-ar>
+                  توليد وعود تعويض غير مصرح بها. <strong>الحل:</strong> تقييد الصياغة بالحقائق المستخرجة مع تطبيق <strong>حظر الإرسال التلقائي دون موافقة المشرف</strong>.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Column: Week-by-Week Timeline -->
+          <div class="roadmap-col">
+            <div class="timeline-card">
+              <div class="card-title" style="margin-bottom: 0.1rem;">
+                <svg class="card-title-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                <span data-en>Week-by-Week Execution Plan Up to Final MVP</span>
+                <span data-ar>الجدول الزمني الأسبوعي حتى تسليم النموذج النهائي (MVP)</span>
+              </div>
+
+              <!-- Week 1 -->
+              <div class="timeline-item done">
+                <div class="timeline-dot">W1</div>
+                <div class="timeline-body">
+                  <div class="timeline-week" data-en>OCT 16 – OCT 22 • COMPLETED</div>
+                  <div class="timeline-week" data-ar>16 تشرين الأول – 22 تشرين الأول • منجز</div>
+                  <div class="timeline-task" data-en>Architecture, V10 Freeze & Stage 2 Submission</div>
+                  <div class="timeline-task" data-ar>تجميد محرك V10، 10 جولات ضغط، وتسليم وثيقة المرحلة الثانية</div>
+                  <div class="timeline-desc" data-en>1,816 external stress tickets evaluated at 94.44%; 217 unit tests verified; Stage 2 Brief finalized.</div>
+                  <div class="timeline-desc" data-ar>تقييم 1,816 تذكرة خارجية بدقة 94.44%، وتوثيق 217 اختبار آلي واعتماد العرض.</div>
+                </div>
+              </div>
+
+              <!-- Week 2 -->
+              <div class="timeline-item active">
+                <div class="timeline-dot">W2</div>
+                <div class="timeline-body">
+                  <div class="timeline-week" data-en>OCT 23 – OCT 29 • IN PROGRESS</div>
+                  <div class="timeline-week" data-ar>23 تشرين الأول – 29 تشرين الأول • قيد التنفيذ</div>
+                  <div class="timeline-task" data-en>Cloud Deployment & Open-Source Fallback Integration</div>
+                  <div class="timeline-task" data-ar>نشر سحابي تجريبي ودمج النماذج المفتوحة المصدر</div>
+                  <div class="timeline-desc" data-en>Deploy Streamlit console to Cloud sandbox for live judge review; wire Groq Llama 3.3 70B provider.</div>
+                  <div class="timeline-desc" data-ar>استضافة واجهة المشرف على السحابة للمحكمين ودمج نموذج Groq Llama 3.3 السريع.</div>
+                </div>
+              </div>
+
+              <!-- Week 3 -->
+              <div class="timeline-item">
+                <div class="timeline-dot">W3</div>
+                <div class="timeline-body">
+                  <div class="timeline-week" data-en>OCT 30 – NOV 05 • UPCOMING</div>
+                  <div class="timeline-week" data-ar>30 تشرين الأول – 05 تشرين الثاني • قادم</div>
+                  <div class="timeline-task" data-en>Support Agent Field Research & Template Polishing</div>
+                  <div class="timeline-task" data-ar>أبحاث ميدانية مع موظفي الدعم وصقل قوالب الردود</div>
+                  <div class="timeline-desc" data-en>Conduct 2 structured interviews with Iraqi wallet support reps; refine authentic Arabic response drafts.</div>
+                  <div class="timeline-desc" data-ar>مقابلات مع ممثلي دعم عملاء المحافظ العراقية وتنسيق أسلوب الصياغة العراقي الودود.</div>
+                </div>
+              </div>
+
+              <!-- Week 4 -->
+              <div class="timeline-item">
+                <div class="timeline-dot">W4</div>
+                <div class="timeline-body">
+                  <div class="timeline-week" data-en>NOV 06 – NOV 12 • UPCOMING</div>
+                  <div class="timeline-week" data-ar>06 تشرين الثاني – 12 تشرين الثاني • قادم</div>
+                  <div class="timeline-task" data-en>Sealed test_v2 Blind Evaluation & Final MVP Delivery</div>
+                  <div class="timeline-task" data-ar>تشغيل الاختبار الأعمى النهائي وحزمة التسليم الشاملة</div>
+                  <div class="timeline-desc" data-en>Single blind run on sealed test_v2 holdout; 60-second video demo recording; final package submission.</div>
+                  <div class="timeline-desc" data-ar>تنفيذ جولة واحدة على مجموعة الاختبار المغلقة، تسجيل فيديو الـ 60 ثانية، وتسليم الـ MVP.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submission Details Card -->
+            <div class="submission-meta-card">
+              <div class="meta-checklist">
+                <span data-en>Deadline: 22 October 2026</span>
+                <span data-ar>الموعد النهائي: 22 تشرين الأول 2026</span>
+                <span data-en>Format: 5 Slides / PDF Ready</span>
+                <span data-ar>الشكل: 5 شرائح / مهيأ للتصدير PDF</span>
+                <span data-en>Repo: github.com/h5r5/novurapay-support</span>
+                <span data-ar>المستودع: github.com/h5r5/novurapay-support</span>
+              </div>
+              <a href="https://form.typeform.com/to/rlOGGCda" target="_blank" class="btn btn-primary" style="text-decoration: none;">
+                <span data-en>Typeform Portal ➔</span>
+                <span data-ar>بوابة التسليم ➔</span>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-bottom">
+          <div class="footer-meta">
+            <span class="footer-pill">Deliverable: Stage 2 Design Brief</span>
+            <span class="footer-pill">Topic: 06 - Support Automation</span>
+          </div>
+          <div>Agentic AI Challenge Iraq • Stage 2 Submission</div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Presentation Toolbar -->
+    <nav class="deck-toolbar">
+      <button class="btn" id="btnPrevBottom" title="Previous Slide">◀</button>
+      <div class="nav-dot active" data-target="1" title="Slide 1: User & Problem"></div>
+      <div class="nav-dot" data-target="2" title="Slide 2: Architecture"></div>
+      <div class="nav-dot" data-target="3" title="Slide 3: Models & Data"></div>
+      <div class="nav-dot" data-target="4" title="Slide 4: Testing & Metrics"></div>
+      <div class="nav-dot" data-target="5" title="Slide 5: Risks & Roadmap"></div>
+      <button class="btn" id="btnNextBottom" title="Next Slide">▶</button>
+    </nav>
+  </div>
+
+  <script>
+    (function() {
+      let currentSlide = 1;
+      const totalSlides = 5;
+      const slides = document.querySelectorAll('.slide');
+      const dots = document.querySelectorAll('.nav-dot');
+      const indicator = document.getElementById('slideIndicator');
+      const btnPrev = document.getElementById('btnPrev');
+      const btnNext = document.getElementById('btnNext');
+      const btnPrevBottom = document.getElementById('btnPrevBottom');
+      const btnNextBottom = document.getElementById('btnNextBottom');
+      const btnPrint = document.getElementById('btnPrint');
+      const btnLang = document.getElementById('btnLang');
+
+      function showSlide(index) {
+        if (index < 1) index = 1;
+        if (index > totalSlides) index = totalSlides;
+        currentSlide = index;
+
+        slides.forEach(slide => {
+          const num = parseInt(slide.getAttribute('data-slide'), 10);
+          if (num === currentSlide) {
+            slide.classList.add('active');
+          } else {
+            slide.classList.remove('active');
+          }
+        });
+
+        dots.forEach(dot => {
+          const target = parseInt(dot.getAttribute('data-target'), 10);
+          if (target === currentSlide) {
+            dot.classList.add('active');
+          } else {
+            dot.classList.remove('active');
+          }
+        });
+
+        if (indicator) {
+          indicator.textContent = `SLIDE 0${currentSlide} / 0${totalSlides}`;
+        }
+      }
+
+      function nextSlide() {
+        if (currentSlide < totalSlides) {
+          showSlide(currentSlide + 1);
+        }
+      }
+
+      function prevSlide() {
+        if (currentSlide > 1) {
+          showSlide(currentSlide - 1);
+        }
+      }
+
+      // Keyboard navigation
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+          e.preventDefault();
+          nextSlide();
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          e.preventDefault();
+          prevSlide();
+        } else if (e.key === 'p' || e.key === 'P') {
+          if (e.ctrlKey || e.metaKey) return; // Allow normal print dialog
+          window.print();
+        } else if (e.key === 'l' || e.key === 'L') {
+          toggleLanguage();
+        }
+      });
+
+      // Button controls
+      if (btnNext) btnNext.addEventListener('click', nextSlide);
+      if (btnPrev) btnPrev.addEventListener('click', prevSlide);
+      if (btnNextBottom) btnNextBottom.addEventListener('click', nextSlide);
+      if (btnPrevBottom) btnPrevBottom.addEventListener('click', prevSlide);
+
+      // Dot controls
+      dots.forEach(dot => {
+        dot.addEventListener('click', () => {
+          const target = parseInt(dot.getAttribute('data-target'), 10);
+          showSlide(target);
+        });
+      });
+
+      // Print PDF
+      if (btnPrint) {
+        btnPrint.addEventListener('click', () => {
+          window.print();
+        });
+      }
+
+      // Language Switcher
+      function toggleLanguage() {
+        const isAr = document.body.classList.contains('lang-ar');
+        if (isAr) {
+          document.body.classList.remove('lang-ar');
+          document.body.classList.add('lang-en');
+          document.documentElement.lang = 'en';
+        } else {
+          document.body.classList.remove('lang-en');
+          document.body.classList.add('lang-ar');
+          document.documentElement.lang = 'ar';
+        }
+      }
+
+      if (btnLang) {
+        btnLang.addEventListener('click', toggleLanguage);
+      }
+    })();
+  </script>
+</body>
+</html>

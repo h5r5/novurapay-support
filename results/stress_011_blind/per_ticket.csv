@@ -1,0 +1,5 @@
+ticket_id,gold,pred,correct,provider_path,degraded,model_id,latency_ms,error
+EXT-2-013,bill_payment_failure,bill_payment_failure,1,mock,0,rules_dialect_ml_v10,14.27,
+EXT-2-048,refund_status,refund_status,1,mock,0,rules_dialect_ml_v10,5.4,
+EXT-2-064,fraud_report,fraud_report,1,mock,0,rules_dialect_ml_v10,5.33,
+EXT-2-131,balance_or_statement_inquiry,balance_or_statement_inquiry,1,mock,0,rules_dialect_ml_v10,6.13,

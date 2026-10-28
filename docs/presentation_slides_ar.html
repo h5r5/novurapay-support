@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>SupportPipe — وثيقة الديزاين بريف، المرحلة الثانية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Noto+Kufi+Arabic:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#121826;--mut:#566074;--line:#d5dae3;--pan:#eef1f7;--lap:#1f4690;--och:#b9801a}
+*{box-sizing:border-box;margin:0}
+@page{size:1280px 720px;margin:0}
+html{background:#c9ced8}
+body{font:400 16px/1.6 "IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;color:var(--ink);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.s{width:1280px;height:720px;margin:24px auto;background:#fff;padding:36px 64px 34px 56px;position:relative;overflow:hidden;break-after:page;display:flex;flex-direction:column}
+.s:last-child{break-after:auto}
+.s::before{content:"";position:absolute;inset:0 0 0 auto;width:14px;background:var(--lap)}
+@media print{html{background:none}.s{margin:0}}
+.pg{position:absolute;top:30px;left:56px;font-size:13px;color:var(--mut)}
+h1{font:800 31px/1.45 "Noto Kufi Arabic","IBM Plex Sans Arabic",Tahoma,sans-serif;max-width:1040px;margin:6px 0 24px}
+h2{font-size:16px;font-weight:600;color:var(--lap);margin-bottom:8px}
+.g{display:grid;gap:44px;flex:1;min-height:0}
+p.sm,.sm{font-size:14px;color:var(--mut)}
+code,.l{font-family:ui-monospace,Consolas,monospace;font-size:.92em;direction:ltr;unicode-bidi:isolate}
+.band{margin-top:auto;background:var(--ink);color:#fff;padding:13px 20px;font-size:17px}
+.row{display:grid;border-top:1px solid var(--line);padding:9px 0;gap:16px;align-items:baseline}
+.row:last-child{border-bottom:1px solid var(--line)}
+.big{font:800 44px/1.1 "Noto Kufi Arabic",sans-serif;color:var(--lap)}
+mark{background:none;color:inherit;padding:0 2px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th{font-weight:600;color:var(--mut);text-align:start;font-size:13px;padding:6px 8px 6px 0;border-bottom:2px solid var(--ink)}
+td{padding:9px 8px 9px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.bar{height:16px;background:var(--pan)}.bar i{display:block;height:100%;background:var(--mut)}
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="s">
+<span class="pg" dir="ltr">1 / 5</span>
+<h1>مشرف الدعم يقرأ ويفرز وينسخ الأرقام بيده، والرسالة الواحدة قد تحمل مشكلتين.</h1>
+<div class="g" style="grid-template-columns:1.3fr 1fr">
+ <div>
+  <h2>المستخدم</h2>
+  <p>مشرف الدعم الفني ومسؤول فرز التذاكر (Tier-1) في محفظة نوفورا الرقمية NovuraPay. يستقبل آلاف الرسائل يومياً من التطبيق وواتساب وتلغرام، وتبلغ ذروتها أيام الرواتب.</p>
+  <h2 style="margin-top:22px">من الطابور: شكوى واحدة، مطلبان</h2>
+  <blockquote style="font-size:22px;line-height:2;border-block:1px solid var(--line);padding:12px 0">
+   <mark style="border-bottom:3px solid var(--lap)">التطبيق علك وطلعني من ردت أحول المبلغ،</mark> ومن رجعت فتحت <mark style="border-bottom:3px solid var(--och)">لكيت الفلوس مخصومة مرتين بدل ما ينخصم 100$ انخصم 200$ وما وصلت للولد!</mark>
+  </blockquote>
+  <div style="margin-top:12px;font-size:15px">
+   <p style="margin-bottom:6px"><b>التداخل المعقد:</b> تجمع بين <b style="color:var(--lap)">عطل برمجي</b> <code>app_bug</code> و<b style="color:var(--och)">نزاع مالي حرج</b> <code>failed_transfer</code>.</p>
+   <p style="margin-bottom:6px"><b>أين الكارثة؟</b> الروبوت التقليدي يطلب من الزبون مسح كاش التطبيق ويتجاهل الـ 200$ المخصومة.</p>
+   <p><b>ما يحتاجه موظف الدعم:</b> توجيه فوري للمسار المالي (إرجاع الـ 100$ الإضافية) وتوثيق الخلل التقني للمطورين دون تأخير.</p>
+  </div>
+ </div>
+ <div>
+  <div class="row" style="grid-template-columns:150px 1fr"><span class="big">66%</span><span>من وقت موظف خدمة العملاء يذهب لمهام لا تواجه العميل، كالإدارة وإدخال البيانات يدوياً. <sup>1</sup></span></div>
+  <div class="row" style="grid-template-columns:150px 1fr"><span class="big" style="font-size:30px">12س 10د</span><span>متوسط أول رد على البريد عبر الصناعات، و36% فقط من الشركات ترد خلال 4 ساعات. <sup>2</sup></span></div>
+  <h2 style="margin-top:14px">لماذا يفشل الشات بوت التقليدي</h2>
+  <p style="font-size:14.5px">يهلوس وعوداً مالية غير مصرح بها، ويخمّن حين تنقص البيانات، ولا يوجّه المعاملة للقسم المصرفي المختص.</p>
+  <h2 style="margin-top:14px">قاموس الكاش العراقي الدارج المستخرج بدقة</h2>
+  <p class="sm" style="font-size:13.5px;line-height:1.7"><code>دفتر</code> ($100K) • <code>شدة</code> ($10K) • <code>ورقة</code> ($100) • <code>طابوقة</code> (25M د.ع) • <code>باكة</code> (2.5M د.ع).</p>
+  <p class="sm" style="margin-top:10px;font-size:11.5px">المصادر: (1) Salesforce إحصاءات وكلاء الذكاء الاصطناعي 2025. (2) SuperOffice دراسة 1,000 شركة. أرقام عامة للقطاع.</p>
+ </div>
+</div>
+<div class="band"><b>SupportPipe</b> بايبلاين خلفي لأتمتة الفرز والتوجيه، وليس روبوت محادثة. لا يُرسَل أي رد للعميل دون موافقة المشرف.</div>
+</section>
+
+<!-- 2 -->
+<section class="s">
+<span class="pg" dir="ltr">2 / 5</span>
+<h1>ثلاث طبقات قرار وبوابة أمان، ولا يخرج أي رد قبل مراجعة بشرية.</h1>
+<div class="g" style="grid-template-columns:1.7fr 1fr">
+ <div>
+  <div class="row" style="grid-template-columns:34px 150px 1fr"><b class="big" style="font-size:22px">1</b><b>استقبال التذاكر</b><span>رسائل التطبيق وواتساب وتلغرام بلهجاتها وعربيزيها.</span></div>
+  <div class="row" style="grid-template-columns:34px 150px 1fr"><b class="big" style="font-size:22px">2</b><b>تنظيف واستخراج</b><span>إزالة المد، رقم الحوالة TXN، توحيد المبالغ الدارجة والتواريخ النسبية، وحجب أرقام الهواتف فوراً (نحو 0.5ms).</span></div>
+  <div class="row" style="grid-template-columns:34px 150px 1fr"><b class="big" style="font-size:22px">3</b><b>شلال الإجماع</b><span><b>V10 المحلي:</b> ثقة &ge; 95% &larr; خروج فوري ($0.00). أقل &larr; يدخل <b>Jev 1.13</b> (إن اتفقا &ge; 80% تُحفظ حصة السحابة). عند الخلاف &larr; يتدخل <b>Gemini / Groq</b> لحسم القرار وصياغة الرد.</span></div>
+  <div class="row" style="grid-template-columns:34px 150px 1fr"><b class="big" style="font-size:22px">4</b><b>بوابة الأمان</b><span>تفكيك التذاكر المركبة (النزاع المالي أولاً)، عزل الحقن النصي ورموز BiDi لقسم الاحتيال، وتصعيد الغامض وناقص المعرفات يدوياً.</span></div>
+  <div class="row" style="grid-template-columns:34px 150px 1fr"><b class="big" style="font-size:22px">5</b><b>غرفة المراجعة</b><span>توجيه حتمي عبر <code>routing_table.yaml</code>. في واجهة Streamlit (مع <b>خريطة الانقطاعات اللحظية Outage Heatmap</b>) يرى المشرف الفئة والأولوية والمسودة المقيدة بالحقائق لاعتمادها بنقرة. لا إرسال تلقائي.</span></div>
+  <div class="row" style="grid-template-columns:34px 150px 1fr"><b class="big" style="font-size:22px">6</b><b>تعلّم مستمر</b><span>أي فرق بين الأوفلاين والسحابة أو تعديل المشرف يُحفظ في <code>discrepancies.jsonl</code> لتحديث النموذج المحلي.</span></div>
+ </div>
+ <div style="background:var(--pan);padding:20px 22px">
+  <h2>ما يميز التصميم</h2>
+  <p style="margin-bottom:10px"><b>التذاكر المركبة:</b> النزاع المالي أولاً، والعطل التقني يُسجَّل في إحصائيات الأعطال.</p>
+  <p style="margin-bottom:10px"><b>سرعة:</b> أكثر من 225 تذكرة في الثانية، بلا تكلفة سحابية.</p>
+  <p style="margin-bottom:10px"><b>توجيه حتمي:</b> جدول ثابت وليس اجتهاد نموذج لغوي.</p>
+  <p><b>ملخص الدفعة:</b> <code>BatchSummary</code> بالفئات والأولويات ونسب التصعيد، وتقرير أسبوعي للأنماط <code>supportpipe patterns</code>.</p>
+ </div>
+</div>
+</section>
+
+<!-- 3 -->
+<section class="s">
+<span class="pg" dir="ltr">3 / 5</span>
+<h1>المحرك المحلي تفوق على نموذج LAYA العربي في الدقة والسرعة والأمان، والتكلفة الفعلية صفر.</h1>
+<div class="g" style="grid-template-columns:1.35fr 1fr;flex:none">
+ <div>
+  <h2>المحرك والنماذج المستخدمة</h2>
+  <table>
+   <tr><th>المحرك</th><th>الدور</th><th>الزمن</th><th>التكلفة</th></tr>
+   <tr><td><b>V10 المحلي</b></td><td>الفرز الأساسي (+80%)</td><td>4.43ms</td><td>$0.00</td></tr>
+   <tr><td><b>Gemini 2.5 / 3.8 Flash</b></td><td>تدقيق وصياغة مسودات</td><td>~1,200ms</td><td>$0.00 (Free Tier)</td></tr>
+   <tr><td><b>TypeSafe Jev 1.13</b></td><td>حسم الحالات الحرجة</td><td>~580ms</td><td>$0.034 من $5 (523 طلباً)، Free Tier</td></tr>
+   <tr><td><b>Groq Llama 3.3 70B</b></td><td>بديل سريع للعروض الحية</td><td>~450ms</td><td>$0.00 (Free Tier)</td></tr>
+  </table>
+  <p class="sm" style="margin-top:10px">عند ظهور خطأ 429 (تجاوز الحصة) من Google AI Studio أثناء اختبارات الضغط، حوّل قاطع الدائرة العمل فوراً إلى V10 دون انقطاع. بُني المشروع على Google Antigravity مع Claude Opus 4.6 وSonnet 4.6 وGemini.</p>
+ </div>
+ <div>
+  <h2>LAYA (ModernBERT، 322M) على تذاكر اللهجة العراقية</h2>
+  <p class="sm">LAYA بلا تدريب 27.58–34.67%</p><div class="bar"><i style="width:34.7%"></i></div>
+  <p class="sm" style="margin-top:8px">LAYA بعد التدريب على 1,100 تذكرة 36.00%</p><div class="bar"><i style="width:36%"></i></div>
+  <p class="sm" style="margin-top:8px"><b style="color:var(--lap)">SupportPipe 82.00–91.33%</b></p><div class="bar"><i style="width:91.3%;background:var(--lap)"></i></div>
+  <p class="sm" style="margin-top:10px">جرّبنا LAYA بديلاً عن نموذجنا المحلي، لكنه ضعيف باللهجتين العراقية والكردية. كشف الحقن النصي 0%، وزمن 454ms مقابل 4.43ms، ورخصة غير تجارية CC BY-NC 4.0.</p>
+ </div>
+</div>
+<div style="margin-top:auto">
+ <h2>البيانات: اصطناعية بالكامل، بلا أي بيانات حقيقية</h2>
+ <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-block:1px solid var(--line)">
+  <div style="padding:12px 0"><span class="big" style="font-size:32px">64</span><br><span class="sm">عائلة قوالب</span></div>
+  <div style="padding:12px 0"><span class="big" style="font-size:32px">14</span><br><span class="sm">فئة مصرفية في 5 مناطق لهجية</span></div>
+  <div style="padding:12px 0"><span class="big" style="font-size:32px">1,816</span><br><span class="sm">تذكرة ضغط في 10 جولات</span></div>
+  <div style="padding:12px 0"><span class="big" style="font-size:32px">0</span><br><span class="sm">بيانات شخصية حقيقية</span></div>
+ </div>
+ <p class="sm" style="margin-top:8px">جولات الضغط ولّدتها Claude Sonnet 5.5 وGemini 3.8 Flash بأسلوب أعمى دون اطلاع على كود المستودع.</p>
+</div>
+</section>
+
+<!-- 4 -->
+<section class="s">
+<span class="pg" dir="ltr">4 / 5</span>
+<h1>94.44% على 1,816 تذكرة ضغط خارجية، وعزل 100 من 100 هجمة نصية.</h1>
+<div class="g" style="grid-template-columns:1fr 1.5fr;flex:none">
+ <div>
+  <div class="big" style="font-size:76px">94.44%</div>
+  <p style="margin-top:6px">1,715 من 1,816 تذكرة عبر 10 جولات خارجية.</p>
+  <p class="sm" dir="rtl">فاصل ثقة ويلسون <span class="l">[93.29%, 95.40%]</span></p>
+ </div>
+ <div>
+  <table>
+   <tr><th>المعيار</th><th>الهدف</th><th>المقاس</th></tr>
+   <tr><td>دقة التصنيف</td><td>أكثر من 90%</td><td><b>94.44%</b></td></tr>
+   <tr><td>عزل الهجمات (حقن نصي وBiDi)</td><td>100%</td><td><b>100 من 100</b></td></tr>
+   <tr><td>سرعة المعالجة</td><td>+200 تذكرة/ث</td><td><b>225+</b> (4.43ms للتذكرة)</td></tr>
+   <tr><td>استخراج الأرقام</td><td>بلا هلوسة</td><td>رقم الحوالة <b>100%</b>، المبالغ الدارجة <b>93.1–100%</b></td></tr>
+  </table>
+ </div>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:44px;margin-top:auto;padding-top:18px;border-top:2px solid var(--ink)">
+ <div>
+  <h2>الجولة العاشرة (450 تذكرة)</h2>
+  <p><span class="big" style="font-size:30px;color:var(--mut)">84%</span> أعمى أولاً، ثم <span class="big" style="font-size:30px">96%</span> بعد تحسينات V10.</p>
+ </div>
+ <div>
+  <h2>الطابور: 89.66% تلقائي، 10.34% يدوي</h2>
+  <div style="display:flex;height:16px"><i style="width:66.7%;background:var(--lap)"></i><i style="width:25%;background:var(--och)"></i><i style="width:8.3%;background:var(--ink)"></i></div>
+  <p class="sm" style="margin-top:6px">من المصعَّد: 66.7% نقص معرف إلزامي، 25% رسالة غامضة، 8.3% محاولة اختراق.</p>
+ </div>
+ <div>
+  <h2>الجودة</h2>
+  <p><b>217</b> اختباراً آلياً ناجحاً، و<b>0</b> تراجعات: كل تحسين يُفحص على كل الدفعات السابقة.</p>
+ </div>
+</div>
+</section>
+
+<!-- 5 -->
+<section class="s">
+<span class="pg" dir="ltr">5 / 5</span>
+<h1>لكل خطر معالجة قائمة؛ والمتبقي هو واجهة الاستخدام والمقابلات الميدانية.</h1>
+<div class="g" style="grid-template-columns:1.3fr 1fr;flex:none">
+ <div>
+  <h2>ما الذي قد يفشل</h2>
+  <table>
+   <tr><th>الخطر</th><th>المعالجة</th></tr>
+   <tr><td><b>حقن نصي وتجاوز اتجاه الكتابة</b></td><td>تنقية رموز الاتجاه وعزل التذكرة لقسم الاحتيال</td></tr>
+   <tr><td><b>انزياح اللهجة</b></td><td>n-gram حروف مزدوج، وتسجيل الغامض في مخزن التناقضات</td></tr>
+   <tr><td><b>مطالب متداخلة</b></td><td>النزاع المالي أولاً، والأثر التقني في تقرير الأعطال</td></tr>
+   <tr><td><b>انقطاع السحابة أو الحصص</b></td><td>V10 يعمل أوفلاين بالكامل</td></tr>
+   <tr><td><b>وعود مالية مهلوسة</b></td><td>مسودات مقيدة بالحقائق المستخرجة وحظر برمجي للإرسال التلقائي</td></tr>
+  </table>
+ </div>
+ <div>
+  <h2>خطة الأسابيع حتى تسليم MVP (08 تشرين الثاني)</h2>
+  <div class="row" style="grid-template-columns:120px 1fr"><b>الأسبوع 1 (حتى 22/10)</b><span><b style="color:var(--lap)">منجز:</b> تسليم الديزاين بريف (5 شرائح)، المستودع، V10 بدقة 94.4%، و217 اختباراً.</span></div>
+  <div class="row" style="grid-template-columns:120px 1fr"><b>الأسبوع 2 (23–30/10)</b><span>مقابلتان مع موظفي كول سنتر محافظ عراقية (User Research) وصقل قوالب الردود الواقعية.</span></div>
+  <div class="row" style="grid-template-columns:120px 1fr"><b>الأسبوع 3 (31/10–05/11)</b><span>اختبار الجاهزية لإدخال الحكام المباشر (Live Run)، وإعداد تقرير <span class="l">One-Page Update</span>.</span></div>
+  <div class="row" style="grid-template-columns:120px 1fr"><b>الأسبوع 4 (06–08/11)</b><span><b style="color:var(--och)">تسليم MVP الرسمي (08/11):</b> حجز جلسة العرض الحي (20 دقيقة) للتأهل للنهائيات.</span></div>
+ </div>
+</div>
+<div class="band" style="font-size:15px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap">
+ <a href="https://github.com/h5r5/novurapay-support" target="_blank" style="color:#fff;text-decoration:none;display:inline-flex;align-items:center;gap:10px">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle;flex-shrink:0"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+  <span>المستودع المفتوح: <b class="l" style="color:#f59e0b;letter-spacing:.3px">github.com/h5r5/novurapay-support</b></span>
+ </a>
+ <span style="display:inline-flex;align-items:center;gap:8px">
+  <span>المطور:</span>
+  <b style="color:#f8fafc;font-size:16px">Haider Ali</b>
+  <span style="opacity:.6;font-size:13px">| Topic 06</span>
+ </span>
+</div>
+</section>
+
+</body>
+</html>
