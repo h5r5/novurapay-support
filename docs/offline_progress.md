@@ -333,5 +333,90 @@ Following the user request to maximize offline classification power and run a co
 
 - **Test Integrity**: 206/206 tests pass cleanly; 14/14 frozen data tests pass without touching `data/splits/test.jsonl`.
 
+---
+
+## 18. Offline Engine V10: Municipal Utility Bills & Landline/Phone Subscription Disambiguation Matrix
+
+Following the evaluation of Stress Batch 010 (450 tickets) and the user authorization to adopt V10, Offline Engine **V10** was implemented and verified under strict Ponytail architectural discipline and Protocol S5:
+
+### Key Architectural Upgrades:
+1. **Rule 2.2d Expansion (Municipal Utilities & Landline/Phone Subscriptions)**:
+   - Expanded deterministic pattern to explicitly resolve municipal water and electricity bills (`قائمة/دفع ماء`, `قائمة/فاتورة ماي/كهرباء`) and telephone line subscriptions (`اشتراك خط الهاتف`).
+   - Routes utility payment failures to `bill_payment_failure` with high confidence (0.92).
+2. **Rule 2.25 Negative Lookahead Disambiguation (`failed_transfer`)**:
+   - Added negative lookahead protection for water bills and landline subscriptions within Rule 2.25 to prevent generic pending transfer matching ("معلك/معلق") from hijacking utility bill payments.
+3. **Configuration & Pipeline Support**:
+   - Added `"v10"` to `offline_model_version` in `supportpipe.config.Settings`.
+   - Propagated `"v10"` across `MockClassifierProvider` pipeline initialization, English routing, and Kurdish ML inference fallback.
+
+### Verified Empirical Performance (Engine V10):
+| Evaluation Split | N Tickets | Engine V9 | Engine V10 | Absolute Delta ($\Delta$) | Regression Check |
+|---|---|---|---|---|---|
+| **Dev Split (`dev.jsonl`)** | 219 | 94.98% (208/219) | **94.98%** (208/219) | **0.00%** | Zero Regression |
+| **Round 10 (`batch_010`)** | 450 | 95.11% (428/450) | **96.00%** (432/450) | **+0.89%** (+4 tickets) | 100% Bill Recall |
+| **ALL STRESS ROUNDS (001 - 010)** | **1,816** | **94.22% (1,711/1,816)** | **94.44% (1,715/1,816)** | **+0.22%** (+4 tickets) | 0 Regressions across 1,816 tickets |
+
+- **Wilson 95% Confidence Interval (All 1,816 stress tickets)**: `[93.29%, 95.40%]`
+- **Average Latency**: 4.43 ms/ticket (100% offline, zero network API calls).
+- **Test Integrity**: All unit tests pass cleanly; frozen data integrity fully preserved.
 
 
+---
+
+## 19. Offline Engine V11: Institutional Fees & Merchant Return/Refund Disambiguation Matrix
+
+Following the evaluation of all 16 Stress Batches (2,877 tickets) and the comprehensive diagnostic audit, Offline Engine **V11** was implemented and verified under strict Ponytail architectural discipline and Protocol S5:
+
+### Key Architectural Upgrades:
+1. **Rule 2.2d Expansion (Institutional Fees, Educational Tuition, Installments & Digital Vouchers)**:
+   - Disambiguated educational fees (`رسوم الجامعة/الكلية/المدرسة`), cooperative/personal installments (`قسط الجمعية/تقسيط`), and gaming vouchers (`رصيد الالعاب/شحن لعبة/بطاقات رقمية`) into `bill_payment_failure`.
+   - Prevented general transfer rule (Rule 2.25) from intercepting institutional payment deductions.
+2. **Rule 2.2c Expansion & Merchant Return Disambiguation**:
+   - Added exclusion to merchant dispute rule (line 502) to ensure merchant cancellations and return tracking (`التاجر كالي الغى الطلب ورجع الفلوس`) route to `refund_status`.
+   - Added explicit patterns for return tracking (`المرتجع`, `دفعة ارجاع`, `رقم ارجاع`, `تامين ... متى يرجع`).
+3. **Configuration & Pipeline Support**:
+   - Added `"v11"` to `offline_model_version` in `supportpipe.config.Settings`.
+   - Propagated `"v11"` across `MockClassifierProvider` pipeline initialization, English routing, and classification logic.
+
+### Verified Empirical Performance (Engine V11 vs V10 across ALL 16 Stress Batches):
+| Metric / Split | N Tickets | Engine V10 | Engine V11 | Absolute Delta ($\Delta$) | Regression Check |
+|---|---|---|---|---|---|
+| **Dev Split (`dev.jsonl`)** | 219 | 94.98% (208/219) | **94.98%** (208/219) | **0.00%** | Zero Regression |
+| **Round 12 (`batch_012`)** | 200 | 90.00% (180/200) | **91.00%** (182/200) | **+1.00%** (+2 tickets) | Zero Regression |
+| **Round 15 (`batch_015`)** | 298 | 95.97% (286/298) | **96.98%** (289/298) | **+1.01%** (+3 tickets) | Zero Regression |
+| **Round 16 (`batch_016`)** | 397 | 94.46% (375/397) | **94.71%** (376/397) | **+0.25%** (+1 ticket) | Zero Regression |
+| **ALL 16 STRESS ROUNDS (001 - 016)** | **2,877** | **94.20% (2,710/2,877)** | **94.40%** (2,716/2,877) | **+0.20%** (+6 tickets) | 0 Regressions across 2,877 tickets |
+
+- **Wilson 95% Confidence Interval (All 2,877 stress tickets)**: `[93.50%, 95.19%]`
+- **Average Latency**: 4.94 ms/ticket (100% offline, zero network API calls).
+- **Test Integrity**: 21/21 offline version tests pass; 14/14 frozen data tests pass; `data/splits/test.jsonl` untouched.
+
+
+---
+
+## 20. Offline Engine V12: Authentication Crash Disambiguation & Clean General Inquiry Routing
+
+Following the evaluation of Stress Batches 017 & 018 (3,422 total stress tickets) and the comprehensive diagnostic audit, Offline Engine **V12** was implemented and verified under strict Ponytail architectural discipline and Protocol S5:
+
+### Key Architectural Upgrades:
+1. **Rule 2.2b Expansion (Sign-in Error Codes & App Authentication Crashes)**:
+   - Added sign-in/authentication error-code and crash syntax (`(?:خطأ|كود|رمز|يخرج|معلق).*(?:في|عند|بـ)?\s*تسجيل\s*(?:الـ?)?دخول|تسجيل\s*(?:الـ?)?دخول.*(?:يظهر\s*لي\s*خطأ|يعطي\s*خطأ|يخرج|يغلق|معلق)`) into `login_problem`. Rescues login failure reports from being misdirected into generic bug categories.
+2. **Rule 2.25 Negative Lookahead Disambiguation (`failed_transfer`)**:
+   - Expanded negative lookahead pattern for pending transfers to exclude agent disputes and wrong recipient transfers (`|الوكيل|وكيل|المستلم|بالغلط|مو\s*رقمي|الرقم\s*غلط|الرقم\s*الخطأ|المحجوز|معلق|المعلق`).
+3. **Rule 2.2f Clean General Banking Inquiry Routing**:
+   - Added deterministic routing for branch hours, locations, and transaction limits (`(?:فروعكم|ساعات\s*العمل|اوقات\s*الدوام|الدوام\s*يوم|عمولة\s*السحب|حدود\s*(?:السحب|التحويل|المعاملات)|working\s*hours|transaction\s*limits)`) directly into `general_inquiry`, while preserving strict prompt injection quarantine in step 0.3.
+4. **Configuration & Pipeline Support**:
+   - Added `"v12"` to `offline_model_version` in `supportpipe.config.Settings`.
+   - Propagated `"v12"` across `MockClassifierProvider` pipeline initialization, English routing, and Kurdish ML inference fallback.
+
+### Verified Empirical Performance (Engine V12 vs V11 across ALL 18 Stress Batches):
+| Metric / Split | N Tickets | Engine V11 | Engine V12 | Absolute Delta ($\Delta$) | Regression Check |
+|---|---|---|---|---|---|
+| **Dev Split (`dev.jsonl`)** | 219 | 94.98% (208/219) | **98.17%** (215/219) | **+3.19%** (+7 tickets) | Zero Regression |
+| **Round 17 (`batch_017`)** | 198 | 97.47% (193/198) | **97.98%** (194/198) | **+0.51%** (+1 ticket) | Zero Regression |
+| **Round 18 (`batch_018`)** | 347 | 97.98% (340/347) | **98.56%** (342/347) | **+0.58%** (+2 tickets) | Zero Regression |
+| **ALL 18 STRESS ROUNDS (001 - 018)** | **3,422** | **94.94% (3,249/3,422)** | **95.50% (3,268/3,422)** | **+0.56%** (+19 tickets) | 0 Regressions across 3,422 tickets |
+
+- **Wilson 95% Confidence Interval (All 3,422 stress tickets)**: `[94.75%, 96.14%]`
+- **Average Latency**: 5.23 ms/ticket (191.4 tickets/sec, 100% offline, zero network API calls).
+- **Test Integrity**: 221/221 unit tests pass; 14/14 frozen data tests pass; `data/splits/test.jsonl` strictly untouched.

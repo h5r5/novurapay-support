@@ -34,6 +34,7 @@ from supportpipe.logging_store import ReviewQueueStore
 from supportpipe.pipeline import process_ticket, run_batch
 from supportpipe.schemas import (
     BatchSummary,
+    ClassificationResult,
     ExtractedFields,
     LabeledTicket,
     PipelineResult,
@@ -351,9 +352,21 @@ def test_drafting_quota_preservation_in_hybrid_mode() -> None:
 
     with patch.object(settings, "llm_mode", "hybrid"):
         with patch.object(settings, "gemini_api_key", "mock_gemini_key"):
-            with patch("supportpipe.draft.generator.generate_candidate_draft") as mock_gemini_draft:
-                res = process_ticket(t)
-                # In hybrid mode without groq or audit draft, candidate drafting should bypass Gemini
-                mock_gemini_draft.assert_not_called()
-                assert res.draft_reply is not None
-                assert "فريق التحويلات" in res.draft_reply
+            with patch.object(settings, "jev_api_key", "mock_jev_key"):
+                with patch.object(settings, "typesafe_api_key", ""):
+                    with patch(
+                        "supportpipe.classify.providers.jev_provider.JevClassifierProvider.classify"
+                    ) as mock_jev_classify:
+                        mock_jev_classify.return_value = ClassificationResult(
+                            category="failed_transfer",
+                            category_confidence=0.92,
+                            priority="high",
+                            priority_confidence=0.90,
+                            reasoning_summary="Waterfall Consensus (System 1 + Jev 1.13) on 'failed_transfer'",
+                        )
+                        with patch("supportpipe.draft.generator.generate_candidate_draft") as mock_gemini_draft:
+                            res = process_ticket(t)
+                            # In hybrid mode without groq or audit draft, candidate drafting should bypass Gemini
+                            mock_gemini_draft.assert_not_called()
+                            assert res.draft_reply is not None
+                            assert "فريق التحويلات" in res.draft_reply

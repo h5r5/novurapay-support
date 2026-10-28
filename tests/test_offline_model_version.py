@@ -278,3 +278,98 @@ def test_normalize_arabic_v2_rules() -> None:
     # 6. Arabizi digit-letters
     assert normalize_arabic_v2("7awalt") == "hawalt"
     assert normalize_arabic_v2("el3arab") == "elearab"
+
+
+def test_mock_provider_explicit_v10_instantiation() -> None:
+    """MockClassifierProvider initialized with 'v10' loads FeatureUnion and CalibratedClassifierCV."""
+    provider = MockClassifierProvider(offline_model_version="v10")
+    assert provider.version == "v10"
+    assert provider.cat_pipe is not None
+
+    vectorizer = provider.cat_pipe.named_steps["vectorizer"]
+    assert isinstance(vectorizer, FeatureUnion)
+    classifier = provider.cat_pipe.named_steps["classifier"]
+    assert isinstance(classifier, CalibratedClassifierCV)
+
+
+def test_v10_utility_bills_and_phone_disambiguation() -> None:
+    """V10 engine must correctly disambiguate water bills and phone line subscriptions from pending transfers."""
+    provider = MockClassifierProvider(offline_model_version="v10")
+
+    # Water bill in Basrawi dialect with 'معلك'
+    res_water_basrawi = provider.classify("دفع ماء البصرة معلك من يومين بالمعقل")
+    assert res_water_basrawi.category == "bill_payment_failure"
+
+    # Water bill in Baghdadi dialect with 'معلكة'
+    res_water_baghdadi = provider.classify("دفع قائمة الماء معلكة بالمنصور ERR-NET-504")
+    assert res_water_baghdadi.category == "bill_payment_failure"
+
+    # Phone line subscription fee with pending notice
+    res_phone_sub = provider.classify("دفعت رسوم اشتراك خط الهاتف بالكرادة وطلع اشعار العملية معلقة كود ERR-NET-504")
+    assert res_phone_sub.category == "bill_payment_failure"
+
+def test_mock_provider_explicit_v11_instantiation() -> None:
+    """MockClassifierProvider initialized with 'v11' loads FeatureUnion and CalibratedClassifierCV."""
+    provider = MockClassifierProvider(offline_model_version="v11")
+    assert provider.version == "v11"
+    assert provider.cat_pipe is not None
+
+    vectorizer = provider.cat_pipe.named_steps["vectorizer"]
+    assert isinstance(vectorizer, FeatureUnion)
+    classifier = provider.cat_pipe.named_steps["classifier"]
+    assert isinstance(classifier, CalibratedClassifierCV)
+
+
+def test_v11_institutional_fees_and_refund_disambiguation() -> None:
+    """V11 engine must disambiguate institutional fees/installments and merchant returns."""
+    provider = MockClassifierProvider(offline_model_version="v11")
+
+    # 1. Tuition fees -> bill_payment_failure
+    res_tuition = provider.classify("سددت رسوم الجامعة 750 الف والجامعة تكول ما وصلها شي")
+    assert res_tuition.category == "bill_payment_failure"
+
+    # 2. Installment payment -> bill_payment_failure
+    res_install = provider.classify("سددت قسط الجمعية بالمحفظة يوم الخميس بس الجمعية تكول ما استلمت")
+    assert res_install.category == "bill_payment_failure"
+
+    # 3. Game credits -> bill_payment_failure
+    res_games = provider.classify("رصيد الالعاب اللي اشتريته 10 دولار ما استلمت الكود")
+    assert res_games.category == "bill_payment_failure"
+
+    # 4. Merchant order cancellation refund -> refund_status
+    res_refund_merchant = provider.classify("التاجر كالي الغى الطلب ورجع الفلوس من طرفه من 8 ايام ورقم الارجاع RF-71042")
+    assert res_refund_merchant.category == "refund_status"
+
+    # 5. Appointment cancellation refund -> refund_status
+    res_cancel_appt = provider.classify("الدكتور كنسل الموعد وانتو خذتوا مني 25 الف كشفية، وهسه من يومين ما رجعوها")
+    assert res_cancel_appt.category == "refund_status"
+
+
+
+def test_mock_provider_explicit_v12_instantiation() -> None:
+    """MockClassifierProvider initialized with 'v12' loads FeatureUnion and CalibratedClassifierCV."""
+    provider = MockClassifierProvider(offline_model_version="v12")
+    assert provider.version == "v12"
+    assert provider.cat_pipe is not None
+
+    vectorizer = provider.cat_pipe.named_steps["vectorizer"]
+    assert isinstance(vectorizer, FeatureUnion)
+    classifier = provider.cat_pipe.named_steps["classifier"]
+    assert isinstance(classifier, CalibratedClassifierCV)
+
+
+def test_v12_login_transfer_general_disambiguation() -> None:
+    """V12 engine must disambiguate login errors, general banking inquiries, and agent/wrong transfers."""
+    provider = MockClassifierProvider(offline_model_version="v12")
+
+    # 1. Login problem with error code / app crash during login
+    res_login = provider.classify("يظهر لي خطأ في تسجيل الدخول معلق التطبيق")
+    assert res_login.category == "login_problem"
+
+    # 2. General inquiry about working hours / branch
+    res_inquiry = provider.classify("شنو فروعكم وساعات العمل يوم السبت؟")
+    assert res_inquiry.category == "general_inquiry"
+
+    # 3. Agent dispute not captured as failed transfer
+    res_agent = provider.classify("الوكيل اخذ عمولة زيادة من حولت")
+    assert res_agent.category == "agent_dispute"

@@ -94,7 +94,7 @@ def _init_offline_pipelines(
                     train_cats.append(str(item["label"]["category"]))
                     train_prios.append(str(item["label"]["priority"]))
 
-            if version in ("v3", "v4", "v5", "v6", "v7", "v8", "v9"):
+            if version in ("v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12"):
                 # In v3 through v9, also load consumed stress batches per STRESS BATCH PROTOCOL
                 consumed_candidates = [
                     Path(__file__).resolve().parents[4] / "data" / "stress",
@@ -126,7 +126,7 @@ def _init_offline_pipelines(
                                 logger.warning("Could not load consumed stress batches: %s", e)
                         break
 
-            if version in ("v3", "v4", "v5", "v6", "v7", "v8", "v9"):
+            if version in ("v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12"):
                 # Upgraded V3-V9 Engine: Arabizi Dual-Channel Normalization + Word (1-2) + Char_wb (2-5) + Calibrated LinearSVC
                 cat_pipe = Pipeline([
                     (
@@ -375,7 +375,7 @@ class MockClassifierProvider(BaseClassifierProvider):
             )
 
         if re.search(r"\b(?:شوكت\s*تفتحون\s*فرع|فرع\s*بالبصرة|فرعكم|مكان\s*الفرع|فروعكم)\b", text, re.I):
-            if re.search(r"\b(?:وين|مكان|عنوان|موقع|صاير)\b", text, re.I):
+            if re.search(r"\b(?:وين|مكان|عنوان|موقع|صاير)\b", text, re.I) or (self.version == "v12" and re.search(r"(?:ساعات|اوقات|دوام|عمل|شنو|ماهي)", text, re.I)):
                 return ClassificationResult(
                     category="general_inquiry",
                     category_confidence=0.90,
@@ -420,7 +420,7 @@ class MockClassifierProvider(BaseClassifierProvider):
             detected_lang = "ar"
 
         if detected_lang == "en" and not is_arabizi:
-            if self.version in ("v5", "v6", "v7", "v8", "v9"):
+            if self.version in ("v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12"):
                 en_cat, en_conf = _classify_english_fintech_intent(raw)
                 if en_cat is not None:
                     en_prio: Literal["high", "medium", "low"] = "high" if (en_cat in ("fraud_report", "account_blocked") or "urgent" in raw.lower() or "retained" in raw.lower()) else ("low" if en_cat in ("balance_or_statement_inquiry", "general_inquiry") else "medium")
@@ -499,7 +499,7 @@ class MockClassifierProvider(BaseClassifierProvider):
                 sentiment_tags=["agent_dispute_fee"],
             )
 
-        if re.search(r"(?:كارفور\s*وخصموا|المول\s*اشتريت|اشتريت\s*ملابس\s*كصوا|ابو\s*المحل\s*كال\s*ما\s*وصل|الكاشير\s*الوصل\s*كال\s*مرفوض|نقطة\s*بيع|التاجر\s*(?:يكول|كال|يقول)|دفع\s*للتاجر)", text, re.I):
+        if re.search(r"(?:كارفور\s*وخصموا|المول\s*اشتريت|اشتريت\s*ملابس\s*كصوا|ابو\s*المحل\s*كال\s*ما\s*وصل|الكاشير\s*الوصل\s*كال\s*مرفوض|نقطة\s*بيع|التاجر\s*(?:يكول|كال|يقول)|دفع\s*للتاجر)", text, re.I) and not re.search(r"(?:ارجاع|إرجاع|استرجاع|استرداد|مرتجع|الغ[ىي]|ألغ[ىي]|الغيت|ألغيت|الغوا|رجع|ترجيع)", text, re.I):
             return ClassificationResult(
                 category="bill_payment_failure",
                 category_confidence=0.92,
@@ -599,7 +599,7 @@ class MockClassifierProvider(BaseClassifierProvider):
                 sentiment_tags=["atm_cashout_undispensed"],
             )
 
-        if self.version in ("v4", "v5", "v6", "v7", "v8", "v9"):
+        if self.version in ("v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12"):
             # 2.2a High-Precision Account Blocked (suspension, compliance, freeze)
             if re.search(
                 r"(?:تم\s*حظر\s*محفظتك|حسابي\s*انحظر|انحظر\s*حسابي|توقيف\s*كافة\s*العمليات|"
@@ -620,15 +620,19 @@ class MockClassifierProvider(BaseClassifierProvider):
                 )
 
             # 2.2b High-Precision Login Problem / Credentials Recovery
-            if re.search(
+            login_pat = (
                 r"(?:رمز\s*السري.*ناسي|ناسي.*رمز\s*السري|مقفول\s*الحساب.*سيمكارت|سيمكارت.*مقفول|"
                 r"رسالة\s*الكود\s*ما\s*(?:عم\s*)?تصل|كود\s*104\s*بالدخول|بصمة\s*الاصبع\s*بطلت|"
                 r"خط\s*كورك\s*القديم.*رمز\s*تفعيل|رمز\s*تفعيل.*الخط\s*المحروك|الخط\s*المحروك.*كود|كود.*الخط\s*المحروك|"
                 r"كود\s*تأكيد\s*على\s*الايميل|غيرت(?:و)?\s*كلمة\s*السر.*البيانات\s*غير\s*متطابقة|"
-                r"تم\s*تجاوز\s*الحد\s*المسموح\s*من\s*المحاولات|session\s*expired\s*please\s*re-authenticate|ma\s*aqdar\s*adkhol)",
-                text,
-                re.I,
-            ) and not re.search(r"(?:انحظر|توقف\s*كليا|الغاء\s*تفعيل|مخالفة\s*الشروط|موقوفة\s*احترازيا|معلقة\s*احترازيا)", text, re.I):
+                r"تم\s*تجاوز\s*الحد\s*المسموح\s*من\s*المحاولات|session\s*expired\s*please\s*re-authenticate|ma\s*aqdar\s*adkhol"
+            )
+            if self.version == "v12":
+                login_pat += r"|(?:خطأ|كود|رمز|يخرج|معلق).*(?:في|عند|بـ)?\s*تسجيل\s*(?:الـ?)?دخول|تسجيل\s*(?:الـ?)?دخول.*(?:يظهر\s*لي\s*خطأ|يعطي\s*خطأ|يخرج|يغلق|معلق)"
+            login_pat += r")"
+            if re.search(login_pat, text, re.I) and not re.search(
+                r"(?:انحظر|توقف\s*كليا|الغاء\s*تفعيل|مخالفة\s*الشروط|موقوفة\s*احترازيا|معلقة\s*احترازيا)", text, re.I
+            ):
                 return ClassificationResult(
                     category="login_problem",
                     category_confidence=0.92,
@@ -639,14 +643,19 @@ class MockClassifierProvider(BaseClassifierProvider):
                 )
 
             # 2.2c High-Precision Refund Status (Merchant return, order cancellation, formal refund claim)
-            if re.search(
+            refund_pat = (
                 r"(?:فلوس\s*الترجيع|طلب\s*(?:الـ?)?(?:استرجاع|استرداد|refund)|معاملة\s*الاسترداد|وصل\s*ارجاع|وصل\s*عكس\s*القيد|"
                 r"الارجاع\s*معلق|قيد\s*الاسترجاع|استرداد\s*(?:مبلغ|للمبلغ)|عكس\s*(?:مبلغ|العملية|حركة|القيد)|فلوس\s*الطلب\s*الملغي|"
                 r"حجز\s*الفندق\s*اللي\s*(?:التغى|الغي)|تذكرة\s*الطيران.*refund|طلب\s*الاسترجاع|"
-                r"سوينا\s*لك\s*استرجاع|سويت\s*استرجاع|رجعنا\s*الفلوس|raja3na\s*il\s*fuloos)",
-                text,
-                re.I,
-            ):
+                r"سوينا\s*لك\s*استرجاع|سويت\s*استرجاع|رجعنا\s*الفلوس|raja3na\s*il\s*fuloos"
+            )
+            if self.version in ("v11", "v12"):
+                refund_pat += (
+                    r"|رفض\s*(?:الـ?)?إ?ارجاع|الغ(?:يت|اء)\s*(?:الطلب|الموعد).*(?:ما\s*)?رجع|ما\s*رجعو(?:ها|ه)|رح\s*نرجع(?:ها|ه)|ارجعوا\s*لي|"
+                    r"المرتجع|دفعة\s*(?:الـ?)?إ?ارجاع|رقم\s*(?:الـ?)?إ?ارجاع|التاجر\s*(?:كالي\s*)?(?:الغ[ىي]|ار?جع)|تامين\s*.*متى\s*يرجع"
+                )
+            refund_pat += r")"
+            if re.search(refund_pat, text, re.I):
                 return ClassificationResult(
                     category="refund_status",
                     category_confidence=0.93,
@@ -657,7 +666,21 @@ class MockClassifierProvider(BaseClassifierProvider):
                 )
 
             # 2.2d High-Precision Bill Payment & Telecom Subscriptions
-            if re.search(r"(?:اشتراك\s*(?:الـ?)?نت|ابو\s*المنظومة|منظومة\s*النت|اشتراك\s*(?:المولد|الكهرباء|المولدة)|شحنت\s*كارت\s*(?:اسيا|زين|كورك)|كارت\s*(?:اسيا|زين|كورك).*(?:ابو|ما\s*تفعل|ما\s*وصل)|كارت\s*اسيا.*ما\s*تفعل|رصيد\s*كورك.*ما\s*نزل)", text, re.I):
+            bill_pat = (
+                r"(?:اشتراك\s*(?:الـ?)?(?:نت|الهاتف|المولد|الكهرباء|المولدة)|"
+                r"قائمة\s*(?:الـ?)?(?:ما[ءي]|كهرباء)|"
+                r"دفع\s*(?:فاتورة\s*|قائمة\s*|رسوم\s*)?(?:ما[ءي]|كهرباء)|"
+                r"فاتورة\s*(?:ما[ءي]|كهرباء|هاتف)|"
+                r"اشتراك\s*(?:خط\s*)?الهاتف|"
+                r"ابو\s*المنظومة|منظومة\s*النت|شحنت\s*كارت\s*(?:اسيا|زين|كورك)|"
+                r"كارت\s*(?:اسيا|زين|كورك).*(?:ابو|ما\s*تفعل|ما\s*وصل)|كارت\s*اسيا.*ما\s*تفعل|رصيد\s*كورك.*ما\s*نزل"
+            )
+            if self.version in ("v11", "v12"):
+                bill_pat += (
+                    r"|سددت\s*(?:رسوم|قسط|اشتراك)|رسوم\s*الجامعة|قسط\s*(?:الشهري|الجامعة|الجمعية)|رصيد\s*الالعاب|taqseet"
+                )
+            bill_pat += r")"
+            if re.search(bill_pat, text, re.I):
                 return ClassificationResult(
                     category="bill_payment_failure",
                     category_confidence=0.92,
@@ -677,6 +700,22 @@ class MockClassifierProvider(BaseClassifierProvider):
                     reasoning_summary="Customer requests account ledger / statement breakdown",
                     sentiment_tags=sentiment.sentiment_tags,
                 )
+
+            # 2.2f High-Precision Clean General Banking Inquiry (V12)
+            if self.version == "v12":
+                if re.search(
+                    r"(?:فروعكم|ساعات\s*العمل|اوقات\s*الدوام|الدوام\s*يوم|عمولة\s*السحب|حدود\s*(?:السحب|التحويل|المعاملات)|working\s*hours|transaction\s*limits)",
+                    text,
+                    re.I,
+                ) and not re.search(r"(?:انسرقت|باكوني|طارت|معلك|اشتراك|رصيد|كارت|حظر|انحظر|مشكوكة|ممزقة)", text, re.I):
+                    return ClassificationResult(
+                        category="general_inquiry",
+                        category_confidence=0.92,
+                        priority="low",
+                        priority_confidence=0.88,
+                        reasoning_summary="General bank inquiry on working hours, branch location, or transaction limits",
+                        sentiment_tags=sentiment.sentiment_tags,
+                    )
 
             # 2.2w High-Precision Wrong Recipient / Accidental Transfer (precedes pending transfer rule 2.25)
             if re.search(
@@ -704,10 +743,19 @@ class MockClassifierProvider(BaseClassifierProvider):
                 and not re.search(r"(?:رمز\s*(?:التاكيد|التأكيد|التحقق)|كود\s*(?:التحقق|التاكيد|التأكيد|الدخول|otp)|otp|باسورد|تسجيل\s*دخول)", text, re.I)
             )
             if self.version != "v1":
-                is_disambiguated = is_disambiguated and not re.search(
+                neg_pat = (
                     r"(?:استرجاع|إرجاع|ارجاع|مرتجع|رجعت|الترجيع|ترجيع|استرداد|عكس\s*(?:مبلغ|العملية|القيد)|معاملة\s*الاسترداد|وصل\s*عكس\s*القيد|اشتراك\s*(?:الـ?)?نت|ابو\s*المنظومة|منظومة\s*النت|كارت\s*اسيا|رصيد\s*كورك|اشتراك\s*ملغي|الغيت|ألغيت|وصل\s*رجوع|فاتورة|فاتوره|fatoret|صك|شحن|"
                     r"محظور|مجمد|تجميد|مقفل|راجع\s*الادارة|موقوف|بلوك|باند|block|blocked|معلقة\s*احترازيا|تعليق\s*احترازي|تعليق|توقف\s*كليا|الغاء\s*تفعيل|مخالفة\s*الشروط|"
-                    r"الصراف|كارت|كاش\s*اوت|سحب\s*من\s*الصراف|كاصين|رصيدي\s*ناقص|خصم)",
+                    r"قائمة\s*(?:الـ?)?(?:ما[ءي]|كهرباء)|دفع\s*(?:فاتورة\s*|قائمة\s*|رسوم\s*)?(?:ما[ءي]|كهرباء)|اشتراك\s*(?:خط\s*)?الهاتف|فاتورة\s*(?:ما[ءي]|كهرباء|هاتف)|"
+                    r"الصراف|كارت|كاش\s*اوت|سحب\s*من\s*الصراف|كاصين|رصيدي\s*ناقص|خصم"
+                )
+                if self.version in ("v11", "v12"):
+                    neg_pat += r"|رسوم\s*الجامعة|قسط|taqseet|رصيد\s*الالعاب|المرتجع|دفعة\s*(?:الـ?)?إ?ارجاع"
+                if self.version == "v12":
+                    neg_pat += r"|الوكيل|وكيل|المستلم|بالغلط|مو\s*رقمي|الرقم\s*غلط|الرقم\s*الخطأ|المحجوز|معلق|المعلق"
+                neg_pat += r")"
+                is_disambiguated = is_disambiguated and not re.search(
+                    neg_pat,
                     text,
                     re.I,
                 )
@@ -741,7 +789,7 @@ class MockClassifierProvider(BaseClassifierProvider):
         # 3. Hybrid ML Model Inference (trained on Arabic dev data; Kurdish routes to specialized heuristics)
         if (
             detected_lang != "ku_kmr"
-            and (detected_lang != "ku_ckb" or self.version == "v9")
+            and (detected_lang != "ku_ckb" or self.version in ("v9", "v10", "v11", "v12"))
             and self.cat_pipe is not None
             and self.prio_pipe is not None
         ):
