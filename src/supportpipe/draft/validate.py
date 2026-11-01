@@ -10,6 +10,9 @@ FORBIDDEN_PROMISE_PATTERNS = [
     re.compile(r"فلوسك\s*ترجعلك\s*(100%|مضمونة|أكيد)", re.IGNORECASE),
     re.compile(r"راح\s*نرجعلك\s*المبلغ\s*خلال\s*ساعة", re.IGNORECASE),
     re.compile(r"guaranteed\s*refund", re.IGNORECASE),
+    re.compile(r"نعدك\s*(?:بـ|ب)?(?:استرجاع|إعادة|تحويل)", re.IGNORECASE),
+    re.compile(r"نتعهد\s*(?:بـ|ب)?(?:استرجاع|إعادة)", re.IGNORECASE),
+    re.compile(r"(?:استرجاع|إعادة)\s*المبلغ\s*مؤكد", re.IGNORECASE),
 ]
 
 
@@ -43,10 +46,11 @@ def check_grounding(
     """
     hallucinated: list[str] = []
     norm_draft = normalize_digits(draft_text)
-    # Strip formatting commas between digits so '25,000' is treated as '25000' rather than '000'
-    norm_draft = re.sub(r"(\d),(\d{3})", r"\1\2", norm_draft)
+    # Strip formatting commas and periods between digits so '25,000' or '2.500.000' is treated as '2500000'
     norm_raw = normalize_digits(ticket_raw_text)
-    norm_raw = re.sub(r"(\d),(\d{3})", r"\1\2", norm_raw)
+    for _ in range(5):
+        norm_draft = re.sub(r"(\d)[,\.](\d{3})(?!\d)", r"\1\2", norm_draft)
+        norm_raw = re.sub(r"(\d)[,\.](\d{3})(?!\d)", r"\1\2", norm_raw)
 
     # Extract all digit sequences of length >= 3 from the draft
     draft_numbers = re.findall(r"\b\d{3,}\b", norm_draft)
