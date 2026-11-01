@@ -253,11 +253,12 @@ uv run supportpipe health
 
 ### 3. Run Batch Processing (Judge Evaluation Run)
 ```bash
-# Process development set (215 tickets)
-uv run supportpipe run --input data/splits/dev.jsonl
+# Process development set (219 tickets)
+# Note: For deterministic offline batch execution (333+ tickets/sec), set LLM_MODE=offline
+LLM_MODE=offline uv run supportpipe run --input data/splits/dev.jsonl
 
 # Process custom ticket file
-uv run supportpipe run --input <path_to_tickets.jsonl>
+LLM_MODE=offline uv run supportpipe run --input <path_to_tickets.jsonl>
 ```
 
 ### 4. Reproduce Frozen Test Set Benchmark
