@@ -22,7 +22,7 @@
   - Role: intended primary decision model; not yet measured on a held-out set for Iraqi Arabic support tickets into 14 closed categories, priority assignment (`high`, `medium`, `low`), and decision confidence scoring via RLCD logit probabilities (Section 7.1 & 7.5, confidence calibration not yet measured). Spike result was anecdotal, n=15, not statistically meaningful.
   - Data-use terms: *not verified by owner*.
 - **Google Gemini (General LLM Provider):**
-  - Model ID: `gemini-3.6-flash` (Console display names: Gemini 3.6 Flash / Gemini 2.5 Flash; fallback: `gemini-2.5-flash`).
+  - Model ID: `gemini-2.5-flash` (default codebase config in `config.py`; UI and documentation also reference `gemini-3.6-flash` and `gemini-3.8-flash`).
   - Role: Entity extraction, cloud auditing, and grounded first-response drafting in Iraqi Arabic.
 - **Groq Llama-3.3-70B-Versatile (Secondary Fallback):**
   - Role: High-speed backup LLM for extraction and drafting in the event of primary provider quota limits.
@@ -56,7 +56,7 @@
 - **Provider Policy Notice:** Testing using free-tier LLM endpoints was conducted solely on synthetic data to prevent any unintended data retention risks.
 
 ## 4. Software Libraries & External Tools
-- **Language & Runtime:** Python 3.12+ (tested on Python 3.12.14)
+- **Language & Runtime:** Python 3.12+ (tested on Python 3.12.14, verified on Python 3.14.4)
 - **Environment & Dependency Manager:** Astral `uv` 0.12.17
 - **Data Validation & Schemas:** Pydantic v2 (`pydantic>=2.10`, `pydantic-settings>=2.7`)
 - **Scientific & Metric Evaluation:** `scikit-learn>=1.5`, `pandas>=2.2`, `numpy>=2.0`, `matplotlib>=3.9`
