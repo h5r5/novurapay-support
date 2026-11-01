@@ -37,7 +37,7 @@
 SupportPipe strictly complies with all mandatory pre-scoring challenge criteria:
 
 > [!NOTE]
-> **Repository Branding Notice:** Adhering to internal repository brand neutrality guidelines (Simulated Iraqi Digital Wallet - NovuraPay), the repository is tracking [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support).
+> **Repository Branding Notice:** Adhering to internal repository brand neutrality guidelines (Simulated Iraqi Digital Wallet - NovuraPay), the repository is tracking [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support) (verified matching git remote).
 
 | Gate | Requirement | Submission Status & Evidence |
 | :--- | :--- | :--- |
