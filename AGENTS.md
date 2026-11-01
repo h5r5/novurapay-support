@@ -41,3 +41,7 @@ Flow: ingest -> blind measurement -> aggregates only -> error analysis -> change
    (b) Add no rule embedding literal phrase from batch; pattern must be supported by >= 3 tickets from >= 2 batch-tag clusters;
    (c) Get row in docs/rules_ledger.md;
    (d) Judged on NEXT fresh batch blind score in docs/stress_series.md.
+5. Documentation Synchronization (Mandatory):
+   (a) Update `docs/stress_series.md` with the new batch row (commit, N tickets, generator, blind accuracy, Wilson 95% CI, slice breakdowns);
+   (b) Immediately synchronize `README.md` (header badges, executive bullet ledger, and Section 2 stress series table) with the new cumulative totals and blind accuracy;
+   (c) Never allow `README.md` to lag behind the current round count or ticket volume.
