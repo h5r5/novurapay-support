@@ -4,7 +4,7 @@
 *A reproducible, auditable, high-throughput batch support pipeline tailored for Iraqi Arabic and Kurdish customer tickets. Engineered with a Tri-Engine Hybrid Architecture, calibrated confidence escalation, deterministic routing, grounded response drafting, and an active learning discrepancy store.*
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/)
-[![Tests: 217/217 Passed](https://img.shields.io/badge/tests-217%2F217%20passing-brightgreen.svg)]()
+[![Tests: 221/221 Passed](https://img.shields.io/badge/tests-221%2F221%20passing-brightgreen.svg)]()
 [![Stress Rounds 1-10: 94.4% Consumed | 84.0% Blind](https://img.shields.io/badge/stress_rounds_1--10-94.4%25%20consumed%20%7C%2084.0%25%20blind-blue.svg)]()
 [![Holdout: 56.4% (Diagnostic)](https://img.shields.io/badge/holdout-56.4%25%20(diagnostic)-orange.svg)]()
 [![Adversarial Breaking Points: 0/100](https://img.shields.io/badge/adversarial_breaking_points-0%2F100%20(100%25)-purple.svg)]()
@@ -14,7 +14,7 @@
 > - **Continuous Stress Rounds 1–10 (1,816 tickets):** **84.00%** blind zero-shot accuracy on unseen Round 10 (Wilson 95% CI: [80.3%, 87.1%]); **94.44%** cumulative consumed accuracy across all 10 rounds (Wilson 95% CI: [93.3%, 95.4%]).
 > - **Diagnostic Holdout Set (133 tickets):** **56.39%** (75/133, Wilson 95% CI: [47.9%, 64.5%]). Unexposed slice: **46.7%** (42/90, Wilson 95% CI: [36.7%, 56.9%]).
 > - **Adversarial Torture Test (100 tickets):** **0/100 breaking points** (100% resilience against BiDi Trojans, prompt injections, and complex currency slang).
-> - **Automated Test Suite:** **217/217 unit and integration tests passing** covering Arabic, Kurdish (Sorani/Kurmanji), Arabizi, PII masking, and fault isolation.
+> - **Automated Test Suite:** **221/221 unit and integration tests passing** covering Arabic, Kurdish (Sorani/Kurmanji), Arabizi, PII masking, and fault isolation.
 
 ---
 

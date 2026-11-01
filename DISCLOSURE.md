@@ -64,4 +64,4 @@
 - **User Interface & Review Queue:** `streamlit>=1.40.0`
 - **Command Line Interface:** `click>=8.1.8`
 - **Configuration & Parsers:** `pyyaml>=6.0`, `python-dateutil>=2.9`
-- **Quality Assurance & Testing:** `pytest>=8.3` (106 automated tests passing with 100% pass rate), `pytest-cov>=5.0`, `ruff>=0.9`, `mypy>=1.14`
+- **Quality Assurance & Testing:** `pytest>=8.3` (221 automated tests passing, 72% coverage measured via `pytest-cov`), `pytest-cov>=5.0`, `ruff>=0.9`, `mypy>=1.14`
