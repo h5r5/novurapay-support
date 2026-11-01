@@ -7,7 +7,7 @@
 
 ## Overview
 
-In mission-critical fintech and banking operations, failure is inevitable; what distinguishes an agentic architecture is how gracefully and safely it handles failures. This document details 5 distinct failure modes, their operational triggers, automated detection mechanisms, deterministic mitigation strategies, and the automated tests proving their effectiveness.
+In mission-critical fintech and banking operations, failure is inevitable; what distinguishes an agentic architecture is how gracefully and safely it handles failures. This document details 6 distinct failure modes, their operational triggers, automated detection mechanisms, deterministic mitigation strategies, and the automated tests proving their effectiveness.
 
 ---
 
