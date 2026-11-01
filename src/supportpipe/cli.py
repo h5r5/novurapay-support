@@ -56,8 +56,16 @@ def health() -> None:
     default=None,
     help="Directory to save review queue results and summary.",
 )
-def run(input_path: Path, output_dir: Path | None) -> None:
+@click.option(
+    "--mode",
+    type=click.Choice(["offline", "live", "hybrid"], case_sensitive=False),
+    default=None,
+    help="Execution mode override: 'offline' (fast deterministic benchmark), 'live', or 'hybrid'.",
+)
+def run(input_path: Path, output_dir: Path | None, mode: str | None = None) -> None:
     """Process a batch of tickets through the pipeline and write to review queue."""
+    if mode is not None:
+        settings.llm_mode = mode.lower()  # type: ignore[assignment]
     click.echo(f"Ingesting tickets from: {input_path}")
     tickets: list[Ticket] = []
 
