@@ -94,7 +94,7 @@ def _init_offline_pipelines(
                     train_cats.append(str(item["label"]["category"]))
                     train_prios.append(str(item["label"]["priority"]))
 
-            if version in ("v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12"):
+            if version in ("v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13"):
                 # In v3 through v9, also load consumed stress batches per STRESS BATCH PROTOCOL
                 consumed_candidates = [
                     Path(__file__).resolve().parents[4] / "data" / "stress",
@@ -126,7 +126,7 @@ def _init_offline_pipelines(
                                 logger.warning("Could not load consumed stress batches: %s", e)
                         break
 
-            if version in ("v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12"):
+            if version in ("v3", "v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13"):
                 # Upgraded V3-V9 Engine: Arabizi Dual-Channel Normalization + Word (1-2) + Char_wb (2-5) + Calibrated LinearSVC
                 cat_pipe = Pipeline([
                     (
@@ -420,7 +420,7 @@ class MockClassifierProvider(BaseClassifierProvider):
             detected_lang = "ar"
 
         if detected_lang == "en" and not is_arabizi:
-            if self.version in ("v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12"):
+            if self.version in ("v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13"):
                 en_cat, en_conf = _classify_english_fintech_intent(raw)
                 if en_cat is not None:
                     en_prio: Literal["high", "medium", "low"] = "high" if (en_cat in ("fraud_report", "account_blocked") or "urgent" in raw.lower() or "retained" in raw.lower()) else ("low" if en_cat in ("balance_or_statement_inquiry", "general_inquiry") else "medium")
@@ -599,7 +599,7 @@ class MockClassifierProvider(BaseClassifierProvider):
                 sentiment_tags=["atm_cashout_undispensed"],
             )
 
-        if self.version in ("v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12"):
+        if self.version in ("v4", "v5", "v6", "v7", "v8", "v9", "v10", "v11", "v12", "v13"):
             # 2.2a High-Precision Account Blocked (suspension, compliance, freeze)
             if re.search(
                 r"(?:تم\s*حظر\s*محفظتك|حسابي\s*انحظر|انحظر\s*حسابي|توقيف\s*كافة\s*العمليات|"
@@ -627,7 +627,7 @@ class MockClassifierProvider(BaseClassifierProvider):
                 r"كود\s*تأكيد\s*على\s*الايميل|غيرت(?:و)?\s*كلمة\s*السر.*البيانات\s*غير\s*متطابقة|"
                 r"تم\s*تجاوز\s*الحد\s*المسموح\s*من\s*المحاولات|session\s*expired\s*please\s*re-authenticate|ma\s*aqdar\s*adkhol"
             )
-            if self.version == "v12":
+            if self.version in ("v12", "v13"):
                 login_pat += r"|(?:خطأ|كود|رمز|يخرج|معلق).*(?:في|عند|بـ)?\s*تسجيل\s*(?:الـ?)?دخول|تسجيل\s*(?:الـ?)?دخول.*(?:يظهر\s*لي\s*خطأ|يعطي\s*خطأ|يخرج|يغلق|معلق)"
             login_pat += r")"
             if re.search(login_pat, text, re.I) and not re.search(
@@ -649,7 +649,7 @@ class MockClassifierProvider(BaseClassifierProvider):
                 r"حجز\s*الفندق\s*اللي\s*(?:التغى|الغي)|تذكرة\s*الطيران.*refund|طلب\s*الاسترجاع|"
                 r"سوينا\s*لك\s*استرجاع|سويت\s*استرجاع|رجعنا\s*الفلوس|raja3na\s*il\s*fuloos"
             )
-            if self.version in ("v11", "v12"):
+            if self.version in ("v11", "v12", "v13"):
                 refund_pat += (
                     r"|رفض\s*(?:الـ?)?إ?ارجاع|الغ(?:يت|اء)\s*(?:الطلب|الموعد).*(?:ما\s*)?رجع|ما\s*رجعو(?:ها|ه)|رح\s*نرجع(?:ها|ه)|ارجعوا\s*لي|"
                     r"المرتجع|دفعة\s*(?:الـ?)?إ?ارجاع|رقم\s*(?:الـ?)?إ?ارجاع|التاجر\s*(?:كالي\s*)?(?:الغ[ىي]|ار?جع)|تامين\s*.*متى\s*يرجع"
@@ -675,7 +675,7 @@ class MockClassifierProvider(BaseClassifierProvider):
                 r"ابو\s*المنظومة|منظومة\s*النت|شحنت\s*كارت\s*(?:اسيا|زين|كورك)|"
                 r"كارت\s*(?:اسيا|زين|كورك).*(?:ابو|ما\s*تفعل|ما\s*وصل)|كارت\s*اسيا.*ما\s*تفعل|رصيد\s*كورك.*ما\s*نزل"
             )
-            if self.version in ("v11", "v12"):
+            if self.version in ("v11", "v12", "v13"):
                 bill_pat += (
                     r"|سددت\s*(?:رسوم|قسط|اشتراك)|رسوم\s*الجامعة|قسط\s*(?:الشهري|الجامعة|الجمعية)|رصيد\s*الالعاب|taqseet"
                 )
@@ -702,7 +702,7 @@ class MockClassifierProvider(BaseClassifierProvider):
                 )
 
             # 2.2f High-Precision Clean General Banking Inquiry (V12)
-            if self.version == "v12":
+            if self.version in ("v12", "v13"):
                 if re.search(
                     r"(?:فروعكم|ساعات\s*العمل|اوقات\s*الدوام|الدوام\s*يوم|عمولة\s*السحب|حدود\s*(?:السحب|التحويل|المعاملات)|working\s*hours|transaction\s*limits)",
                     text,
@@ -714,6 +714,24 @@ class MockClassifierProvider(BaseClassifierProvider):
                         priority="low",
                         priority_confidence=0.88,
                         reasoning_summary="General bank inquiry on working hours, branch location, or transaction limits",
+                        sentiment_tags=sentiment.sentiment_tags,
+                    )
+
+            # 2.2k High-Precision Civil Identification / Residence Card KYC Disambiguation (V13)
+            if self.version == "v13":
+                if re.search(
+                    r"(?:البطاق(?:ة|ه)\s*(?:الوطني(?:ة|ه)|الموحد(?:ة|ه))|بطاق(?:ة|ه)\s*سكن(?:ي(?:ة|ه))?)",
+                    text,
+                    re.I,
+                ) and not re.search(
+                    r"(?:صراف|atm|ماستركارد|فيزا|سحب|كاش|عمولة)", text, re.I
+                ):
+                    return ClassificationResult(
+                        category="kyc_document_issue",
+                        category_confidence=0.93,
+                        priority="medium",
+                        priority_confidence=0.88,
+                        reasoning_summary="Civil identification document or residence card verification inquiry",
                         sentiment_tags=sentiment.sentiment_tags,
                     )
 
@@ -749,9 +767,9 @@ class MockClassifierProvider(BaseClassifierProvider):
                     r"قائمة\s*(?:الـ?)?(?:ما[ءي]|كهرباء)|دفع\s*(?:فاتورة\s*|قائمة\s*|رسوم\s*)?(?:ما[ءي]|كهرباء)|اشتراك\s*(?:خط\s*)?الهاتف|فاتورة\s*(?:ما[ءي]|كهرباء|هاتف)|"
                     r"الصراف|كارت|كاش\s*اوت|سحب\s*من\s*الصراف|كاصين|رصيدي\s*ناقص|خصم"
                 )
-                if self.version in ("v11", "v12"):
+                if self.version in ("v11", "v12", "v13"):
                     neg_pat += r"|رسوم\s*الجامعة|قسط|taqseet|رصيد\s*الالعاب|المرتجع|دفعة\s*(?:الـ?)?إ?ارجاع"
-                if self.version == "v12":
+                if self.version in ("v12", "v13"):
                     neg_pat += r"|الوكيل|وكيل|المستلم|بالغلط|مو\s*رقمي|الرقم\s*غلط|الرقم\s*الخطأ|المحجوز|معلق|المعلق"
                 neg_pat += r")"
                 is_disambiguated = is_disambiguated and not re.search(
@@ -789,7 +807,7 @@ class MockClassifierProvider(BaseClassifierProvider):
         # 3. Hybrid ML Model Inference (trained on Arabic dev data; Kurdish routes to specialized heuristics)
         if (
             detected_lang != "ku_kmr"
-            and (detected_lang != "ku_ckb" or self.version in ("v9", "v10", "v11", "v12"))
+            and (detected_lang != "ku_ckb" or self.version in ("v9", "v10", "v11", "v12", "v13"))
             and self.cat_pipe is not None
             and self.prio_pipe is not None
         ):

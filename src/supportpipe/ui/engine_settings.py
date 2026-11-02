@@ -17,13 +17,13 @@ from supportpipe.classify.providers.mock_provider import MockClassifierProvider
 from supportpipe.config import settings
 
 ENGINE_OPTIONS: list[str] = [
-    "🔄 Tiered Hybrid Waterfall (الهجين المتسلسل)",
-    "⚡ Groq Llama 3.3 70B Versatile (سحابي عالي الدقة)",
-    "⚡ Groq Llama 3.1 8B Instant (فائق السرعة)",
-    "🌐 Google Gemini 2.5 Flash (سحابي وتدقيق)",
-    "🧠 TypeSafe Jev 1.13 API (نموذج معاير عراقي)",
-    "💻 Local Fast Heuristic / Mock (محلي 0.5ms)",
-    "⚔️ Side-by-Side Dual Engine Match (مبارزة ثنائية)",
+    "Tiered Hybrid Waterfall (الهجين المتسلسل)",
+    "Groq Llama 3.3 70B Versatile (سحابي عالي الدقة)",
+    "Groq Llama 3.1 8B Instant (فائق السرعة)",
+    "Google Gemini 2.5 Flash (سحابي وتدقيق)",
+    "TypeSafe Jev 1.13 API (نموذج معاير عراقي)",
+    "Local Fast Heuristic / Mock v13 (محلي 0.5ms - v13 الأحدث)",
+    "Side-by-Side Dual Engine Match (مبارزة ثنائية)",
 ]
 
 
@@ -44,7 +44,7 @@ def resolve_engine_choice(choice: str) -> dict[str, Any]:
             "label": "Groq Llama 3.1 8B",
             "name": "groq",
         }
-    elif "gemini" in c or "2.5" in c:
+    elif "gemini" in c or "2.5" in c or "3.6" in c or "3.8" in c:
         return {
             "provider": "gemini",
             "model": "gemini-2.5-flash",
@@ -65,11 +65,12 @@ def resolve_engine_choice(choice: str) -> dict[str, Any]:
             "label": "Side-by-Side Dual Engine Match",
             "name": "duel",
         }
-    elif "heuristic" in c or "mock" in c or "محلي" in c or "0.5ms" in c or "أوفلاين" in c:
+    elif "heuristic" in c or "mock" in c or "محلي" in c or "0.5ms" in c or "أوفلاين" in c or "v12" in c or "v13" in c:
+        eff_v = getattr(settings, "offline_model_version", "v13")
         return {
             "provider": "mock",
-            "model": None,
-            "label": "Local Fast Heuristic",
+            "model": eff_v,
+            "label": f"Local Fast Heuristic ({eff_v})",
             "name": "mock",
         }
     else:  # hybrid
@@ -128,6 +129,11 @@ def sync_runtime_settings() -> None:
     if "conf_threshold_input" in st.session_state:
         settings.category_confidence_threshold = float(st.session_state["conf_threshold_input"])
 
+    if "offline_version_input" in st.session_state and st.session_state["offline_version_input"]:
+        settings.offline_model_version = str(st.session_state["offline_version_input"]).split()[0].lower()
+    else:
+        settings.offline_model_version = "v13"
+
 
 def ping_engine_connection(
     provider: str,
@@ -166,10 +172,11 @@ def ping_engine_connection(
             lat = (time.perf_counter() - t0) * 1000.0
             return True, lat, f"تم الاتصال بنجاح بمزود TypeSafe Jev API - الفئة: {res.category}"
         elif p == "mock":
-            prov = MockClassifierProvider()
+            eff_v = getattr(settings, "offline_model_version", "v12")
+            prov = MockClassifierProvider(offline_model_version=eff_v)
             res = prov.classify("فحص اتصال تجريبي للتحقق من المفتاح", channel="app")
             lat = (time.perf_counter() - t0) * 1000.0
-            return True, lat, f"المحرك المحلي الاستدلالي سليم - الفئة: {res.category}"
+            return True, lat, f"المحرك المحلي الاستدلالي ({eff_v}) سليم - الفئة: {res.category}"
         elif p == "hybrid":
             prov = HybridClassifierProvider()
             res = prov.classify("فحص اتصال تجريبي للتحقق من المفتاح", channel="app")

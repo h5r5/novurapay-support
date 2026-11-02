@@ -45,6 +45,8 @@ id_rsa*
 !.agents/rules/
 .agent
 .claude/
+.opencode/
+opencode.jsonc
 
 # Testing & Coverage
 .pytest_cache/

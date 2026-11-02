@@ -373,3 +373,37 @@ def test_v12_login_transfer_general_disambiguation() -> None:
     # 3. Agent dispute not captured as failed transfer
     res_agent = provider.classify("الوكيل اخذ عمولة زيادة من حولت")
     assert res_agent.category == "agent_dispute"
+
+
+def test_mock_provider_explicit_v13_instantiation() -> None:
+    """MockClassifierProvider initialized with 'v13' loads FeatureUnion and CalibratedClassifierCV."""
+    provider = MockClassifierProvider(offline_model_version="v13")
+    assert provider.version == "v13"
+    assert provider.cat_pipe is not None
+
+    vectorizer = provider.cat_pipe.named_steps["vectorizer"]
+    assert isinstance(vectorizer, FeatureUnion)
+    classifier = provider.cat_pipe.named_steps["classifier"]
+    assert isinstance(classifier, CalibratedClassifierCV)
+
+
+def test_v13_civil_id_document_disambiguation() -> None:
+    """V13 engine must disambiguate civil ID / residence cards into kyc_document_issue."""
+    provider = MockClassifierProvider(offline_model_version="v13")
+
+    # 1. National unified card -> kyc_document_issue
+    res_unified = provider.classify("رفض التطبيق صورة البطاقة الموحدة بسبب اللمعان اثناء التوثيق")
+    assert res_unified.category == "kyc_document_issue"
+
+    # 2. National card -> kyc_document_issue
+    res_national = provider.classify("البطاقة الوطنية مالتي بيها كسر خفيف والتطبيق يرفضها بالمسح")
+    assert res_national.category == "kyc_document_issue"
+
+    # 3. Residence card -> kyc_document_issue
+    res_residence = provider.classify("صورة بطاقة السكن رفضوها ويردون نسخة حديثة")
+    assert res_residence.category == "kyc_document_issue"
+
+    # 4. Bank ATM card -> card_issue (negative guard validation)
+    res_atm = provider.classify("الصراف بلع البطاقة مالتي وما طلعت")
+    assert res_atm.category == "card_issue"
+

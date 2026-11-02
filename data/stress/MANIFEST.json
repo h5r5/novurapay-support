@@ -268,5 +268,20 @@
       0.8088,
       0.8839
     ]
+  },
+  "batch_019": {
+    "sha256": "7e90e3794feb94bc871bfe68d76c98e9604f7bca6b182aba429038bde6175edd",
+    "n": 400,
+    "generator": "external Claude (no repo access)",
+    "date": "2026-11-02T17:01:00.515742+00:00",
+    "prompt_hash": "none",
+    "measured_at": "2026-11-02T17:03:49.561419+00:00",
+    "git_commit": "6f1b696817b1f88631c6de630e23d682a3bd8e39",
+    "blind_accuracy": 0.5825,
+    "blind_wilson_95_ci": [
+      0.5336,
+      0.6298
+    ],
+    "status": "consumed"
   }
 }

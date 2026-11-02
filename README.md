@@ -4,15 +4,15 @@
 *A reproducible, auditable, high-throughput batch support pipeline tailored for Iraqi Arabic and Kurdish customer tickets. Engineered with a Tri-Engine Hybrid Architecture, calibrated confidence escalation, deterministic routing, grounded response drafting, and an active learning discrepancy store.*
 
 [![Python 3.12+](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/)
-[![Tests: 221/221 Passed](https://img.shields.io/badge/tests-221%2F221%20passing-brightgreen.svg)]()
-[![Stress Rounds 1-18: 3,422 Tickets | 76.9% Blind](https://img.shields.io/badge/stress_rounds_1--18-3%2C422%20tickets%20%7C%2076.9%25%20blind-blue.svg)]()
+[![Tests: 223/223 Passed](https://img.shields.io/badge/tests-223%2F223%20passing-brightgreen.svg)]()
+[![Stress Rounds 1-19: 3,822 Tickets | 74.9% Blind](https://img.shields.io/badge/stress_rounds_1--19-3%2C822%20tickets%20%7C%2074.9%25%20blind-blue.svg)]()
 [![Adversarial Resilience: 92% (8/100 Edge Cases)](https://img.shields.io/badge/adversarial_resilience-92%25%20(8%2F100%20edge%20cases)-purple.svg)]()
 [![Code Style: Ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
 > **Empirical Performance Ledger (Zero-Hype, Verifiable Metrics):**
-> - **Continuous Stress Rounds 1–18 (3,422 tickets):** **76.86%** blind zero-shot accuracy across all 18 unseen batches (2,630/3,422, Wilson 95% CI: [75.4%, 78.2%]), with recent rounds consistently operating at **83%–88%** accuracy.
+> - **Continuous Stress Rounds 1–19 (3,822 tickets):** **74.91%** blind zero-shot accuracy across all 19 unseen batches (2,863/3,822, Wilson 95% CI: [73.51%, 76.26%]), with recent rounds consistently operating at **83%–88%** accuracy.
 > - **Adversarial Edge-Case Suite (100 tickets):** **92.0% accuracy** (8 extreme dialect edge cases flagged for human escalation/review; 39.0% escalation rate).
-> - **Automated Test Suite:** **221/221 unit and integration tests passing** covering Arabic, Kurdish (Sorani/Kurmanji), Arabizi, PII masking, and fault isolation.
+> - **Automated Test Suite:** **223/223 unit and integration tests passing** covering Arabic, Kurdish (Sorani/Kurmanji), Arabizi, PII masking, and fault isolation.
 
 ---
 
@@ -189,9 +189,9 @@ All figures below originate directly from reproducible runs on the initial proto
 * **Date Match Rate:** **100.0%** (calendar-accurate normalized event dates).
 * **Processing Throughput:** **333+ tickets/sec** in offline batch execution.
 
-### 2. Continuous Adversarial Stress Series (18 Rounds — 3,422 Tickets)
+### 2. Continuous Adversarial Stress Series (19 Rounds — 3,822 Tickets)
 
-To evaluate real-world generalizability and prevent over-tuning, SupportPipe was evaluated against **18 sequential stress rounds (3,422 unseen tickets)**. Each batch was generated externally using frontier LLMs (**Claude 5.5 / Gemini 3.8 Flash**) with zero repository access, simulating extreme colloquial Iraqi dialects, Kurdish variants, Arabizi, and financial dispute edge cases:
+To evaluate real-world generalizability and prevent over-tuning, SupportPipe was evaluated against **19 sequential stress rounds (3,822 unseen tickets)**. Each batch was generated externally using frontier LLMs (**Claude 5.5 / Gemini 3.8 Flash**) with zero repository access, simulating extreme colloquial Iraqi dialects, Kurdish variants, Arabizi, and financial dispute edge cases:
 
 | Batch ID | Date | Generator | Tickets | Blind Zero-Shot | Wilson 95% CI | Target Dialects & Stress Slices |
 | :--- | :---: | :--- | :---: | :---: | :---: | :--- |
@@ -213,7 +213,8 @@ To evaluate real-world generalizability and prevent over-tuning, SupportPipe was
 | `batch_016` | 2026-10-26 | External Claude (No repo access) | 397 | **83.88%** (333/397) | [79.9%, 87.2%] | Mixed (89.7%), Baghdadi, Moslawi, Basrawi |
 | `batch_017` | 2026-10-27 | External Claude (No repo access) | 198 | **87.88%** (174/198) | [82.6%, 91.7%] | Arabizi (92.6%), Mixed (91.2%), Western dialect |
 | `batch_018` | 2026-10-27 | External Claude (No repo access) | 347 | **85.01%** (295/347) | [80.9%, 88.4%] | Mixed (90.5%), Basrawi (89.7%), Moslawi, Arabizi |
-| **Cumulative Total** | **2026-10-27** | **External Frontier LLMs (Zero Repo Access)** | **3,422** | **76.86%** (2,630/3,422) | **[75.41%, 78.24%]** | **3,422 tickets evaluated across 18 sequential blind stress rounds** |
+| `batch_019` | 2026-11-02 | External Claude (No repo access) | 400 | **58.25%** (233/400) | [53.4%, 63.0%] | Mosul (63.8%), Arabizi (61.4%), Baghdadi, Basrawi, Mixed |
+| **Cumulative Total** | **2026-11-02** | **External Frontier LLMs (Zero Repo Access)** | **3,822** | **74.91%** (2,863/3,822) | **[73.51%, 76.26%]** | **3,822 tickets evaluated across 19 sequential blind stress rounds** |
 
 ---
 

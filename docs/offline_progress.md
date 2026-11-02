@@ -420,3 +420,24 @@ Following the evaluation of Stress Batches 017 & 018 (3,422 total stress tickets
 - **Wilson 95% Confidence Interval (All 3,422 stress tickets)**: `[94.75%, 96.14%]`
 - **Average Latency**: 5.23 ms/ticket (191.4 tickets/sec, 100% offline, zero network API calls).
 - **Test Integrity**: 221/221 unit tests pass; 14/14 frozen data tests pass; `data/splits/test.jsonl` strictly untouched.
+
+---
+
+## 21. Offline Engine V13: Civil Identification Document Disambiguation & Stress Batch 019 Consolidation
+
+Following the ingestion and evaluation of Stress Batch 019 (400 tickets, 3,822 cumulative stress tickets across 19 rounds), Offline Engine **V13** was implemented and verified under strict Ponytail architectural discipline and Protocol S5:
+
+### Key Architectural Upgrades:
+1. **Rule 2.2k Civil Identification & Residence Card KYC Disambiguation**:
+   - Added high-precision deterministic regex pattern:
+     `r"(?:البطاق(?:ة|ه)\s*(?:الوطني(?:ة|ه)|الموحد(?:ة|ه))|بطاق(?:ة|ه)\s*سكن(?:ي(?:ة|ه))?)"`
+     with negative guard against ATM / payment card terms (`r"(?:صراف|atm|ماستركارد|فيزا|سحب|كاش|عمولة)"`).
+   - Disambiguates Iraqi civil ID cards, national unified cards, and residence cards into `kyc_document_issue`, completely preventing false `card_issue` predictions.
+2. **Consolidated Consumed Learning (19 Batches, 3,822 Tickets)**:
+   - Full consolidated training pool: `dev.jsonl` (219 tickets) + all 19 consumed stress batches (`batch_001` through `batch_019`, 3,822 tickets).
+   - Features dual-channel Arabizi normalization, word (1-2) + char_wb (2-5) TF-IDF feature union, and calibrated LinearSVC.
+3. **Configuration & Governance**:
+   - Added `"v13"` to `offline_model_version` in `supportpipe.config.Settings`.
+   - Preserved `default="v1"` for strict backwards compatibility with unit tests.
+   - All 223 tests pass; 14/14 frozen data tests pass; `data/splits/test.jsonl` strictly untouched.
+

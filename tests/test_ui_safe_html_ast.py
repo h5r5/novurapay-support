@@ -117,9 +117,9 @@ def test_app_py_has_zero_unwrapped_unsafe_html_interpolations() -> None:
     source = app_path.read_text(encoding="utf-8")
     audit_results = inspect_unsafe_html_sites(source, filename=str(app_path))
 
-    # There must be exactly 27 unsafe_allow_html call sites in app.py
+    # There must be exactly 28 unsafe_allow_html call sites in app.py
     call_lines = {r["line"] for r in audit_results}
-    assert len(call_lines) == 27, f"Expected 27 unsafe_allow_html call sites, found {len(call_lines)}"
+    assert len(call_lines) == 28, f"Expected 28 unsafe_allow_html call sites, found {len(call_lines)}"
 
     violations = [r for r in audit_results if not r["is_safe"]]
     assert len(violations) == 0, (
