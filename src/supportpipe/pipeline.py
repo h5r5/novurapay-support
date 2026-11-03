@@ -27,6 +27,7 @@ def process_ticket(
     ticket: Ticket,
     provider_override: str | None = None,
     is_duplicate: bool = False,
+    offline_model_version: str | None = None,
 ) -> PipelineResult:
     """Process a single ticket through the complete typed pipeline."""
     start_time = time.perf_counter()
@@ -45,6 +46,7 @@ def process_ticket(
         provider_name=provider_override,
         fast_extracted=extracted,
         ticket_id=ticket.ticket_id,
+        offline_model_version=offline_model_version,
     )
 
     # 2.5 Process Cloud Auditor Corrections if Discrepancy Detected
@@ -98,9 +100,14 @@ def process_ticket(
         is_duplicate=is_duplicate,
     )
 
-    # 6. Response Drafting (Only for non-escalated tickets; human approves before send)
+    # 6. Response Drafting (Human approves before send)
     draft_reply: str | None = None
-    if not escalated:
+    if classification.category == "unclear_or_incomplete" or (
+        escalation_reason and any(w in escalation_reason for w in ["Prompt Injection", "override", "ambiguous", "manual agent triage"])
+    ):
+        draft_reply = f"[تذكرة مصعدة للمراجعة اليدوية]: {escalation_reason}"
+        draft_source = "escalation_notice"
+    else:
         candidate_draft = None
         if classification.audit_details and classification.audit_details.get("draft_reply"):
             candidate_draft = classification.audit_details.get("draft_reply")
@@ -144,9 +151,6 @@ def process_ticket(
             extracted=extracted,
             llm_draft_candidate=candidate_draft,
         )
-    else:
-        draft_reply = f"[تذكرة مصعدة للمراجعة اليدوية]: {escalation_reason}"
-        draft_source = "escalation_notice"
 
     total_latency_ms = (time.perf_counter() - start_time) * 1000.0
 
@@ -193,6 +197,7 @@ def process_ticket(
 def run_batch(
     tickets: list[Ticket],
     provider_override: str | None = None,
+    offline_model_version: str | None = None,
 ) -> tuple[list[PipelineResult], BatchSummary]:
     """Execute pipeline over a batch of tickets and compute aggregate summary."""
     batch_start = time.perf_counter()
@@ -237,6 +242,7 @@ def run_batch(
                 ticket,
                 provider_override=provider_override,
                 is_duplicate=is_dup,
+                offline_model_version=offline_model_version,
             )
         except Exception as exc:
             logger.exception("Fault isolation: Ticket %s crashed pipeline: %s", ticket.ticket_id, exc)

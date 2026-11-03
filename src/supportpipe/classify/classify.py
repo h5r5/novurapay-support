@@ -70,13 +70,14 @@ def classify_ticket(
     provider_name: str | None = None,
     fast_extracted: ExtractedFields | dict[str, Any] | None = None,
     ticket_id: str = "TKT-LIVE",
+    offline_model_version: str | None = None,
 ) -> tuple[ClassificationResult, str]:
     """Classify a support ticket into category, priority, and confidences.
 
     Returns:
         (ClassificationResult, provider_path_name)
     """
-    provider = get_classifier_provider(provider_name)
+    provider = get_classifier_provider(provider_name, offline_model_version=offline_model_version)
     provider_name_tag = provider.__class__.__name__.replace("ClassifierProvider", "").lower()
 
     try:
@@ -89,6 +90,8 @@ def classify_ticket(
         return result, provider_name_tag
     except Exception as e:
         logger.error("Classification failed via %s: %s. Falling back to Mock.", provider_name_tag, e)
-        fallback = MockClassifierProvider().classify(ticket_text=ticket_text, channel=channel)
+        fallback = MockClassifierProvider(offline_model_version=offline_model_version).classify(
+            ticket_text=ticket_text, channel=channel
+        )
         fallback.degraded = True
         return fallback, f"{provider_name_tag}_fallback_mock"

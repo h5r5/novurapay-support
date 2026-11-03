@@ -91,6 +91,7 @@ data/call_budget_counter.json
 data/.sealed_test_lock.json
 results/batch_*
 results/eval_matrix*
+results/*.jsonl
 
 
 # Local benchmark resources

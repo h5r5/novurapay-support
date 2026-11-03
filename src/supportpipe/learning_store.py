@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -44,6 +45,7 @@ class DiscrepancyStore:
     def __init__(self, store_path: Path | None = None) -> None:
         self.file_path = store_path or settings.discrepancy_store_path
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.Lock()
 
     def record_discrepancy(
         self,
@@ -88,8 +90,9 @@ class DiscrepancyStore:
         )
 
         try:
-            with open(self.file_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps(record.model_dump(), ensure_ascii=False) + "\n")
+            with self._lock:
+                with open(self.file_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(record.model_dump(), ensure_ascii=False) + "\n")
         except Exception as e:
             logger.error("Failed persisting discrepancy record %s: %s", record.record_id, e)
 

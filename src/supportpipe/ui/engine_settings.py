@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Any
+from typing import Any, cast
 
 import streamlit as st
 
@@ -130,7 +130,7 @@ def sync_runtime_settings() -> None:
         settings.category_confidence_threshold = float(st.session_state["conf_threshold_input"])
 
     if "offline_version_input" in st.session_state and st.session_state["offline_version_input"]:
-        settings.offline_model_version = str(st.session_state["offline_version_input"]).split()[0].lower()
+        settings.offline_model_version = cast(Any, str(st.session_state["offline_version_input"]).split()[0].lower())
     else:
         settings.offline_model_version = "v13"
 

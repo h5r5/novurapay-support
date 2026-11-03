@@ -1,17 +1,17 @@
 # Graph Report - zine  (2026-11-02)
 
 ## Corpus Check
-- 214 files · ~401,336 words
+- 214 files · ~245,550 words
 - Verdict: corpus is large enough that graph structure adds value.
-- Unclassified: 96 file(s) not represented in the graph (top: .csv 46, .jsonl 43, (none) 3)
+- Unclassified: 95 file(s) not represented in the graph (top: .csv 46, .jsonl 43, (none) 3)
 
 ## Summary
-- 2362 nodes · 3986 edges · 164 communities (153 shown, 11 thin omitted)
+- 2362 nodes · 3987 edges · 166 communities (151 shown, 15 thin omitted)
 - Extraction: 90% EXTRACTED · 10% INFERRED · 0% AMBIGUOUS · INFERRED: 390 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6f1b6968`
+- Built from commit: `5c292d3c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -43,7 +43,7 @@
 - test_ui_model_selection.py
 - grouped_cv.py
 - supportpipe
-- parse_currency_amount
+- test_lb04_verbal_fractional_amounts
 - test_grouped_cv.py
 - Status Export — 2026-10-16
 - Per-Tag Slice Performance
@@ -87,7 +87,7 @@
 - batch_005
 - run_evaluation_harness
 - batch_011
-- pipeline.py
+- time
 - should_escalate
 - Per-Tag Slice Performance
 - pytest
@@ -112,7 +112,7 @@
 - rules_gate.py
 - Stress Test Findings Report: Batch 002
 - Per-Tag Slice Performance
-- run
+- run_batch
 - Stress Test Findings Report: Batch 003
 - Per-Tag Slice Performance
 - Code & Logic Critique — 2026-09-22
@@ -136,7 +136,7 @@
 - Adversarial Stress Test Deep Analysis (100 Extreme Tickets)
 - Stress Test Findings Report: Batch 008
 - Per-Tag Slice Performance
-- README.md
+- System Disclosure & Provenance (DISCLOSURE.md)
 - 4. Owner Decisions Needed (Ordered by Impact)
 - Per-Tag Slice Performance
 - test_ms01_english_language_ticket_routing
@@ -165,18 +165,20 @@
 - Stress Test Findings Report: Batch 017
 - Per-Tag Slice Performance
 - Stress Test Blind Evaluation Summary: batch_013
-- 14. Offline Engine V6: Southern Dialect Fine-Tuning, Arabizi Expansion & 4-Batch Consolidation (869 Tickets)
-- 15. Offline Engine V7: Kurdish Sorani Disambiguation, Arabic Housing Cards & 5-Batch Consolidation (1,019 Tickets)
+- README.md
+- icons.py
 - Stress Test Findings Report: Batch 019
 - test_normalizers.py
 - Stress Test Findings Report: Batch 018
-- 4. Evaluation Methodology
+- 16. Offline Engine V8: English Runtime App Crash Stems & 6-Batch Consolidation (1,169 Tickets)
 - 10. Offline Engine V4: Architectural Generalisation & Multi-Batch Consolidation
 - 6. Root-Cause Analysis & Important Failure Cases
 - 5. Final Evaluation Results on Sealed Test Sets
-- 💎 Key Innovations & Competitive Strengths
+- 5. Qualification Gate Analysis & Selection of Winner
 - load_dev_dataset
 - Missing or broken scenario handling
+- test_entity_extraction_prevents_phone_ref_collision
+- test_lb01_year_not_captured_as_amount
 
 ## God Nodes (most connected - your core abstractions)
 1. `MockClassifierProvider` - 72 edges
@@ -193,19 +195,19 @@
 ## Surprising Connections (you probably didn't know these)
 - `12. Recommended Next Actions` --references--> `GroqClassifierProvider`  [INFERRED]
   docs/STATUS_EXPORT_2026-10-16.md → src/supportpipe/classify/providers/groq_provider.py
+- `Key Architectural Upgrades:` --references--> `_classify_english_fintech_intent()`  [INFERRED]
+  docs/offline_progress.md → src/supportpipe/classify/providers/mock_provider.py
 - `Recommended Next Steps` --references--> `MockClassifierProvider`  [INFERRED]
   docs/LAYA_ARABIC_SUPPORT_EVALUATION.md → src/supportpipe/classify/providers/mock_provider.py
 - `3. Rules Audit: Out-of-Fold Fired Count & Precision` --references--> `MockClassifierProvider`  [INFERRED]
   docs/offline_diagnosis.md → src/supportpipe/classify/providers/mock_provider.py
 - `1. Existing Rules Audit (Phase 9 Block O - Task O3)` --references--> `MockClassifierProvider`  [INFERRED]
   docs/rules_ledger.md → src/supportpipe/classify/providers/mock_provider.py
-- `ب) طبقة الذكاء الاصطناعي والتصنيف (`supportpipe/classify/`)` --references--> `analyze_iraqi_sentiment_and_intent()`  [INFERRED]
-  docs/ARCHITECTURE_MAP.md → src/supportpipe/classify/sentiment.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (164 total, 11 thin omitted)
+## Communities (166 total, 15 thin omitted)
 
 ### Community 0 - "GroqClassifierProvider"
 Cohesion: 0.12
@@ -232,12 +234,12 @@ Cohesion: 0.05
 Nodes (42): **01   Fraud & Scam Protection Agent**, **02   SME & Merchant Assistant**, **03   AI Loan Officer**, **04   Bill Pay & Transfer Agent**, **05   KYC Document Agent**, **06   Support Pipeline Automation**, **Agentic AI Challenge Iraq: Topic Briefs**, **Data** (+34 more)
 
 ### Community 7 - "test_audit_hardening.py"
-Cohesion: 0.13
-Nodes (6): test_vuln_01_kurmanji_routing(), test_vuln_03_phone_masking_in_text_clean(), test_vuln_04_otp_code_scrubbing(), test_vuln_06_international_phone_pii_masking(), test_vuln_07_theft_scam_routes_to_fraud_report(), test_vuln_10_amount_preceded_ref_rejected()
+Cohesion: 0.11
+Nodes (8): test_vuln_01_kurmanji_routing(), test_vuln_02_and_09_nan_inf_and_bounds_check(), test_vuln_03_phone_masking_in_text_clean(), test_vuln_04_otp_code_scrubbing(), test_vuln_06_international_phone_pii_masking(), test_vuln_07_theft_scam_routes_to_fraud_report(), test_vuln_08_english_failed_transfer_classified(), test_vuln_10_amount_preceded_ref_rejected()
 
 ### Community 8 - "normalize.py"
 Cohesion: 0.09
-Nodes (14): أ) طبقة المعالجة اللغوية والاستخراج (`supportpipe/extract/`), Minor / style (lower priority, kept separate on purpose), extract_entities_offline(), extract_ticket_details(), normalize_digits(), normalize_phone_number(), normalize_repeated_characters(), resolve_event_date() (+6 more)
+Nodes (16): أ) طبقة المعالجة اللغوية والاستخراج (`supportpipe/extract/`), Minor / style (lower priority, kept separate on purpose), extract_entities_offline(), extract_ticket_details(), get_iqd_per_usd(), normalize_digits(), normalize_phone_number(), normalize_repeated_characters() (+8 more)
 
 ### Community 9 - "Per-Tag Slice Performance"
 Cohesion: 0.20
@@ -253,7 +255,7 @@ Nodes (6): DiscrepancyRecord, is_path_inside_repo(), test_discrepancy_store_path
 
 ### Community 13 - "TaxonomyRegistry"
 Cohesion: 0.07
-Nodes (9): Architecture / invariant violations, AV-01: Hardcoded Telemetry Claims in UI Violating Rule 08, AV-02: Missing LLM Drafting in Production Pipeline, AV-03: Hardcoded Run Directory Paths in Streamlit UI, Invariants That Held Under Adversarial Probing:, TaxonomyRegistry, get_latest_eval_dir(), load_adversarial_metrics() (+1 more)
+Nodes (10): Architecture / invariant violations, AV-01: Hardcoded Telemetry Claims in UI Violating Rule 08, AV-02: Missing LLM Drafting in Production Pipeline, AV-03: Hardcoded Run Directory Paths in Streamlit UI, Invariants That Held Under Adversarial Probing:, TaxonomyRegistry, get_latest_eval_dir(), load_adversarial_metrics() (+2 more)
 
 ### Community 14 - "test_scaffold.py"
 Cohesion: 0.12
@@ -289,7 +291,7 @@ Nodes (25): check_sealed_test_guard(), _get_git_output(), SealedGuardError, chec
 
 ### Community 22 - "Ticket"
 Cohesion: 0.08
-Nodes (21): EH-01: Zero Fault Isolation in `run_batch` Crashes Entire Batch, 0. Graphify, Failure Mode 2: Empty, Whitespace, or Gibberish Input (FM-02), process_ticket(), Ticket, test_drafting_quota_preservation_in_hybrid_mode(), test_pipeline_batch_fault_isolation(), test_failure_mode_empty_or_gibberish() (+13 more)
+Nodes (20): 0. Graphify, Failure Mode 2: Empty, Whitespace, or Gibberish Input (FM-02), process_ticket(), Ticket, test_drafting_quota_preservation_in_hybrid_mode(), test_pipeline_batch_fault_isolation(), test_failure_mode_empty_or_gibberish(), test_failure_mode_english_prompt_injection() (+12 more)
 
 ### Community 23 - "فهرس النصوص الحالية والمقترحة حسب الشاشات (Per-Screen UI Catalog)"
 Cohesion: 0.17
@@ -306,10 +308,6 @@ Nodes (13): get_key_status(), ping_engine_connection(), resolve_engine_choice(),
 ### Community 26 - "grouped_cv.py"
 Cohesion: 0.14
 Nodes (6): build_baseline_pipeline(), build_pipeline_from_config(), generate_markdown_report(), main(), run_all_evaluations(), make_builder()
-
-### Community 29 - "parse_currency_amount"
-Cohesion: 0.12
-Nodes (9): get_iqd_per_usd(), parse_currency_amount(), parse_iqd_amount(), test_vuln_02_and_09_nan_inf_and_bounds_check(), test_usd_dollar_prefix_parsed(), test_usd_dollar_suffix_not_treated_as_iqd(), test_kurdish_bazaar_dollar_slang_and_verbal_amounts(), test_parse_iqd_amount_formats() (+1 more)
 
 ### Community 30 - "test_grouped_cv.py"
 Cohesion: 0.19
@@ -400,8 +398,8 @@ Cohesion: 0.67
 Nodes (3): 17. Offline Engine V9: Kurdish Sorani Normalization & Multi-Fintech English Disambiguation Matrix, Comprehensive 6-Round Diagnostic Benchmark:, Key Architectural Upgrades:
 
 ### Community 52 - "_classify_english_fintech_intent"
-Cohesion: 0.11
-Nodes (15): 16. Offline Engine V8: English Runtime App Crash Stems & 6-Batch Consolidation (1,169 Tickets), Key Architectural Upgrades:, Verified Empirical Performance (Engine V8):, 1. Existing Rules Audit (Phase 9 Block O - Task O3), 2. Active Stress Batch Change Log, Rules Ledger, 1. Executive Summary, 2. Failure Analysis by Slice (+7 more)
+Cohesion: 0.12
+Nodes (14): 15. Offline Engine V7: Kurdish Sorani Disambiguation, Arabic Housing Cards & 5-Batch Consolidation (1,019 Tickets), Key Architectural Upgrades:, Verified Empirical Performance (Engine V7):, 1. Existing Rules Audit (Phase 9 Block O - Task O3), 2. Active Stress Batch Change Log, Rules Ledger, 1. Executive Summary, 2. Failure Analysis by Slice (+6 more)
 
 ### Community 53 - "Synthetic Data Quality Assurance Report (QA_NOTES.md)"
 Cohesion: 0.40
@@ -428,8 +426,8 @@ Cohesion: 0.20
 Nodes (9): 1. Evaluation Methodology & Grouped-CV Setup, 2. Baseline Model Performance (Task B2), 3.1 Primary Comparison: Rules + ML Architecture (Hybrid), 3.2 Standalone ML-Only Comparison (No Heuristic Rules), 3. Candidate Configurations & Experimental Results (Task B3), 4. Analytical Findings & Plain-Language Assessment, Baseline Per-Category Recall Breakdown, Statistical Rigor & Significance (+1 more)
 
 ### Community 59 - "detect_ticket_language"
-Cohesion: 0.13
-Nodes (6): detect_ticket_language(), test_kurdish_kurmanji_latin_script_pipeline(), test_kurdish_language_detection(), test_kurdish_multi_issue_detection(), test_kurdish_phone_disambiguation_wrong_recipient(), test_kurdish_sorani_end_to_end_pipeline()
+Cohesion: 0.15
+Nodes (5): detect_ticket_language(), test_kurdish_kurmanji_latin_script_pipeline(), test_kurdish_language_detection(), test_kurdish_phone_disambiguation_wrong_recipient(), test_kurdish_sorani_end_to_end_pipeline()
 
 ### Community 60 - "Milestone 3 Self-Audit: Weekly Pattern Reporting & Systemic Incident Detection"
 Cohesion: 0.29
@@ -483,9 +481,9 @@ Nodes (18): compute_config_hash(), export_per_ticket_csv(), extract_groups(), lo
 Cohesion: 0.18
 Nodes (11): batch_011, blind_accuracy, blind_wilson_95_ci, date, generator, git_commit, measured_at, n (+3 more)
 
-### Community 73 - "pipeline.py"
-Cohesion: 0.08
-Nodes (12): 3. What's Actually Implemented (Module by Module), run_batch(), detect_multi_issue(), resolve_team(), BatchSummary, test_scoped_deduplication_two_users_same_ref(), generate_nationwide_synthetic_corpus(), test_batch_capacity_throughput_and_latencies() (+4 more)
+### Community 73 - "time"
+Cohesion: 0.28
+Nodes (3): generate_nationwide_synthetic_corpus(), test_batch_capacity_throughput_and_latencies(), test_stress_extreme_and_adversarial_payloads()
 
 ### Community 74 - "should_escalate"
 Cohesion: 0.16
@@ -525,15 +523,15 @@ Nodes (27): MockClassifierProvider, run_spike(), test_default_offline_model_vers
 
 ### Community 83 - "Offline V2 Engine Progress Report (Phase 9 Block O - Task O6)"
 Cohesion: 0.12
-Nodes (15): 11. Stress Batch 003 Blind Execution & Evaluation, 13. Stress Batch 004 Blind Execution & Evaluation, 1. Executive Summary, 2. Diagnosis & Root Cause Analysis (Task O1), 3. Candidate Declaration (Task O2), 4. Experimental Results & Grouped Cross-Validation (Task O5), 5. Qualification Gate Analysis & Selection of Winner, 7. Recommendations for Fresh Stress Batches (+7 more)
+Nodes (15): 11. Stress Batch 003 Blind Execution & Evaluation, 13. Stress Batch 004 Blind Execution & Evaluation, 14. Offline Engine V6: Southern Dialect Fine-Tuning, Arabizi Expansion & 4-Batch Consolidation (869 Tickets), 1. Executive Summary, 2. Diagnosis & Root Cause Analysis (Task O1), 3. Candidate Declaration (Task O2), 4. Experimental Results & Grouped Cross-Validation (Task O5), 7. Recommendations for Fresh Stress Batches (+7 more)
 
 ### Community 84 - "Stress Test Findings Report Template"
 Cohesion: 0.40
 Nodes (4): 1. Batch Lifecycle & Error Analysis Procedure, 2. Findings Report Template (`docs/stress_findings_NNN.md`), Lifecycle State Machine, Stress Test Findings Report Template
 
 ### Community 85 - "test_failure_modes.py"
-Cohesion: 0.11
-Nodes (13): Documented Failure Modes and Mitigations (FAILURE_MODES.md), Failure Mode 1: Adversarial Prompt Injection in Ticket Text (FM-01), Failure Mode 3: Provider Network Outage or API Timeout (FM-03), Failure Mode 4: Missing Category-Implied Mandatory Fields (FM-04), Failure Mode 5: Ungrounded Figures or Hallucinated Promises in Draft (FM-05), Failure Mode 6: Extreme Street Dialect Theft/Fraud with Customer Anger & Colloquial Amounts (FM-06), Overview, test_failure_mode_missing_required_reference() (+5 more)
+Cohesion: 0.12
+Nodes (12): Failure Mode 1: Adversarial Prompt Injection in Ticket Text (FM-01), Failure Mode 3: Provider Network Outage or API Timeout (FM-03), Failure Mode 4: Missing Category-Implied Mandatory Fields (FM-04), Failure Mode 5: Ungrounded Figures or Hallucinated Promises in Draft (FM-05), Failure Mode 6: Extreme Street Dialect Theft/Fraud with Customer Anger & Colloquial Amounts (FM-06), Overview, test_failure_mode_missing_required_reference(), test_failure_mode_prompt_injection() (+4 more)
 
 ### Community 86 - "is_arabizi_text"
 Cohesion: 0.11
@@ -556,8 +554,8 @@ Cohesion: 0.18
 Nodes (11): batch_006, blind_accuracy, blind_wilson_95_ci, date, generator, git_commit, measured_at, n (+3 more)
 
 ### Community 94 - "test_audit_vulnerabilities_regression.py"
-Cohesion: 0.13
-Nodes (7): Scenario coverage matrix, strip_arabic_diacritics_and_tatweel(), test_explicit_days_offset_preserved(), test_extract_entities_usd_prefix_and_small_amounts(), test_kurdish_and_rtl_prompt_injection_quarantined(), test_minutes_hours_not_parsed_as_days(), test_pipeline_empty_batch()
+Cohesion: 0.10
+Nodes (9): Scenario coverage matrix, strip_arabic_diacritics_and_tatweel(), test_explicit_days_offset_preserved(), test_extract_entities_usd_prefix_and_small_amounts(), test_kurdish_and_rtl_prompt_injection_quarantined(), test_minutes_hours_not_parsed_as_days(), test_pipeline_empty_batch(), test_usd_dollar_prefix_parsed() (+1 more)
 
 ### Community 95 - "batch_007"
 Cohesion: 0.18
@@ -575,9 +573,9 @@ Nodes (9): 1. Executive Summary, 2. Failure Analysis by Slice, 3. Root Cause Inv
 Cohesion: 0.20
 Nodes (9): Overall Performance, Per-Category Recall, Per-Tag Slice Performance, Slice: `ambiguous`, Slice: `attack_type`, Slice: `dialect`, Slice: `length_bucket`, Slice: `secondary_hint` (+1 more)
 
-### Community 99 - "run"
-Cohesion: 0.17
-Nodes (7): 2. Hypothesis Verification Ledger, classify_one_cmd(), eval(), health(), patterns(), run(), spike_cmd()
+### Community 99 - "run_batch"
+Cohesion: 0.09
+Nodes (13): 2. Hypothesis Verification Ledger, EH-01: Zero Fault Isolation in `run_batch` Crashes Entire Batch, classify_one_cmd(), eval(), health(), patterns(), run(), spike_cmd() (+5 more)
 
 ### Community 100 - "Stress Test Findings Report: Batch 003"
 Cohesion: 0.22
@@ -640,8 +638,8 @@ Cohesion: 0.18
 Nodes (11): batch_008, blind_accuracy, blind_wilson_95_ci, date, generator, git_commit, measured_at, n (+3 more)
 
 ### Community 115 - "Laya-Ara Offline Support Evaluation Report"
-Cohesion: 0.18
-Nodes (11): 1. Executive Summary, 2. Environment, Model Revision & Hardware Specification, 3. License and Deployment Constraints, 5.1 Slice Accuracies Across Systems (N=950), 5.2 Confidence Threshold Trade-offs (Coverage vs Accuracy), 5.3 Computational Efficiency and Resource Usage, 5. Detailed Benchmark Results, 7. Decision and Next Steps (+3 more)
+Cohesion: 0.12
+Nodes (16): 1. Executive Summary, 2. Environment, Model Revision & Hardware Specification, 3. License and Deployment Constraints, 4.1 Strict Data Protection Protocol, 4.2 Forward-Chaining Protocol, 4.3 Frozen Criteria Definition, 4.4 Evaluated Variants, 4. Evaluation Methodology (+8 more)
 
 ### Community 116 - "خريطة المعمارية وهيكلية ملفات مشروع SupportPipe (ARCHITECTURE_MAP.md)"
 Cohesion: 0.20
@@ -652,8 +650,8 @@ Cohesion: 0.18
 Nodes (11): batch_009, blind_accuracy, blind_wilson_95_ci, date, generator, git_commit, measured_at, n (+3 more)
 
 ### Community 118 - "SupportPipe: Enterprise Batch Support Pipeline for Iraqi Dialects & Digital Wallets"
-Cohesion: 0.14
-Nodes (14): 1. Baseline Diagnostic Split (133 Tickets — Initial Baseline), 1. Definitive Offline Benchmarks (MVP Baseline vs. Laya-Ara), 2. Continuous Adversarial Stress Series (19 Rounds — 3,822 Tickets), 2. Exploratory Hybrid Cascades (Research Only — Not Adopted), ⚡ 60-Second Judge Demo Pitch, 📊 Empirical Evaluation Benchmarks & Stress Testing, Executive Overview Rail, 🛡️ Limitations & Responsible AI Disclaimer (+6 more)
+Cohesion: 0.11
+Nodes (19): 1. Baseline Diagnostic Split (133 Tickets — Initial Baseline), 1. Definitive Offline Benchmarks (MVP Baseline vs. Laya-Ara), 1. Tri-Engine Hybrid Architecture with Active Learning, 2. Adversarial Edge-Case Hardening (100 Extreme Tickets), 2. Continuous Adversarial Stress Series (19 Rounds — 3,822 Tickets), 2. Exploratory Hybrid Cascades (Research Only — Not Adopted), 3. Authentic Iraqi & Kurdish Linguistic Engine, 4. Zero Hallucination First-Response Drafter (+11 more)
 
 ### Community 119 - "Per-Tag Slice Performance"
 Cohesion: 0.20
@@ -671,8 +669,8 @@ Nodes (7): 1. Executive Summary, 2. Failure Analysis by Slice, 3. Root Cause Pat
 Cohesion: 0.20
 Nodes (9): Overall Performance, Per-Category Recall, Per-Tag Slice Performance, Slice: `ambiguous`, Slice: `attack_type`, Slice: `dialect`, Slice: `length_bucket`, Slice: `secondary_hint` (+1 more)
 
-### Community 123 - "README.md"
-Cohesion: 0.24
+### Community 123 - "System Disclosure & Provenance (DISCLOSURE.md)"
+Cohesion: 0.33
 Nodes (6): 1. AI Coding Assistants & Development Tools, 2. Machine Learning & Language Models Used in Pipeline, 3. Data Provenance & Privacy, 4. Software Libraries & External Tools, Evaluated Research Candidates (Not Adopted in Production), System Disclosure & Provenance (DISCLOSURE.md)
 
 ### Community 124 - "4. Owner Decisions Needed (Ordered by Impact)"
@@ -696,8 +694,8 @@ Cohesion: 0.15
 Nodes (6): analyze_iraqi_sentiment_and_intent(), DialectSentimentAnalysis, test_anger_and_profanity_elevation(), test_emergency_hospital_urgency(), test_pure_gratitude_vs_polite_urgency(), test_kurdish_sentiment_theft_and_emergency()
 
 ### Community 129 - "test_remediation_regressions.py"
-Cohesion: 0.15
-Nodes (5): test_distinct_users_same_generic_text_not_flagged_as_duplicate(), test_eh01_batch_fault_isolation(), test_ms02_multi_issue_detection(), test_ms03_batch_duplicate_detection(), test_schema_priority_casing_and_reasoning_clamp()
+Cohesion: 0.11
+Nodes (7): detect_multi_issue(), test_kurdish_multi_issue_detection(), test_distinct_users_same_generic_text_not_flagged_as_duplicate(), test_eh01_batch_fault_isolation(), test_ms02_multi_issue_detection(), test_ms03_batch_duplicate_detection(), test_schema_priority_casing_and_reasoning_clamp()
 
 ### Community 130 - "evaluate_model_grouped_cv"
 Cohesion: 0.20
@@ -733,7 +731,7 @@ Nodes (4): test_character_deduplication_and_elongation(), test_compound_fraction
 
 ### Community 138 - "schemas.py"
 Cohesion: 0.07
-Nodes (12): Invariant Checks (Verified via Graphify & Code Tracing):, ReviewQueueStore, analyze_ticket_patterns(), format_markdown_pattern_report(), PipelineResult, load_recent_runs(), load_split_tickets(), render_ticket_dossier() (+4 more)
+Nodes (13): 3. What's Actually Implemented (Module by Module), Invariant Checks (Verified via Graphify & Code Tracing):, ReviewQueueStore, analyze_ticket_patterns(), format_markdown_pattern_report(), resolve_team(), BatchSummary, PipelineResult (+5 more)
 
 ### Community 139 - "Per-Tag Slice Performance"
 Cohesion: 0.20
@@ -779,25 +777,21 @@ Nodes (9): Overall Performance, Per-Category Recall, Per-Tag Slice Performance, 
 Cohesion: 0.50
 Nodes (3): Overall Performance, Per-Category Recall, Stress Test Blind Evaluation Summary: batch_013
 
-### Community 152 - "14. Offline Engine V6: Southern Dialect Fine-Tuning, Arabizi Expansion & 4-Batch Consolidation (869 Tickets)"
-Cohesion: 0.67
-Nodes (3): 14. Offline Engine V6: Southern Dialect Fine-Tuning, Arabizi Expansion & 4-Batch Consolidation (869 Tickets), Key Architectural Upgrades:, Verified Empirical Performance (Engine V6):
-
-### Community 153 - "15. Offline Engine V7: Kurdish Sorani Disambiguation, Arabic Housing Cards & 5-Batch Consolidation (1,019 Tickets)"
-Cohesion: 0.67
-Nodes (3): 15. Offline Engine V7: Kurdish Sorani Disambiguation, Arabic Housing Cards & 5-Batch Consolidation (1,019 Tickets), Key Architectural Upgrades:, Verified Empirical Performance (Engine V7):
-
 ### Community 154 - "Stress Test Findings Report: Batch 019"
 Cohesion: 0.25
 Nodes (7): 1. Executive Summary, 2. Slice Breakdown, 3. Failure Analysis & Root Cause Patterns, 4. Change Gate Assessment (S5 Evaluation), A. Category Recall Performance (Blind V11), B. Dialect & Tag Slice Performance, Stress Test Findings Report: Batch 019
+
+### Community 155 - "test_normalizers.py"
+Cohesion: 0.25
+Nodes (3): test_normalize_digits(), test_parse_iqd_amount_formats(), test_resolve_relative_dates()
 
 ### Community 156 - "Stress Test Findings Report: Batch 018"
 Cohesion: 0.25
 Nodes (7): 1. Executive Summary, 2. Slice Breakdown, 3. Failure Analysis & Root Cause, 4. Change Gate Assessment (S5 Evaluation), A. Category Recall Performance (Blind V11), B. Dialect & Tag Slice Performance, Stress Test Findings Report: Batch 018
 
-### Community 157 - "4. Evaluation Methodology"
-Cohesion: 0.40
-Nodes (5): 4.1 Strict Data Protection Protocol, 4.2 Forward-Chaining Protocol, 4.3 Frozen Criteria Definition, 4.4 Evaluated Variants, 4. Evaluation Methodology
+### Community 157 - "16. Offline Engine V8: English Runtime App Crash Stems & 6-Batch Consolidation (1,169 Tickets)"
+Cohesion: 0.67
+Nodes (3): 16. Offline Engine V8: English Runtime App Crash Stems & 6-Batch Consolidation (1,169 Tickets), Key Architectural Upgrades:, Verified Empirical Performance (Engine V8):
 
 ### Community 158 - "10. Offline Engine V4: Architectural Generalisation & Multi-Batch Consolidation"
 Cohesion: 0.67
@@ -811,9 +805,9 @@ Nodes (5): 6.1 Tokenizer Domain Gap on Arabizi, 6.2 Colloquial Iraqi Dialect Nua
 Cohesion: 0.40
 Nodes (5): 5. Final Evaluation Results on Sealed Test Sets, A. Primary Performance Matrix, B. Dialect & Attack Slice Performance on Round 9 ($N = 150$), C. Coverage vs. Accuracy Calibration Curve (Round 9, $N=150$), D. Paired McNemar Statistical Significance Tests
 
-### Community 161 - "💎 Key Innovations & Competitive Strengths"
-Cohesion: 0.40
-Nodes (5): 1. Tri-Engine Hybrid Architecture with Active Learning, 2. Adversarial Edge-Case Hardening (100 Extreme Tickets), 3. Authentic Iraqi & Kurdish Linguistic Engine, 4. Zero Hallucination First-Response Drafter, 💎 Key Innovations & Competitive Strengths
+### Community 161 - "5. Qualification Gate Analysis & Selection of Winner"
+Cohesion: 0.67
+Nodes (3): 5. Qualification Gate Analysis & Selection of Winner, Head-to-Head Comparison: `cand_v2_3` vs `cand_v2_4`, Why `cand_v2_3_norm_linear_svc_calibrated` Was Chosen:
 
 ### Community 163 - "Missing or broken scenario handling"
 Cohesion: 0.50
@@ -822,12 +816,12 @@ Nodes (4): Missing or broken scenario handling, MS-01: Multi-Issue Tickets Unhan
 ## Knowledge Gaps
 - **1 isolated node(s):** `supportpipe`
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1418 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **15 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `MockClassifierProvider` connect `MockClassifierProvider` to `GroqClassifierProvider`, `evaluate_model_grouped_cv`, `test_audit_hardening.py`, `LB-02: Whitespace Input Aborts Batch and Crashes UI, Violating FM-02`, `json`, `Settings`, `Ticket`, `test_ui_model_selection.py`, `stress_eval.py`, `Evaluation Deep Dive: SupportPipe Performance, Calibration & Robustness`, `_classify_english_fintech_intent`, `ExtractedFields`, `ClassificationResult`, `offline_v2_eval.py`, `run_evaluation_harness`, `Offline Engine Diagnosis & Out-of-Fold Analysis (Phase 9 Block O - O1 & O4)`, `is_arabizi_text`, `evaluation/eval_harness.py`, `test_audit_vulnerabilities_regression.py`, `Stress Test Findings Report: Batch 002`, `run`, `Code & Logic Critique — 2026-09-22`, `Laya-Ara Offline Support Evaluation Report`, `README.md`?**
+- **Why does `MockClassifierProvider` connect `MockClassifierProvider` to `GroqClassifierProvider`, `evaluate_model_grouped_cv`, `test_audit_hardening.py`, `LB-02: Whitespace Input Aborts Batch and Crashes UI, Violating FM-02`, `json`, `Settings`, `Ticket`, `test_ui_model_selection.py`, `stress_eval.py`, `Evaluation Deep Dive: SupportPipe Performance, Calibration & Robustness`, `_classify_english_fintech_intent`, `ExtractedFields`, `ClassificationResult`, `offline_v2_eval.py`, `run_evaluation_harness`, `Offline Engine Diagnosis & Out-of-Fold Analysis (Phase 9 Block O - O1 & O4)`, `is_arabizi_text`, `evaluation/eval_harness.py`, `test_audit_vulnerabilities_regression.py`, `Stress Test Findings Report: Batch 002`, `run_batch`, `Code & Logic Critique — 2026-09-22`, `Laya-Ara Offline Support Evaluation Report`, `System Disclosure & Provenance (DISCLOSURE.md)`?**
   _High betweenness centrality (0.077) - this node is a cross-community bridge._
 - **Are the 54 inferred relationships involving `MockClassifierProvider` (e.g. with `2. Machine Learning & Language Models Used in Pipeline` and `2. Hypothesis Verification Ledger`) actually correct?**
   _`MockClassifierProvider` has 54 INFERRED edges - model-reasoned connections that need verification._
@@ -835,7 +829,7 @@ _Questions this graph is uniquely positioned to answer:_
   _1 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `GroqClassifierProvider` be split into smaller, more focused modules?**
   _Cohesion score 0.11578947368421053 - nodes in this community are weakly interconnected._
-- **Why does `process_ticket()` connect `Ticket` to `GroqClassifierProvider`, `test_dialect_sentiment.py`, `test_remediation_regressions.py`, `run`, `normalize.py`, `pipeline.py`, `schemas.py`, `re`, `should_escalate`, `LB-02: Whitespace Input Aborts Batch and Crashes UI, Violating FM-02`, `json`, `test_failure_modes.py`, `run_eval.py`, `detect_ticket_language`, `ExtractedFields`?**
+- **Why does `process_ticket()` connect `Ticket` to `GroqClassifierProvider`, `test_remediation_regressions.py`, `test_dialect_sentiment.py`, `run_batch`, `normalize.py`, `time`, `schemas.py`, `re`, `should_escalate`, `LB-02: Whitespace Input Aborts Batch and Crashes UI, Violating FM-02`, `json`, `test_failure_modes.py`, `run_eval.py`, `detect_ticket_language`, `ExtractedFields`?**
   _High betweenness centrality (0.029) - this node is a cross-community bridge._
 - **Are the 47 inferred relationships involving `Ticket` (e.g. with `0. Graphify` and `Failure Mode 2: Empty, Whitespace, or Gibberish Input (FM-02)`) actually correct?**
   _`Ticket` has 47 INFERRED edges - model-reasoned connections that need verification._

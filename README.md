@@ -22,7 +22,7 @@
 >
 > **SupportPipe is an enterprise back-office batch pipeline, not a chatbot.** It processes ticket queues with deterministic precision through typed stages:
 >
-> 1. **Tri-Engine Hybrid Architecture:** Combines an ultra-fast offline dialect engine (~0.5ms offline execution), a specialized decision classifier (TypeSafe Jev 1.13), and a cloud auditor (Google Gemini 3.6 Flash) with a real-time consensus matrix and continuous discrepancy logging *(tri-engine end-to-end consensus accuracy and live latency: design, not yet measured; offline single-engine baseline measured)*.
+> 1. **Tri-Engine Hybrid Architecture:** Combines an ultra-fast offline dialect engine (~0.5ms offline execution), a specialized decision classifier (TypeSafe Jev 1.13), and a cloud auditor (Google Gemini 2.5 Flash) with a real-time consensus matrix and continuous discrepancy logging *(tri-engine end-to-end consensus accuracy and live latency: design, not yet measured; offline single-engine baseline measured)*.
 > 2. **Deep Iraqi & Kurdish Dialect Grounding:** Automatically strips repetitive character elongation (*"ملييووونين وربععع"* $\rightarrow$ *"مليونين وربع"*), understands provincial currency conventions (*"دفتر"* = $100,000, *"شدة"* = $10,000, *"ورقة"* = $100, *"طابوقة"* = 25M IQD), and parses calendar-accurate relative dates (*"صارلي شهر"*, *"قبل اولت اولت البارحة"*).
 > 3. **Deterministic Operational Routing:** Eliminates LLM department hallucinations by mapping closed categories directly to operational squads via an auditable lookup table (`routing_table.yaml`).
 > 4. **Calibrated Escalation Gate:** Automatically escalates incomplete requests, missing mandatory transaction references, low-confidence predictions, and hostile injection payloads to human triage with clear, auditable reasoning tags.
@@ -41,7 +41,7 @@ SupportPipe strictly complies with all mandatory pre-scoring challenge criteria:
 | :--- | :--- | :--- |
 | **Gate 1** | Real commit history spanning build period | Continuous, atomic Git commits on `main` tracking [`https://github.com/h5r5/novurapay-support`](https://github.com/h5r5/novurapay-support). |
 | **Gate 2** | Live run on judge-supplied input | Deterministic batch processing via `uv run supportpipe run --input <file.jsonl>` and interactive "Paste JSON" test panel in Streamlit UI. |
-| **Gate 3** | Full disclosure of models, tools, and data | Full disclosures in [`DISCLOSURE.md`](DISCLOSURE.md) (Gemini 3.6 Flash, TypeSafe Jev 1.13, in-domain offline ML, synthetic data, uv). |
+| **Gate 3** | Full disclosure of models, tools, and data | Full disclosures in [`DISCLOSURE.md`](DISCLOSURE.md) (Gemini 2.5 Flash, TypeSafe Jev 1.13, in-domain offline ML, synthetic data, uv). |
 | **Gate 4** | Documented failure modes and handling ($\ge$ 3) | 6 detailed failure modes with automated unit test suites in [`FAILURE_MODES.md`](FAILURE_MODES.md) and [`tests/test_failure_modes.py`](tests/test_failure_modes.py). |
 
 ---
@@ -97,7 +97,7 @@ flowchart TD
 
         M2 --> DEC2{"Jev Agrees &<br>Conf >= 0.80?"}:::diamondBox
         DEC2 -->|Yes: Preserve Quota| PASS_JEV["2-Engine Consensus Prediction<br><i>(Gemini Quota Preserved)</i>"]:::greenBox
-        DEC2 -->|No: Conflict / Low Conf| M3["Step 3: System 2 Cloud Auditor<br><i>(Google Gemini 3.8 Flash • Failover: Groq Llama-3.3)</i>"]:::purpleBox
+        DEC2 -->|No: Conflict / Low Conf| M3["Step 3: System 2 Cloud Auditor<br><i>(Google Gemini 2.5 Flash • Failover: Groq Llama-3.3)</i>"]:::purpleBox
 
         M3 --> PASS_CLOUD["Cloud Consensus Prediction"]:::purpleBox
         M3 -.->|Conflict Logged| DISC[("Active Learning Discrepancy Store<br><i>data/audit_learning/discrepancies.jsonl</i>")]:::zincBox
@@ -117,7 +117,7 @@ flowchart TD
     subgraph S5["5. GROUNDED FIRST-RESPONSE DRAFTING & REVIEW COCKPIT"]
         direction TB
         DRAFT["Culturally Grounded Iraqi Response Generator<br><i>(Strictly bounded to extracted entities • Zero invented facts)</i>"]:::zincBox
-        QUEUE["Streamlit Operations Review Queue<br><i>(Approve • Edit • Reject • Outage Heatmap)</i>"]:::blueBox
+        QUEUE["Operations Review Queue<br><i>(Approve • Edit • Reject • Outage Heatmap)</i>"]:::blueBox
         SEND["Zero Outbound Auto-Send Policy<br><i>(Human supervisor approval mandatory)</i>"]:::amberBox
 
         ROUTE --> DRAFT
@@ -137,9 +137,9 @@ flowchart TD
 
 ### 1. Tri-Engine Hybrid Architecture with Active Learning
 Rather than relying on a single fallible LLM, SupportPipe employs a tiered consensus structure *(tri-engine end-to-end consensus accuracy and live latency: design, not yet measured; current measurements reflect offline single-engine baseline)*:
-* **System 1 (Offline Heuristic & Fast ML):** Instant offline execution (<1ms) using cached TF-IDF + Logistic Regression and deterministic pattern trees.
+* **System 1 (Offline Heuristic & Fast ML V13):** Instant offline execution (<1ms) using cached TF-IDF + Logistic Regression and deterministic pattern trees.
 * **System 1.5 (TypeSafe Jev 1.13):** Production-grade specialized decision classifier outputting calibrated RLCD probabilities across 14 closed classes.
-* **System 2 (Google Gemini 3.6 Flash):** Cloud-based auditor, trilingual reasoner, and dialect first-response drafter.
+* **System 2 (Google Gemini 2.5 Flash):** Cloud-based auditor, trilingual reasoner, and dialect first-response drafter.
 * **Active Learning Discrepancy Store:** Whenever the cloud engines correct the local offline heuristic, the ticket is scrubbed of PII and logged to `data/audit_learning/discrepancies.jsonl` with rule improvement suggestions.
 
 ### 2. Adversarial Edge-Case Hardening (100 Extreme Tickets)
@@ -283,22 +283,32 @@ uv run supportpipe patterns --input data/splits/dev.jsonl --window-hours 2
 ```
 
 ### 7. Launch Interactive Operations Cockpit UI
+
+**A. Native Web Operations Cockpit (High-Speed HTML5/CSS3/Vanilla JS + FastAPI):**
+```bash
+uv run python -m supportpipe.server
+# Open http://127.0.0.1:8000
+```
+*Features:*
+* **Multi-Model Playground:** Side-by-side live comparison of Mock V13, Google Gemini 2.5 Flash, Groq Llama 3.3, and TypeSafe Jev 1.13 with real-time consensus analysis, smart result caching, and zero-waste token quotas.
+* **Review Queue:** Review escalated tickets, inspect confidence scores, edit drafts, and approve actions with instant search and status filtering.
+* **Dialect Stress Benchmarks:** Full visibility into all 19 continuous stress rounds (3,822 tickets), accuracy trends, and Iraqi dialect slices.
+* **Systemic Outages:** Heatmap visualization of simulated banking switches, sudden transfer failures, and merchant payment spikes.
+* **Active Learning Loop:** Real-time discrepancy inspection with Candidate Rule #14 proposal for self-correcting extraction heuristics.
+
+**B. Streamlit Cockpit (Alternative UI):**
 ```bash
 uv run streamlit run src/supportpipe/ui/app.py
 ```
-*Features:*
-* **Review Queue:** Review escalated tickets, inspect confidence scores, edit drafts, and approve actions.
-* **Paste JSON Sandbox:** Live single-ticket execution for real-time judge testing.
-* **Discrepancy Store:** Inspect real-time discrepancies logged between cloud models and offline heuristics.
-* **Systemic Outages:** Heatmap visualization of sudden transfer failures and merchant payment spikes.
 
 ### 8. Run Full Regression Test Suite & Linters
 ```bash
-# Run all 215 automated tests
+# Run all 223 automated tests
 uv run pytest tests/ -v
 
 # Run code style & static analysis
-uv run ruff check src scripts tests
+uv run ruff check src tests
+uv run mypy src
 ```
 
 ---
@@ -311,6 +321,8 @@ novurapay-support/
 ├── DISCLOSURE.md                  # Gate 3: Models, synthetic data & tooling disclosures
 ├── FAILURE_MODES.md               # Gate 4: 6 detailed failure modes and automated test cases
 ├── pyproject.toml                 # Package dependencies, scripts & tool configuration
+├── supportpipe-dashboardv2.html   # Native HTML5/CSS3/Vanilla JS High-Speed Operations Cockpit
+├── presentation/                  # Competition presentation decks (PPTX) & slide generators
 ├── docs/
 │   ├── ADVERSARIAL_BREAKING_POINTS.md # 100-ticket adversarial stress test & hardening report
 │   ├── ARCHITECTURE_MAP.md        # Master architectural roadmap & directory layout guide
@@ -325,12 +337,13 @@ novurapay-support/
 │   ├── user_research/             # Bilingual interview guide for support agents
 │   └── self_audit/                # Milestone audit reports (M0.md, M1.md, M2.md, M3.md)
 ├── src/supportpipe/
+│   ├── server.py                  # High-throughput FastAPI Web Cockpit Server (REST endpoints)
 │   ├── schemas.py                 # Pydantic v2 data models with strict validation
 │   ├── pipeline.py                # Core batch orchestrator & provenance tracer
 │   ├── logging_store.py           # Review queue storage with PII regex scrubbing
 │   ├── cli.py                     # CLI commands (health, run, eval, patterns)
 │   ├── taxonomy/                  # categories.yaml, routing_table.yaml, priority_rubric.yaml
-│   ├── classify/                  # Classifier providers & sentiment.py
+│   ├── classify/                  # Classifier providers (Mock V13, Gemini, Groq, Jev) & sentiment.py
 │   │   └── providers/             # hybrid_provider.py (Tri-Engine consensus), mock, jev, gemini
 │   ├── extract/                   # Dialect extraction, character deduplication, currencies, and relative dates
 │   ├── draft/                     # Grounded response generator and reviewed Arabic templates
@@ -343,7 +356,7 @@ novurapay-support/
 │   ├── manifest.json              # Frozen SHA-256 test set hashes
 │   ├── QA_NOTES.md                # 65-ticket manual inspection notes
 │   ├── splits/                    # dev.jsonl (219 tickets) and test.jsonl (133 tickets)
-│   ├── stress_test_100_adversarial.jsonl # 100 extreme adversarial stress-test tickets
+│   ├── stress/                    # 19 continuous blind stress rounds (3,822 tickets total)
 │   └── audit_learning/            # discrepancies.jsonl (Active Learning discrepancy store)
 ├── scripts/                       # Adversarial generators, stress-test runners & report generators
 │   ├── generate_adversarial_100.py# 100 extreme test cases generator
@@ -351,7 +364,7 @@ novurapay-support/
 │   ├── generate_breaking_report.py# Breaking points markdown report builder
 │   └── test_hybrid_on_failures.py # Tri-engine verification script
 ├── results/                       # Reproducible run outputs (metrics.json, adversarial_stress_test/)
-└── tests/                         # 106 unit, integration, trilingual, capacity, failure mode, & hybrid tests (100% pass)
+└── tests/                         # 223 unit, integration, dialect, capacity, failure mode, & hybrid tests (100% pass)
 ```
 
 ---

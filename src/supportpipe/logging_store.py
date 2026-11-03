@@ -2,6 +2,7 @@
 
 import json
 import re
+import threading
 from pathlib import Path
 
 from supportpipe.config import settings
@@ -63,6 +64,7 @@ class ReviewQueueStore:
     def __init__(self, storage_dir: Path | None = None) -> None:
         self.storage_dir = storage_dir or settings.results_dir
         self.storage_dir.mkdir(parents=True, exist_ok=True)
+        self._lock = threading.Lock()
 
     def save_run(
         self,
@@ -117,7 +119,8 @@ class ReviewQueueStore:
             "notes": mask_pii(notes) if notes else "",
             "final_reply": mask_pii(final_reply) if final_reply else "",
         }
-        with open(audit_file, "a", encoding="utf-8") as f:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+        with self._lock:
+            with open(audit_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
         return entry
 
