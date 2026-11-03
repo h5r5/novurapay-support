@@ -427,6 +427,8 @@ def classify_ticket_endpoint(req: ClassifyRequest) -> dict[str, Any]:
                     "dateRes": date_str,
                     "phoneNumber": phone_str,
                     "phone": phone_str,
+                    "draftSource": getattr(res, "draft_source", "template" if m_cfg["isLocal"] else "llm"),
+                    "draft_source": getattr(res, "draft_source", "template" if m_cfg["isLocal"] else "llm"),
                     "draftReply": res.draft_reply
                     or (res.escalation_reason or "(تحويل للمراجعة اليدوية)"),
                     "draft": res.draft_reply

@@ -2450,7 +2450,16 @@ function renderComparisonGrid(results) {
       </div>
 
       <div>
-        <div style="font-size:11px; color:var(--text-muted); margin-bottom:4px; font-weight:500;">مسودة الرد المعتمدة:</div>
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+          <span style="font-size:11px; color:var(--text-muted); font-weight:500;">مسودة الرد المعتمدة:</span>
+          ${(() => {
+            const draftSrc = res.draftSource || res.draft_source || (res.isLocal ? 'template' : 'llm');
+            if (draftSrc === 'llm') return '<span class="mono" dir="ltr" style="font-size:10px; background:var(--accent-muted); color:var(--accent); border:1px solid var(--accent-border); border-radius:var(--radius-xs); padding:1px 6px; letter-spacing:0.02em; display:inline-flex; align-items:center; gap:4px;"><span style=\"width:5px; height:5px; border-radius:50%; background:var(--accent); display:inline-block;\"></span>SOURCE: LLM_INFERENCE</span>';
+            if (draftSrc === 'template') return '<span class="mono" dir="ltr" style="font-size:10px; background:var(--layer-3); color:var(--text-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-xs); padding:1px 6px; letter-spacing:0.02em; display:inline-flex; align-items:center; gap:4px;"><span style=\"width:5px; height:5px; border-radius:50%; background:var(--text-muted); display:inline-block;\"></span>SOURCE: OFFLINE_RULESET</span>';
+            if (draftSrc === 'escalation_notice') return '<span class="mono" dir="ltr" style="font-size:10px; background:var(--status-escalate-bg); color:var(--status-escalate); border:1px solid var(--status-escalate-border); border-radius:var(--radius-xs); padding:1px 6px; letter-spacing:0.02em; display:inline-flex; align-items:center; gap:4px;"><span style=\"width:5px; height:5px; border-radius:50%; background:var(--status-escalate); display:inline-block;\"></span>SOURCE: ESCALATION_GATE</span>';
+            return '';
+          })()}
+        </div>
         ${isEsc && escReason ? `<div style="font-size:11px; background:var(--status-escalate-bg, rgba(239, 68, 68, 0.15)); border:1px solid var(--status-escalate-border, rgba(239, 68, 68, 0.3)); border-radius:var(--radius-xs); color:var(--status-escalate); padding:5px 8px; margin-bottom:6px; line-height:1.4;"><strong>تنبيه التصعيد:</strong> ${escReason}</div>` : ''}
         <div class="model-draft-box" style="${isQuota ? 'border-color:var(--status-outage-border); background:var(--status-outage-bg); color:var(--status-outage); line-height:1.6;' : ''}" contenteditable="${!isQuota}">${draft}</div>
       </div>
