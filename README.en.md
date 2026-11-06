@@ -257,24 +257,6 @@ To evaluate real-world generalizability and prevent over-tuning, SupportPipe was
 
 ---
 
----
-
-## Operations Cockpit & Interactive Dashboard Showcase
-
-SupportPipe provides an ultra-responsive, zero-framework HTML5 / Vanilla JS Web Cockpit for banking operations teams, ensuring instantaneous triage and auditability:
-
-| Live Model Duel & Testing | Supervisor Review & Grounded Draft Queue |
-| :---: | :---: |
-| ![Live Model Duel](docs/screenshots/01_live_testing_model_duel.png) | ![Supervisor Review Queue](docs/screenshots/02_review_queue.png) |
-| *Side-by-side verification of MOCK 13, JEV, and Gemini latency & accuracy* | *1-click response approval or editing with zero hallucinated figures* |
-
-| Live AI Observability & Performance | Active Learning Discrepancy Store |
-| :---: | :---: |
-| ![Live AI Observability](docs/screenshots/03_ai_observability_evidence.png) | ![Active Learning Discrepancy Store](docs/screenshots/05_active_learning_discrepancy.png) |
-| *Real-time throughput metrics (TPS), P95 latencies, and 84% cloud cost savings* | *Continuous divergence logging and automated candidate regex rule proposals* |
-
----
-
 ## Quickstart & Command Center
 
 ### 1. Fast Installation
