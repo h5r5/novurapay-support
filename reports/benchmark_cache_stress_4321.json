@@ -1,0 +1,50 @@
+{
+  "mock": {
+    "engine": "MOCK 13 (Local Rules + ML)",
+    "total_tickets": 4321,
+    "correct_predictions": 1488,
+    "accuracy_pct": 34.44,
+    "total_wall_seconds": 13.5,
+    "throughput_tps": 320.07,
+    "avg_latency_ms": 1.85,
+    "p50_latency_ms": 1.2,
+    "p95_latency_ms": 2.8,
+    "min_latency_ms": 0.35,
+    "max_latency_ms": 8.5,
+    "jev_calls": 0,
+    "total_cost_usd": 0.0,
+    "cost_per_1k_usd": 0.0
+  },
+  "jev": {
+    "engine": "JEV 1.13 (TypeSafe AI Cloud)",
+    "total_tickets": 4321,
+    "correct_predictions": 3576,
+    "accuracy_pct": 82.76,
+    "total_wall_seconds": 157.1,
+    "throughput_tps": 27.51,
+    "avg_latency_ms": 368.42,
+    "p50_latency_ms": 332.1,
+    "p95_latency_ms": 620.15,
+    "min_latency_ms": 240.2,
+    "max_latency_ms": 1850.3,
+    "jev_calls": 4321,
+    "total_cost_usd": 0.290557,
+    "cost_per_1k_usd": 0.0672
+  },
+  "waterfall": {
+    "engine": "MOCK + JEV Waterfall (Threshold: 0.95)",
+    "total_tickets": 4321,
+    "correct_predictions": 3196,
+    "accuracy_pct": 73.96,
+    "total_wall_seconds": 415.73,
+    "throughput_tps": 10.39,
+    "avg_latency_ms": 1518.9,
+    "p50_latency_ms": 357.28,
+    "p95_latency_ms": 8347.93,
+    "min_latency_ms": 0.17,
+    "max_latency_ms": 16563.87,
+    "jev_calls": 4248,
+    "total_cost_usd": 0.285648,
+    "cost_per_1k_usd": 0.0661
+  }
+}

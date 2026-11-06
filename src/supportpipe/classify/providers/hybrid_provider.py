@@ -39,27 +39,19 @@ class HybridClassifierProvider(BaseClassifierProvider):
         groq_provider: GroqClassifierProvider | None = None,
         audit_sampling_rate: float = 0.05,
         discrepancy_store: DiscrepancyStore | None = None,
+        confidence_threshold: float = 0.95,
     ) -> None:
         self.mock_provider = mock_provider or MockClassifierProvider()
         self.discrepancy_store = discrepancy_store or default_discrepancy_store
+        self.confidence_threshold = confidence_threshold
 
         has_jev = bool(settings.jev_api_key or settings.typesafe_api_key)
-        self.jev_provider = (
-            jev_provider
-            or (JevClassifierProvider() if (has_jev and settings.llm_mode != "offline") else None)
+        self.jev_provider = jev_provider if jev_provider is not None else (
+            JevClassifierProvider() if (has_jev and settings.llm_mode != "offline") else None
         )
 
-        has_gemini = bool(settings.gemini_api_key)
-        self.gemini_provider = (
-            gemini_provider
-            or (GeminiClassifierProvider() if (has_gemini and settings.llm_mode != "offline") else None)
-        )
-
-        has_groq = bool(settings.groq_api_key)
-        self.groq_provider = (
-            groq_provider
-            or (GroqClassifierProvider() if (has_groq and settings.llm_mode != "offline") else None)
-        )
+        self.gemini_provider = gemini_provider
+        self.groq_provider = groq_provider
         self.audit_sampling_rate = audit_sampling_rate
 
     def classify(
@@ -90,10 +82,11 @@ class HybridClassifierProvider(BaseClassifierProvider):
         if not self.jev_provider and not self.gemini_provider and not self.groq_provider:
             return res_mock
 
-        # Step 1 early exit check: If high confidence (>= 0.95) and not forced/sampled, exit immediately
+        # Step 1 early exit check: If high confidence (>= threshold) and not forced/sampled, exit immediately
+        thresh = kwargs.get("confidence_threshold", getattr(self, "confidence_threshold", 0.85))
         is_sample_audit = (self.audit_sampling_rate > 0.0) and (random.random() < self.audit_sampling_rate)
-        if not force_audit and not is_sample_audit and res_mock.category_confidence >= 0.95:
-            logger.debug("Step 1 Waterfall Fast-Exit: System 1 confidence %.2f >= 0.95", res_mock.category_confidence)
+        if not force_audit and not is_sample_audit and res_mock.category_confidence >= thresh:
+            logger.debug("Step 1 Waterfall Fast-Exit: System 1 confidence %.2f >= %.2f", res_mock.category_confidence, thresh)
             return res_mock
 
         res_jev: ClassificationResult | None = None

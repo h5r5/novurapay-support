@@ -283,5 +283,20 @@
       0.6298
     ],
     "status": "consumed"
+  },
+  "batch_020": {
+    "sha256": "32e3a4d8abf86a8b4db1508859f0360d4a9b2e4ca1f81b7d66305f9374e3b0e8",
+    "n": 499,
+    "generator": "unknown",
+    "date": "2026-11-05T20:36:00.314339+00:00",
+    "prompt_hash": "none",
+    "status": "consumed",
+    "measured_at": "2026-11-05T20:37:42.856400+00:00",
+    "git_commit": "98014541d549e5465b4cf090beb12511c3dfab14",
+    "blind_accuracy": 0.6914,
+    "blind_wilson_95_ci": [
+      0.6495,
+      0.7303
+    ]
   }
 }

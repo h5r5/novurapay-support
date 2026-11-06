@@ -28,9 +28,11 @@ def process_ticket(
     provider_override: str | None = None,
     is_duplicate: bool = False,
     offline_model_version: str | None = None,
+    llm_mode: str | None = None,
 ) -> PipelineResult:
     """Process a single ticket through the complete typed pipeline."""
     start_time = time.perf_counter()
+    effective_llm_mode = llm_mode or settings.llm_mode
 
     # 1. Structured Fast Extraction (System 1 Local Extractor)
     extracted = extract_ticket_details(
@@ -111,7 +113,7 @@ def process_ticket(
         candidate_draft = None
         if classification.audit_details and classification.audit_details.get("draft_reply"):
             candidate_draft = classification.audit_details.get("draft_reply")
-        elif settings.llm_mode != "offline":
+        elif effective_llm_mode != "offline":
             if settings.groq_api_key:
                 try:
                     from supportpipe.classify.providers.groq_provider import generate_groq_draft
@@ -125,7 +127,7 @@ def process_ticket(
                 except Exception as groq_err:
                     logger.warning("Failed generating Groq candidate draft: %s", groq_err)
                     candidate_draft = None
-            elif settings.llm_mode == "live" and settings.gemini_api_key:
+            elif effective_llm_mode == "live" and settings.gemini_api_key:
                 try:
                     from supportpipe.classify.providers.gemini_provider import (
                         GeminiClassifierProvider,
@@ -139,6 +141,7 @@ def process_ticket(
                             category=classification.category,
                             priority=classification.priority,
                             extracted=extracted,
+                            llm_mode=effective_llm_mode,
                         )
                 except Exception as draft_err:
                     logger.warning("Failed generating candidate LLM draft: %s", draft_err)
@@ -198,6 +201,7 @@ def run_batch(
     tickets: list[Ticket],
     provider_override: str | None = None,
     offline_model_version: str | None = None,
+    llm_mode: str | None = None,
 ) -> tuple[list[PipelineResult], BatchSummary]:
     """Execute pipeline over a batch of tickets and compute aggregate summary."""
     batch_start = time.perf_counter()
@@ -243,6 +247,7 @@ def run_batch(
                 provider_override=provider_override,
                 is_duplicate=is_dup,
                 offline_model_version=offline_model_version,
+                llm_mode=llm_mode,
             )
         except Exception as exc:
             logger.exception("Fault isolation: Ticket %s crashed pipeline: %s", ticket.ticket_id, exc)

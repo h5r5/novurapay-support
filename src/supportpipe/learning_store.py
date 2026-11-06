@@ -150,6 +150,58 @@ class DiscrepancyStore:
             "top_suggestions": suggestions[:10],
         }
 
+    def get_candidate_rules_path(self) -> Path:
+        """Return the path to candidate rules JSON file."""
+        return self.file_path.parent / "candidate_rules.json"
+
+    def get_rule_status(self, rule_id: str, default: str = "pending") -> str:
+        """Fetch saved candidate rule status."""
+        rules_path = self.get_candidate_rules_path()
+        if not rules_path.exists():
+            return default
+        try:
+            with open(rules_path, encoding="utf-8") as f:
+                data = json.load(f)
+                return str(data.get(rule_id, {}).get("status", default))
+        except Exception as e:
+            logger.warning("Failed reading candidate rules: %s", e)
+            return default
+
+    def update_rule_status(
+        self,
+        rule_id: str,
+        status: str,
+        updated_by: str = "QA-SUPERVISOR",
+    ) -> dict[str, Any]:
+        """Persist updated status for a candidate rule with timestamp."""
+        rules_path = self.get_candidate_rules_path()
+        with self._lock:
+            data: dict[str, Any] = {}
+            if rules_path.exists():
+                try:
+                    with open(rules_path, encoding="utf-8") as f:
+                        data = json.load(f)
+                except Exception:
+                    data = {}
+
+            entry: dict[str, Any] = {
+                "rule_id": rule_id,
+                "status": status,
+                "updated_at": datetime.now(UTC).isoformat(),
+                "updated_by": updated_by,
+            }
+            data[rule_id] = entry
+
+            try:
+                tmp_path = rules_path.with_suffix(".tmp")
+                tmp_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+                import os
+                os.replace(tmp_path, rules_path)
+            except Exception as e:
+                logger.error("Failed saving candidate rule status: %s", e)
+
+            return entry
+
 
 # Singleton instance
 discrepancy_store = DiscrepancyStore()

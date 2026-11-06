@@ -14,7 +14,7 @@ import time
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 from pydantic import BaseModel, Field
@@ -22,13 +22,14 @@ from pydantic import BaseModel, Field
 from supportpipe.classify.providers.gemini_provider import GeminiClassifierProvider
 from supportpipe.classify.providers.groq_provider import GroqClassifierProvider
 from supportpipe.config import settings
+from supportpipe.diagnostics import ping_engine_connection
 from supportpipe.extract.normalize import mask_phone_number
 from supportpipe.learning_store import discrepancy_store
-from supportpipe.logging_store import ReviewQueueStore
+from supportpipe.logging_store import ReviewQueueStore, mask_pii
 from supportpipe.patterns.report import analyze_ticket_patterns, format_markdown_pattern_report
 from supportpipe.pipeline import process_ticket, run_batch
 from supportpipe.schemas import PipelineResult, Ticket
-from supportpipe.ui.engine_settings import ping_engine_connection
+from supportpipe.taxonomy.loader import taxonomy
 
 logger = logging.getLogger(__name__)
 
@@ -38,10 +39,10 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# Enable CORS for local development
+# Enable CORS with configured safe origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -104,6 +105,14 @@ class PingRequest(BaseModel):
     model: str | None = None
 
 
+class SettingsSaveRequest(BaseModel):
+    offline_model_version: str | None = None
+    confidence_threshold: float | None = None
+    gemini_api_key: str | None = None
+    groq_api_key: str | None = None
+    jev_api_key: str | None = None
+
+
 class BatchProcessRequest(BaseModel):
     tickets_raw: list[dict[str, Any]] = Field(..., min_length=1, max_length=500)
     provider: str = "mock"
@@ -112,22 +121,26 @@ class BatchProcessRequest(BaseModel):
 # =============================================================================
 # Helper Functions
 # =============================================================================
-def load_dev_tickets(limit: int = 50) -> list[Ticket]:
-    """Load tickets from dev.jsonl split."""
+def load_dev_tickets(limit: int = 50, offset: int = 0) -> list[Ticket]:
+    """Load tickets from dev.jsonl split with offset and limit."""
     dev_path = settings.project_root / "data" / "splits" / "dev.jsonl"
     tickets: list[Ticket] = []
     if dev_path.exists():
         with open(dev_path, encoding="utf-8") as f:
+            valid_idx = 0
             for line in f:
                 line_str = line.strip()
                 if line_str:
                     try:
                         data = json.loads(line_str)
                         t_data = data.get("ticket", data)
-                        tickets.append(Ticket.model_validate(t_data))
-                        if len(tickets) >= limit:
-                            break
-                    except Exception:
+                        if valid_idx >= offset:
+                            tickets.append(Ticket.model_validate(t_data))
+                            if len(tickets) >= limit:
+                                break
+                        valid_idx += 1
+                    except Exception as parse_err:
+                        logger.warning("Failed parsing dev ticket line: %s", parse_err)
                         continue
     return tickets
 
@@ -257,18 +270,44 @@ def get_system_health() -> dict[str, Any]:
     }
 
 
+def load_dev_samples(limit: int = 250) -> list[dict[str, Any]]:
+    """Load dev.jsonl tickets with gold labels and template metadata for stepper."""
+    dev_path = settings.project_root / "data" / "splits" / "dev.jsonl"
+    samples: list[dict[str, Any]] = []
+    if dev_path.exists():
+        with open(dev_path, encoding="utf-8") as f:
+            for idx, line in enumerate(f, 1):
+                s = line.strip()
+                if not s:
+                    continue
+                try:
+                    data = json.loads(s)
+                    t_data = data.get("ticket", {})
+                    l_data = data.get("label", {})
+                    cat_id = l_data.get("category", "")
+                    cat_meta = taxonomy.categories.get(cat_id, {})
+                    samples.append(
+                        {
+                            "id": t_data.get("ticket_id", f"DEV-{idx:03d}"),
+                            "text": mask_pii(t_data.get("raw_text", "")),
+                            "channel": t_data.get("channel", "app"),
+                            "gold_category": cat_id,
+                            "gold_category_ar": cat_meta.get("name_ar", cat_id),
+                            "gold_priority": l_data.get("priority", "medium"),
+                            "template_id": l_data.get("template_id", ""),
+                        }
+                    )
+                    if len(samples) >= limit:
+                        break
+                except Exception:
+                    continue
+    return samples
+
+
 @app.get("/api/scenarios")
 def get_preset_scenarios() -> dict[str, Any]:
     """Return preset test scenarios and split samples for stepper toolbar."""
-    dev_tickets = load_dev_tickets(limit=30)
-    dev_samples = [
-        {
-            "id": t.ticket_id,
-            "text": t.raw_text,
-            "channel": t.channel,
-        }
-        for t in dev_tickets
-    ]
+    dev_samples = load_dev_samples(limit=250)
     return {
         "presets": PRESET_SCENARIOS,
         "dev_samples": dev_samples,
@@ -315,6 +354,12 @@ def classify_ticket_endpoint(req: ClassifyRequest) -> dict[str, Any]:
             "tag": "RLCD Engine",
             "isLocal": False,
         },
+        "waterfall": {
+            "name": "الشلال الهجين (Tiered Waterfall)",
+            "tag": "Cascade Intelligence",
+            "isLocal": False,
+            "isWaterfall": True,
+        },
     }
 
     results: list[dict[str, Any]] = []
@@ -352,8 +397,9 @@ def classify_ticket_endpoint(req: ClassifyRequest) -> dict[str, Any]:
                         }
                     )
                     continue
-                settings.llm_mode = "live"
-                res: PipelineResult = process_ticket(live_ticket, provider_override="gemini")
+                res: PipelineResult = process_ticket(
+                    live_ticket, provider_override="gemini", llm_mode="live"
+                )
             elif model_key == "groq":
                 has_key = bool(settings.groq_api_key or os.environ.get("GROQ_API_KEY"))
                 if not has_key:
@@ -379,14 +425,18 @@ def classify_ticket_endpoint(req: ClassifyRequest) -> dict[str, Any]:
                         }
                     )
                     continue
-                settings.llm_mode = "live"
-                res = process_ticket(live_ticket, provider_override="groq")
+                res = process_ticket(live_ticket, provider_override="groq", llm_mode="live")
             elif model_key == "jev":
-                settings.llm_mode = "live"
-                res = process_ticket(live_ticket, provider_override="jev")
+                res = process_ticket(live_ticket, provider_override="jev", llm_mode="live")
+            elif model_key == "waterfall":
+                res = process_ticket(live_ticket, provider_override="hybrid", llm_mode="live")
             else:  # mock
-                settings.llm_mode = "offline"
-                res = process_ticket(live_ticket, provider_override="mock", offline_model_version="v13")
+                res = process_ticket(
+                    live_ticket,
+                    provider_override="mock",
+                    offline_model_version="v13",
+                    llm_mode="offline",
+                )
 
             lat_ms = (time.perf_counter() - t0) * 1000.0
 
@@ -436,6 +486,9 @@ def classify_ticket_endpoint(req: ClassifyRequest) -> dict[str, Any]:
                     "draft_response": res.draft_reply
                     or (res.escalation_reason or "(تحويل للمراجعة اليدوية)"),
                     "escalationReason": res.escalation_reason,
+                    "reasoningSummary": res.reasoning_summary or "",
+                    "isWaterfall": m_cfg.get("isWaterfall", False),
+                    "extractedJson": e_fields.model_dump(mode="json"),
                     "entities": {
                         "txn_ref": ref_str,
                         "amount": amt_str,
@@ -461,7 +514,7 @@ def classify_ticket_endpoint(req: ClassifyRequest) -> dict[str, Any]:
             if is_quota:
                 cat_val = "quota_exhausted"
                 draft_msg = (
-                    f"⚠️ نفدت حصة التوكنز (Tokens / Quota Exhausted) الخاصة بمزود الخدمة [{m_cfg['name']}]. "
+                    f"نفدت حصة التوكنز (Tokens / Quota Exhausted) الخاصة بمزود الخدمة [{m_cfg['name']}]. "
                     "يرجى ترقية الخطة أو التحقق من الرصيد والمفتاح."
                 )
                 team_ar = "وحدة مراقبة الحصص السحابية"
@@ -520,8 +573,8 @@ def classify_ticket_endpoint(req: ClassifyRequest) -> dict[str, Any]:
                 ),
                 discrepancy_reason=f"Arena mismatch: {[(r['modelKey'], r['category']) for r in valid_results]}",
             )
-        except Exception:
-            pass
+        except Exception as disc_err:
+            logger.warning("Failed recording consensus discrepancy: %s", disc_err)
 
     # Speed ratio
     local_res = next((r for r in results if r.get("isLocal")), None)
@@ -546,18 +599,25 @@ def classify_ticket_endpoint(req: ClassifyRequest) -> dict[str, Any]:
 
 
 @app.get("/api/queue")
-def get_review_queue() -> dict[str, Any]:
+def get_review_queue(
+    limit: int = Query(50, ge=1, le=500, description="Max tickets to return"),
+    offset: int = Query(0, ge=0, description="Pagination offset"),
+) -> dict[str, Any]:
     """Fetch live review queue tickets from dev dataset cross-referenced with human decisions."""
-    dev_tickets = load_dev_tickets(limit=50)
+    dev_tickets = load_dev_tickets(limit=limit, offset=offset)
     audit_decisions = load_human_audit_decisions()
 
     formatted_tickets: list[dict[str, Any]] = []
     ready_count = 0
     escalated_count = 0
 
-    settings.llm_mode = "offline"
     for tkt in dev_tickets:
-        res = process_ticket(tkt, provider_override="mock", offline_model_version="v13")
+        res = process_ticket(
+            tkt,
+            provider_override="mock",
+            offline_model_version="v13",
+            llm_mode="offline",
+        )
         is_decided = tkt.ticket_id in audit_decisions
         decision = audit_decisions.get(tkt.ticket_id, {})
         action_name = decision.get("action")
@@ -568,6 +628,9 @@ def get_review_queue() -> dict[str, Any]:
             is_esc = False
         elif action_name == "ESCALATED_TO_OPERATIONS":
             status_text = "محالة للعمليات"
+            is_esc = True
+        elif action_name == "REJECTED":
+            status_text = "تم الرفض"
             is_esc = True
         else:
             status_text = "مصعدة للمراجعة" if is_esc else "جاهزة للاعتماد"
@@ -594,7 +657,7 @@ def get_review_queue() -> dict[str, Any]:
                 "conf": round(res.category_confidence * 100.0, 1),
                 "lat": round(res.latency_ms, 2),
                 "esc": is_esc,
-                "text": tkt.raw_text,
+                "text": mask_pii(tkt.raw_text),
                 "ref": e_fields.transaction_ref or "غير متوفر",
                 "amt": amt_str,
                 "draft": decision.get("final_reply")
@@ -609,6 +672,8 @@ def get_review_queue() -> dict[str, Any]:
 
     return {
         "total": len(formatted_tickets),
+        "limit": limit,
+        "offset": offset,
         "ready_count": ready_count,
         "escalated_count": escalated_count,
         "avg_latency": 0.48,
@@ -730,8 +795,12 @@ def get_outage_intelligence(dataset: str = "dev") -> dict[str, Any]:
     # Enforce Frozen Data Policy: never read or process test split in interactive dashboard
     _ = dataset
     dev_tickets = load_dev_tickets(limit=50)
-    settings.llm_mode = "offline"
-    results = [process_ticket(t, provider_override="mock") for t in dev_tickets]
+    results = [
+        process_ticket(
+            t, provider_override="mock", offline_model_version="v13", llm_mode="offline"
+        )
+        for t in dev_tickets
+    ]
 
     patterns = analyze_ticket_patterns(results, dev_tickets)
 
@@ -834,9 +903,11 @@ def download_outage_markdown_report(dataset: str = "dev") -> PlainTextResponse:
     # Enforce Frozen Data Policy: test.jsonl is sealed
     _ = dataset
     dev_tickets = load_dev_tickets(limit=50)
-    settings.llm_mode = "offline"
     results = [
-        process_ticket(t, provider_override="mock", offline_model_version="v13") for t in dev_tickets
+        process_ticket(
+            t, provider_override="mock", offline_model_version="v13", llm_mode="offline"
+        )
+        for t in dev_tickets
     ]
     patterns = analyze_ticket_patterns(results, dev_tickets)
     md_content = format_markdown_pattern_report(patterns)
@@ -848,7 +919,7 @@ def download_outage_markdown_report(dataset: str = "dev") -> PlainTextResponse:
 
 @app.get("/api/learning")
 def get_active_learning_data() -> dict[str, Any]:
-    """Return discrepancy audit stats and Candidate Rule #14 proposal."""
+    """Return discrepancy audit stats and Candidate Rule #14 proposal with persistent state."""
     stats = discrepancy_store.get_summary_stats()
     recent = discrepancy_store.load_discrepancies(limit=50)
 
@@ -875,6 +946,7 @@ def get_active_learning_data() -> dict[str, Any]:
         for d in recent
     ]
 
+    saved_status = discrepancy_store.get_rule_status("RULE-V13-CANDIDATE", default="pending")
     candidate_rule = {
         "rule_id": "RULE-V13-CANDIDATE",
         "title": "اقتراح قاعدة محلية مستخلصة تلقائياً (Candidate Rule #14)",
@@ -882,7 +954,7 @@ def get_active_learning_data() -> dict[str, Any]:
         "expected_lift": "+0.85% على شريحة العربيزي",
         "reason": "تكرر تضاربات بين المحرك المحلي والمدقق السحابي في تذاكر تحتوي على كلمات (كراش / تهنيج / lag) مترافقة مع مبالغ وحوالات معلقة.",
         "code_snippet": "RULE-V13-CANDIDATE: if ('crash' in text or 'lag' in text) and ('transfer' in text or 'حوالة' in text) -> route_to='Payments & Transfers', category='pending_transfer', flag='app_stability'",
-        "status": "pending",
+        "status": saved_status,
     }
 
     kpi_dict = {
@@ -906,13 +978,17 @@ def get_active_learning_data() -> dict[str, Any]:
 
 @app.post("/api/learning/candidate-rule")
 def update_candidate_rule_status(req: RuleActionRequest) -> dict[str, Any]:
-    """Update Candidate Rule state in the active learning registry."""
-    effective_status = req.status or req.action or "approved"
+    """Persist Candidate Rule state in the active learning registry."""
+    raw_status = req.status or req.action or "approved"
+    effective_status = raw_status.strip().lower() or "approved"
+    rule_id = (req.rule_id or "RULE-V13-CANDIDATE").strip() or "RULE-V13-CANDIDATE"
+    persisted = discrepancy_store.update_rule_status(rule_id, effective_status)
     return {
         "success": True,
-        "rule_id": req.rule_id,
+        "rule_id": rule_id,
         "status": effective_status,
-        "message": f"تم تحديث حالة القاعدة {req.rule_id} إلى [{effective_status}] بنجاح.",
+        "entry": persisted,
+        "message": f"تم تحديث حالة القاعدة {rule_id} إلى [{effective_status}] بنجاح.",
     }
 
 
@@ -932,22 +1008,80 @@ def ping_provider_endpoint(req: PingRequest) -> dict[str, Any]:
     }
 
 
+@app.get("/api/settings")
+def get_settings_endpoint() -> dict[str, Any]:
+    """Return active engine configuration, threshold, and circuit breaker telemetry."""
+    has_gemini = bool(settings.gemini_api_key or os.environ.get("GEMINI_API_KEY"))
+    has_groq = bool(settings.groq_api_key or os.environ.get("GROQ_API_KEY"))
+    has_jev = bool(settings.jev_api_key or settings.typesafe_api_key or os.environ.get("JEV_API_KEY") or os.environ.get("TYPESAFE_API_KEY"))
+    return {
+        "offline_model_version": getattr(settings, "offline_model_version", "v13"),
+        "confidence_threshold": getattr(settings, "confidence_threshold", 0.65),
+        "has_gemini": has_gemini,
+        "has_groq": has_groq,
+        "has_jev": has_jev,
+        "gemini_api_key": settings.gemini_api_key or "",
+        "groq_api_key": settings.groq_api_key or "",
+        "jev_api_key": settings.jev_api_key or settings.typesafe_api_key or "",
+        "circuit_breakers": {
+            "gemini": {"status": "CLOSED", "failures": 0},
+            "groq": {"status": "CLOSED", "failures": 0},
+            "jev": {"status": "CLOSED", "failures": 0},
+        },
+    }
+
+
+@app.post("/api/settings/save")
+def save_settings_endpoint(req: SettingsSaveRequest) -> dict[str, Any]:
+    """Persist settings to settings singleton and environment."""
+    if req.offline_model_version:
+        settings.offline_model_version = req.offline_model_version  # type: ignore[assignment]
+    if req.confidence_threshold is not None:
+        settings.confidence_threshold = req.confidence_threshold
+    if req.gemini_api_key is not None:
+        settings.gemini_api_key = req.gemini_api_key
+        os.environ["GEMINI_API_KEY"] = req.gemini_api_key
+    if req.groq_api_key is not None:
+        settings.groq_api_key = req.groq_api_key
+        os.environ["GROQ_API_KEY"] = req.groq_api_key
+    if req.jev_api_key is not None:
+        settings.jev_api_key = req.jev_api_key
+        settings.typesafe_api_key = req.jev_api_key
+        os.environ["JEV_API_KEY"] = req.jev_api_key
+        os.environ["TYPESAFE_API_KEY"] = req.jev_api_key
+    return {
+        "success": True,
+        "message": "تم حفظ الإعدادات بنجاح وتحديث بيئة التشغيل الحية",
+        "offline_model_version": settings.offline_model_version,
+        "confidence_threshold": settings.confidence_threshold,
+    }
+
+
 @app.post("/api/batch")
 def process_batch_endpoint(req: BatchProcessRequest) -> dict[str, Any]:
     """Process an uploaded batch of tickets through the pipeline."""
     tickets: list[Ticket] = []
     for item in req.tickets_raw:
         try:
-            t_obj = item.get("ticket", item)
+            t_obj = dict(item.get("ticket", item))
+            if "submitted_at" not in t_obj or not t_obj["submitted_at"]:
+                t_obj["submitted_at"] = datetime.now(UTC).isoformat()
+            if "synthetic_user_id" not in t_obj or not t_obj["synthetic_user_id"]:
+                t_obj["synthetic_user_id"] = f"USR-{t_obj.get('ticket_id', 'BATCH')}"
             tickets.append(Ticket.model_validate(t_obj))
-        except Exception:
+        except Exception as tkt_err:
+            logger.warning("Failed parsing batch ticket item: %s", tkt_err)
             continue
 
     if not tickets:
         raise HTTPException(status_code=400, detail="No valid tickets provided in batch")
 
+    eff_mode = "offline" if req.provider == "mock" else "live"
     results, summary = run_batch(
-        tickets, provider_override=req.provider, offline_model_version="v13"
+        tickets,
+        provider_override=req.provider,
+        offline_model_version="v13",
+        llm_mode=eff_mode,
     )
 
     formatted_results = [
@@ -981,8 +1115,8 @@ def run() -> None:
     import uvicorn
 
     print("=" * 70)
-    print("  🚀 SupportPipe Fintech Cockpit Web Server Running!")
-    print("  🌐 Open in Browser: http://127.0.0.1:8000 (or http://localhost:8000)")
+    print("  [SupportPipe] Fintech Cockpit Web Server Running")
+    print("  Open in Browser: http://127.0.0.1:8000 (or http://localhost:8000)")
     print("=" * 70)
     uvicorn.run("supportpipe.server:app", host="127.0.0.1", port=8000, reload=True)
 

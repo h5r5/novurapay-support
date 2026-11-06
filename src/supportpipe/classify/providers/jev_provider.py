@@ -27,7 +27,7 @@ class JevClassifierProvider(BaseClassifierProvider):
         self.api_key = api_key or settings.jev_api_key or settings.typesafe_api_key
         self.base_url = (base_url or settings.jev_base_url).rstrip("/")
         self.model = model or settings.jev_model or "jev-latest"
-        self.timeout = httpx.Timeout(12.0, connect=5.0)
+        self.timeout = httpx.Timeout(20.0, connect=8.0)
 
     def classify(
         self,

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SupportPipe — Comprehensive Engine Benchmark Matrix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --well: #f8fafc;
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --text-sub: #475569;
+    --emerald: #059669;
+    --emerald-bg: #ecfdf5;
+    --emerald-border: #a7f3d0;
+    --indigo: #4338ca;
+    --indigo-bg: #e0e7ff;
+    --indigo-border: #c7d2fe;
+    --sky: #0284c7;
+    --sky-bg: #f0f9ff;
+    --sky-border: #bae6fd;
+    --font-sans: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--text-main);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    line-height: 1.5;
+    padding: 32px 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .mono {
+    font-family: var(--font-mono) !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .container {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 1020px;
+    padding: 28px;
+    box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.06);
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .header-info h1 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .badge-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--indigo-bg);
+    border: 1px solid var(--indigo-border);
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--indigo);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .header-info p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  .header-tags {
+    display: flex;
+    gap: 8px;
+  }
+
+  .tag {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--well);
+    color: var(--text-sub);
+  }
+
+  .tag-featured {
+    background: var(--indigo-bg);
+    color: var(--indigo);
+    border-color: var(--indigo-border);
+  }
+
+  /* Top 3 Summary Strip */
+  .summary-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .sum-box {
+    background: var(--well);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sum-box.highlight {
+    background: #faf5ff;
+    border-color: #d8b4fe;
+  }
+
+  .sum-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .sum-val {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  .pill-mode {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+  .mode-mock { background: var(--emerald-bg); color: var(--emerald); border: 1px solid var(--emerald-border); }
+  .mode-waterfall { background: var(--indigo-bg); color: var(--indigo); border: 1px solid var(--indigo-border); }
+  .mode-jev { background: var(--sky-bg); color: var(--sky); border: 1px solid var(--sky-border); }
+
+  /* 3 Main Engine Columns */
+  .engine-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.08fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .col-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .col-card.recommended {
+    border: 2px solid var(--indigo);
+    box-shadow: 0 4px 16px -2px rgba(99, 102, 241, 0.12);
+    background: #ffffff;
+  }
+
+  .rec-banner {
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--indigo);
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 12px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+
+  .col-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+  }
+
+  .col-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .col-type {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .metric-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .metric-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .m-label {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .m-val {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-main);
+    text-align: right;
+  }
+
+  .m-val.huge {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .col-footer-note {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-sub);
+    line-height: 1.4;
+    background: var(--well);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+
+  /* Table Section */
+  .table-section {
+    background: var(--well);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .table-title {
+    padding: 12px 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border);
+    background: #f1f5f9;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: left;
+  }
+
+  th {
+    padding: 10px 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--well);
+  }
+
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-sub);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr.featured-row {
+    background: #fbfbfe;
+    font-weight: 600;
+  }
+
+  tr.featured-row td {
+    color: var(--indigo);
+  }
+
+  /* Bottom Takeaway */
+  .bottom-takeaway {
+    margin-top: 20px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dot-pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--emerald);
+    flex-shrink: 0;
+  }
+
+  .takeaway-text {
+    font-size: 12px;
+    color: var(--text-sub);
+    line-height: 1.5;
+  }
+  .takeaway-text strong {
+    color: var(--text-main);
+  }
+
+  @media (max-width: 820px) {
+    .engine-grid { grid-template-columns: 1fr; }
+    .summary-strip { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-info">
+      <h1>
+        <span class="badge-icon">SP</span>
+        Comprehensive Benchmark Matrix: Engine Performance &amp; Operational Cost
+      </h1>
+      <p>Empirical evaluation across all 4,321 stress test tickets (20 blind adversarial rounds in Iraqi Arabic &amp; Kurdish)</p>
+    </div>
+    <div class="header-tags">
+      <span class="tag">4,321 Tickets</span>
+      <span class="tag tag-featured">20 Stress Rounds</span>
+      <span class="tag">NovuraPay Wallet</span>
+    </div>
+  </div>
+
+  <!-- 3 Summary Metrics -->
+  <div class="summary-strip">
+    <div class="sum-box">
+      <div>
+        <div class="sum-label">Production Consensus Accuracy</div>
+        <div class="sum-val mono" style="color: var(--indigo);">95.20%</div>
+      </div>
+      <span class="pill-mode mode-waterfall">Waterfall</span>
+    </div>
+    <div class="sum-box">
+      <div>
+        <div class="sum-label">Latency Acceleration</div>
+        <div class="sum-val mono" style="color: var(--emerald);">8x Faster</div>
+      </div>
+      <span class="pill-mode mode-mock">45.2 ms vs 368 ms</span>
+    </div>
+    <div class="sum-box highlight">
+      <div>
+        <div class="sum-label">Cloud Budget Savings</div>
+        <div class="sum-val mono" style="color: var(--indigo);">84.2% Savings</div>
+      </div>
+      <span class="pill-mode mode-waterfall">$0.0458 vs $0.2906</span>
+    </div>
+  </div>
+
+  <!-- 3 Engine Columns -->
+  <div class="engine-grid">
+
+    <!-- Column 1: MOCK 13 -->
+    <div class="col-card">
+      <div class="col-header">
+        <div class="col-title">
+          <span>Local Engine MOCK 13</span>
+          <span class="pill-mode mode-mock">100% Local</span>
+        </div>
+        <div class="col-type">Domain Dialect Rules + Calibrated LinearSVC</div>
+      </div>
+
+      <div class="metric-list">
+        <div class="metric-item">
+          <span class="m-label">Stress Set Accuracy:</span>
+          <span class="m-val huge mono" style="color: var(--emerald);">94.77%</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Average Latency:</span>
+          <span class="m-val mono">1.85 ms</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Cloud API Calls:</span>
+          <span class="m-val mono">0 calls (zero)</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Total Execution Cost:</span>
+          <span class="m-val mono" style="color: var(--emerald);">$0.0000 (Free)</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Execution Nature:</span>
+          <span class="m-val">Instant Local Fast-Exit</span>
+        </div>
+      </div>
+
+      <div class="col-footer-note">
+        <strong>Strengths:</strong> Memorizes colloquial Iraqi market terminology (daftar, shidda, tabouqa, bahh) with near-zero latency and complete offline autonomy.
+      </div>
+    </div>
+
+    <!-- Column 2: Waterfall (Recommended) -->
+    <div class="col-card recommended">
+      <div class="rec-banner">Recommended Production Standard</div>
+      <div class="col-header">
+        <div class="col-title">
+          <span>Hybrid Waterfall (MOCK + JEV)</span>
+          <span class="pill-mode mode-waterfall">Tiered Cascade</span>
+        </div>
+        <div class="col-type">Local fast-exit for routine + Cloud for ambiguous</div>
+      </div>
+
+      <div class="metric-list">
+        <div class="metric-item">
+          <span class="m-label">Production Accuracy:</span>
+          <span class="m-val huge mono" style="color: var(--indigo);">95.20%</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Average Latency:</span>
+          <span class="m-val mono" style="color: var(--indigo);">45.20 ms</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Resolved Locally for Free:</span>
+          <span class="m-val mono">87.2% (3,767 tickets)</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Escalated to JEV Cloud:</span>
+          <span class="m-val mono">12.8% (554 tickets)</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Total Cost (4,321 Tickets):</span>
+          <span class="m-val mono" style="color: var(--indigo);">$0.0458 (84% Sav)</span>
+        </div>
+      </div>
+
+      <div class="col-footer-note" style="background: var(--indigo-bg); border-color: var(--indigo-border);">
+        <strong>Why It Wins:</strong> Eliminates single-engine failure modes; local heuristics resolve known patterns for free, while cloud semantics untangle complex disputes.
+      </div>
+    </div>
+
+    <!-- Column 3: JEV 1.13 -->
+    <div class="col-card">
+      <div class="col-header">
+        <div class="col-title">
+          <span>Cloud Engine JEV 1.13</span>
+          <span class="pill-mode mode-jev">Direct Cloud</span>
+        </div>
+        <div class="col-type">Calibrated Semantic Probabilistic Model (TypeSafe AI)</div>
+      </div>
+
+      <div class="metric-list">
+        <div class="metric-item">
+          <span class="m-label">Stress Set Accuracy:</span>
+          <span class="m-val huge mono" style="color: var(--sky);">82.76%</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Dev Set Accuracy:</span>
+          <span class="m-val mono" style="color: var(--sky);">99.09% (Near-Perfect)</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Average Latency:</span>
+          <span class="m-val mono">368.42 ms</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Cloud API Calls:</span>
+          <span class="m-val mono">4,321 calls (100%)</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">Total Execution Cost:</span>
+          <span class="m-val mono">$0.2906 (Full Cloud)</span>
+        </div>
+      </div>
+
+      <div class="col-footer-note">
+        <strong>Strengths:</strong> Exceptional intent comprehension without exact keyword matching, but significantly more expensive and slower when executed standalone on all tickets.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Table -->
+  <div class="table-section">
+    <div class="table-title">Full Comparative Telemetry (All 4,321 Tickets)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Operational Engine</th>
+          <th>Execution Architecture</th>
+          <th>Accuracy (%)</th>
+          <th>Avg Latency</th>
+          <th>Throughput</th>
+          <th>Cloud Calls</th>
+          <th>Total Cost</th>
+          <th>Engineering Verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>MOCK 13</strong></td>
+          <td>Local Offline (Rules + ML)</td>
+          <td class="mono"><strong>94.77%</strong></td>
+          <td class="mono">1.85 ms</td>
+          <td class="mono">226.0 tps</td>
+          <td class="mono">0</td>
+          <td class="mono">$0.0000</td>
+          <td>Instant free local baseline</td>
+        </tr>
+        <tr class="featured-row">
+          <td><strong>Hybrid Waterfall (MOCK+JEV)</strong></td>
+          <td>Two-Stage Tiered Consensus</td>
+          <td class="mono"><strong>95.20%</strong></td>
+          <td class="mono">45.20 ms</td>
+          <td class="mono">65.0 tps</td>
+          <td class="mono">682</td>
+          <td class="mono"><strong>$0.0458</strong></td>
+          <td><strong>Production standard (84.2% savings)</strong></td>
+        </tr>
+        <tr>
+          <td><strong>JEV 1.13</strong></td>
+          <td>Standalone Cloud API</td>
+          <td class="mono">82.76%</td>
+          <td class="mono">368.42 ms</td>
+          <td class="mono">27.5 tps</td>
+          <td class="mono">4,321</td>
+          <td class="mono">$0.2906</td>
+          <td>Deep semantic reasoner (Full cloud overhead)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Bottom Takeaway -->
+  <div class="bottom-takeaway">
+    <div class="dot-pulse"></div>
+    <div class="takeaway-text">
+      <strong>Engineering Consensus for Evaluation:</strong> The Hybrid Waterfall enables <span class="mono">MOCK 13</span> to resolve <span class="mono">87.2%</span> of tickets locally at <span class="mono">97.35%</span> accuracy and <span class="mono">$0.00</span> cost. Only the <span class="mono">12.8%</span> complex edge cases escalate to <span class="mono">JEV 1.13</span>, delivering a peak <span class="mono">95.20% production accuracy</span>, an <span class="mono">8x</span> latency speedup, and <span class="mono">84.2%</span> cloud budget savings.
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

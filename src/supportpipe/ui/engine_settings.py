@@ -1,7 +1,3 @@
-"""Engine selection registry, connection testing, and runtime settings helpers for SupportPipe UI."""
-
-from __future__ import annotations
-
 import os
 import time
 from typing import Any, cast
@@ -15,71 +11,21 @@ from supportpipe.classify.providers.hybrid_provider import HybridClassifierProvi
 from supportpipe.classify.providers.jev_provider import JevClassifierProvider
 from supportpipe.classify.providers.mock_provider import MockClassifierProvider
 from supportpipe.config import settings
+from supportpipe.diagnostics import ENGINE_OPTIONS, resolve_engine_choice
 
-ENGINE_OPTIONS: list[str] = [
-    "Tiered Hybrid Waterfall (الهجين المتسلسل)",
-    "Groq Llama 3.3 70B Versatile (سحابي عالي الدقة)",
-    "Groq Llama 3.1 8B Instant (فائق السرعة)",
-    "Google Gemini 2.5 Flash (سحابي وتدقيق)",
-    "TypeSafe Jev 1.13 API (نموذج معاير عراقي)",
-    "Local Fast Heuristic / Mock v13 (محلي 0.5ms - v13 الأحدث)",
-    "Side-by-Side Dual Engine Match (مبارزة ثنائية)",
+__all__ = [
+    "ENGINE_OPTIONS",
+    "ping_engine_connection",
+    "resolve_engine_choice",
+    "get_key_status",
+    "sync_runtime_settings",
+    "GroqClassifierProvider",
+    "GeminiClassifierProvider",
+    "JevClassifierProvider",
+    "MockClassifierProvider",
+    "HybridClassifierProvider",
+    "BaseClassifierProvider",
 ]
-
-
-def resolve_engine_choice(choice: str) -> dict[str, Any]:
-    """Map UI model selection option string to provider, model ID, and metadata."""
-    c = choice.lower()
-    if "70b" in c:
-        return {
-            "provider": "groq",
-            "model": "llama-3.3-70b-versatile",
-            "label": "Groq Llama 3.3 70B",
-            "name": "groq",
-        }
-    elif "8b" in c:
-        return {
-            "provider": "groq",
-            "model": "llama-3.1-8b-instant",
-            "label": "Groq Llama 3.1 8B",
-            "name": "groq",
-        }
-    elif "gemini" in c or "2.5" in c or "3.6" in c or "3.8" in c:
-        return {
-            "provider": "gemini",
-            "model": "gemini-2.5-flash",
-            "label": "Google Gemini 2.5 Flash",
-            "name": "gemini",
-        }
-    elif "jev" in c:
-        return {
-            "provider": "jev",
-            "model": "jev-latest",
-            "label": "TypeSafe Jev 1.13",
-            "name": "jev",
-        }
-    elif "dual" in c or "match" in c or "مبارزة" in c or "duel" in c:
-        return {
-            "provider": "duel",
-            "model": None,
-            "label": "Side-by-Side Dual Engine Match",
-            "name": "duel",
-        }
-    elif "heuristic" in c or "mock" in c or "محلي" in c or "0.5ms" in c or "أوفلاين" in c or "v12" in c or "v13" in c:
-        eff_v = getattr(settings, "offline_model_version", "v13")
-        return {
-            "provider": "mock",
-            "model": eff_v,
-            "label": f"Local Fast Heuristic ({eff_v})",
-            "name": "mock",
-        }
-    else:  # hybrid
-        return {
-            "provider": "hybrid",
-            "model": None,
-            "label": "Tiered Hybrid Waterfall",
-            "name": "hybrid",
-        }
 
 INITIAL_ENV_KEYS: dict[str, str] = {
     "groq": os.environ.get("GROQ_API_KEY", settings.groq_api_key),
@@ -187,3 +133,5 @@ def ping_engine_connection(
     except Exception as e:
         lat = (time.perf_counter() - t0) * 1000.0
         return False, lat, str(e)
+
+

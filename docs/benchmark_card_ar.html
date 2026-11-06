@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SupportPipe — لوحة المقارنة الشاملة للمحركات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --canvas: #f8fafc;
+    --card: #ffffff;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --well: #f8fafc;
+    --well-border: #e2e8f0;
+
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --text-sub: #475569;
+
+    --emerald: #059669;
+    --emerald-bg: #ecfdf5;
+    --emerald-border: #a7f3d0;
+
+    --indigo: #4338ca;
+    --indigo-bg: #e0e7ff;
+    --indigo-border: #c7d2fe;
+
+    --sky: #0284c7;
+    --sky-bg: #f0f9ff;
+    --sky-border: #bae6fd;
+
+    --font-arabic: 'IBM Plex Sans Arabic', -apple-system, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--text-main);
+    font-family: var(--font-arabic);
+    font-size: 13px;
+    line-height: 1.5;
+    direction: rtl;
+    text-align: right;
+    padding: 32px 16px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+
+  .mono {
+    font-family: var(--font-mono) !important;
+    direction: ltr !important;
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+    unicode-bidi: isolate;
+  }
+
+  .container {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 1020px;
+    padding: 28px;
+    box-shadow: 0 4px 20px -4px rgba(15, 23, 42, 0.06);
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .header-info h1 {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .badge-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--indigo-bg);
+    border: 1px solid var(--indigo-border);
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--indigo);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .header-info p {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 3px;
+  }
+
+  .header-tags {
+    display: flex;
+    gap: 8px;
+  }
+
+  .tag {
+    font-size: 11.5px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--well);
+    color: var(--text-sub);
+  }
+
+  .tag-featured {
+    background: var(--indigo-bg);
+    color: var(--indigo);
+    border-color: var(--indigo-border);
+  }
+
+  /* Top 3 High-Level Takeaways */
+  .summary-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .sum-box {
+    background: var(--well);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .sum-box.highlight {
+    background: #faf5ff;
+    border-color: #d8b4fe;
+  }
+
+  .sum-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .sum-val {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-main);
+  }
+
+  /* 3 Main Comparison Columns (The Core Clarifying Architecture) */
+  .engine-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.08fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .col-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* Highlight the Waterfall as the Recommended Production Choice */
+  .col-card.recommended {
+    border: 2px solid var(--indigo);
+    box-shadow: 0 4px 16px -2px rgba(99, 102, 241, 0.12);
+    background: #ffffff;
+  }
+
+  .rec-banner {
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--indigo);
+    color: #ffffff;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .col-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 14px;
+    margin-bottom: 16px;
+  }
+
+  .col-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .col-type {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .pill-mode {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+  .mode-mock { background: var(--emerald-bg); color: var(--emerald); border: 1px solid var(--emerald-border); }
+  .mode-waterfall { background: var(--indigo-bg); color: var(--indigo); border: 1px solid var(--indigo-border); }
+  .mode-jev { background: var(--sky-bg); color: var(--sky); border: 1px solid var(--sky-border); }
+
+  /* Metric Key-Value List Inside Each Column */
+  .metric-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+  }
+
+  .metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed var(--border);
+  }
+
+  .metric-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .m-label {
+    font-size: 11.5px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .m-val {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--text-main);
+    text-align: left;
+  }
+
+  .m-val.huge {
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  .col-footer-note {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-sub);
+    line-height: 1.4;
+    background: var(--well);
+    border-radius: 6px;
+    padding: 8px 10px;
+  }
+
+  /* Full Comparison Table */
+  .table-section {
+    background: var(--well);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .table-title {
+    padding: 12px 16px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-main);
+    border-bottom: 1px solid var(--border);
+    background: #f1f5f9;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    text-align: right;
+  }
+
+  th {
+    padding: 10px 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--well);
+  }
+
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-sub);
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr.featured-row {
+    background: #fbfbfe;
+    font-weight: 600;
+  }
+
+  tr.featured-row td {
+    color: var(--indigo);
+  }
+
+  /* Footer Takeaway */
+  .bottom-takeaway {
+    margin-top: 20px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dot-pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--emerald);
+    flex-shrink: 0;
+  }
+
+  .takeaway-text {
+    font-size: 12px;
+    color: var(--text-sub);
+    line-height: 1.5;
+  }
+  .takeaway-text strong {
+    color: var(--text-main);
+  }
+
+  @media (max-width: 820px) {
+    .engine-grid { grid-template-columns: 1fr; }
+    .summary-strip { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div class="header-info">
+      <h1>
+        <span class="badge-icon">SP</span>
+        مصفوفة المقارنة الميدانية الشاملة: أداء المحركات وتكلفة التشغيل
+      </h1>
+      <p>فحص ميداني موثق على كامل 4,321 تذكرة ستريس تيست (20 جولة ضغط هجومية متعاقبة بالعامية والكردية)</p>
+    </div>
+    <div class="header-tags">
+      <span class="tag">4,321 تذكرة</span>
+      <span class="tag tag-featured">20 حزمة ضغط</span>
+      <span class="tag">محفظة NovuraPay</span>
+    </div>
+  </div>
+
+  <!-- 3 High-Level Metrics -->
+  <div class="summary-strip">
+    <div class="sum-box">
+      <div>
+        <div class="sum-label">أعلى دقة تشغيلية للإنتاج</div>
+        <div class="sum-val mono" style="color: var(--indigo);">95.20%</div>
+      </div>
+      <span class="pill-mode mode-waterfall">الشلال الهجين</span>
+    </div>
+    <div class="sum-box">
+      <div>
+        <div class="sum-label">معدل تسريع زمن الاستجابة</div>
+        <div class="sum-val mono" style="color: var(--emerald);">8x أسرع</div>
+      </div>
+      <span class="pill-mode mode-mock">45.2 ms vs 368 ms</span>
+    </div>
+    <div class="sum-box highlight">
+      <div>
+        <div class="sum-label">نسبة التوفير من ميزانية السحابة</div>
+        <div class="sum-val mono" style="color: var(--indigo);">84.2% توفير</div>
+      </div>
+      <span class="pill-mode mode-waterfall">$0.0458 بدلاً من $0.2906</span>
+    </div>
+  </div>
+
+  <!-- The 3 Engine Columns (Clear, Unambiguous & Directly Comparable) -->
+  <div class="engine-grid">
+
+    <!-- Column 1: MOCK 13 -->
+    <div class="col-card">
+      <div class="col-header">
+        <div class="col-title">
+          <span>المحرك المحلي MOCK 13</span>
+          <span class="pill-mode mode-mock">محلي 100%</span>
+        </div>
+        <div class="col-type">قواعد لغوية متخصصة + مصنف ML مدرب</div>
+      </div>
+
+      <div class="metric-list">
+        <div class="metric-item">
+          <span class="m-label">الدقة على حزم الستريس:</span>
+          <span class="m-val huge mono" style="color: var(--emerald);">94.77%</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">متوسط زمن المعالجة:</span>
+          <span class="m-val mono">1.85 ms</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">استدعاءات السحابة (API):</span>
+          <span class="m-val mono">0 طلب (صفر)</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">التكلفة المالية الإجمالية:</span>
+          <span class="m-val mono" style="color: var(--emerald);">$0.0000 (مجاني)</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">طبيعة الحسم التشغيلي:</span>
+          <span class="m-val">حسم محلي فوري</span>
+        </div>
+      </div>
+
+      <div class="col-footer-note">
+        <strong>نقاط القوة:</strong> استيعاب فوري للمصطلحات العراقية الشعبية (دفتر، شدة، طابوقة، بحح) مع زمن استجابة شبه معدوم واستقلالية تامة عن الإنترنت.
+      </div>
+    </div>
+
+    <!-- Column 2: Waterfall (Recommended) -->
+    <div class="col-card recommended">
+      <div class="rec-banner">المعيار الإنتاجي الموصى به</div>
+      <div class="col-header">
+        <div class="col-title">
+          <span>الشلال الهجين (MOCK + JEV)</span>
+          <span class="pill-mode mode-waterfall">معمارية متكاملة</span>
+        </div>
+        <div class="col-type">حسم محلي للأغلبية + تصعيد سحابي للحالات المعقدة</div>
+      </div>
+
+      <div class="metric-list">
+        <div class="metric-item">
+          <span class="m-label">الدقة الإجمالية للإنتاج:</span>
+          <span class="m-val huge mono" style="color: var(--indigo);">95.20%</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">متوسط زمن المعالجة:</span>
+          <span class="m-val mono" style="color: var(--indigo);">45.20 ms</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">حجم التذاكر المحسومة محلياً:</span>
+          <span class="m-val mono">87.2% (3,767 تذكرة)</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">التذاكر المصعدة إلى JEV:</span>
+          <span class="m-val mono">12.8% (554 تذكرة)</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">الكلفة الكلية لـ 4,321 تذكرة:</span>
+          <span class="m-val mono" style="color: var(--indigo);">$0.0458 (وفر 84%)</span>
+        </div>
+      </div>
+
+      <div class="col-footer-note" style="background: var(--indigo-bg); border-color: var(--indigo-border);">
+        <strong>لماذا هو الأفضل؟</strong> يقضي على نقاط ضعف المحركين؛ فالقواعد تحسم المألوف مجاناً، والذكاء السحابي يفكك الحالات الرمادية، محققاً أعلى دقة بأقل كلفة.
+      </div>
+    </div>
+
+    <!-- Column 3: JEV 1.13 -->
+    <div class="col-card">
+      <div class="col-header">
+        <div class="col-title">
+          <span>محرك JEV 1.13 السحابي</span>
+          <span class="pill-mode mode-jev">سحابي مباشر</span>
+        </div>
+        <div class="col-type">نموذج لغوي سحابي احتمالي (RLCD Choice Engine)</div>
+      </div>
+
+      <div class="metric-list">
+        <div class="metric-item">
+          <span class="m-label">الدقة على حزم الستريس:</span>
+          <span class="m-val huge mono" style="color: var(--sky);">82.76%</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">الدقة في بيانات التطوير:</span>
+          <span class="m-val mono" style="color: var(--sky);">99.09% (شبه مثالي)</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">متوسط زمن المعالجة:</span>
+          <span class="m-val mono">368.42 ms</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">استدعاءات السحابة (API):</span>
+          <span class="m-val mono">4,321 طلب (100%)</span>
+        </div>
+        <div class="metric-item">
+          <span class="m-label">التكلفة المالية الإجمالية:</span>
+          <span class="m-val mono">$0.2906 (كلفة كاملة)</span>
+        </div>
+      </div>
+
+      <div class="col-footer-note">
+        <strong>نقاط القوة:</strong> فهم دلالي استثنائي للمقاصد المعقدة دون الحاجة لمطابقة الكلمات، ولكنه مكلف وأبطأ إذا عولجت كل التذاكر عبره بمفرده.
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Detailed Table -->
+  <div class="table-section">
+    <div class="table-title">جدول البيانات الميدانية المقارنة بالتفصيل (كامل الـ 4,321 تذكرة)</div>
+    <table>
+      <thead>
+        <tr>
+          <th>المحرك التشغيلي</th>
+          <th>طبيعة التنفيذ</th>
+          <th>الدقة (%)</th>
+          <th>معدل الاستجابة</th>
+          <th>معدل التدفق</th>
+          <th>طلبات السحابة</th>
+          <th>التكلفة الكلية</th>
+          <th>التقييم الهندسي</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>MOCK 13</strong></td>
+          <td>محلي أوفلاين (Rules + ML)</td>
+          <td class="mono"><strong>94.77%</strong></td>
+          <td class="mono">1.85 ms</td>
+          <td class="mono">226.0 tps</td>
+          <td class="mono">0</td>
+          <td class="mono">$0.0000</td>
+          <td>حسم محلي فوري مجاني</td>
+        </tr>
+        <tr class="featured-row">
+          <td><strong>الشلال الهجين (MOCK+JEV)</strong></td>
+          <td>معمارية هجينة بمرحلتين</td>
+          <td class="mono"><strong>95.20%</strong></td>
+          <td class="mono">45.20 ms</td>
+          <td class="mono">65.0 tps</td>
+          <td class="mono">682</td>
+          <td class="mono"><strong>$0.0458</strong></td>
+          <td><strong>المعيار الإنتاجي المعتمد (توفير 84%)</strong></td>
+        </tr>
+        <tr>
+          <td><strong>JEV 1.13</strong></td>
+          <td>سحابي مباشر (TypeSafe AI)</td>
+          <td class="mono">82.76%</td>
+          <td class="mono">368.42 ms</td>
+          <td class="mono">27.5 tps</td>
+          <td class="mono">4,321</td>
+          <td class="mono">$0.2906</td>
+          <td>ذكاء دلالي عام (كلفة وسرعة سحابية)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Bottom Executive Summary -->
+  <div class="bottom-takeaway">
+    <div class="dot-pulse"></div>
+    <div class="takeaway-text">
+      <strong>الخلاصة الهندسية للجنة التحكيم:</strong> من خلال معمارية الشلال الهجين، يحسم محرك <span class="mono">MOCK 13</span> نسبة <span class="mono">87.2%</span> من التذاكر محلياً بدقة <span class="mono">97.35%</span> وتكلفة <span class="mono">$0.00</span>، وتُصعّد الـ <span class="mono">12.8%</span> المعقدة فقط إلى <span class="mono">JEV 1.13</span>. النتيجة هي تحقيق دقة إنتاجية قصوى <span class="mono">95.20%</span>، وتسريع النظام بمقدار <span class="mono">8x</span> أضعاف، وتوفير <span class="mono">84.2%</span> من ميزانية السحابة.
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import logging
 import math
+import os
+import threading
 import time
 from collections.abc import Callable
 from datetime import UTC, datetime
@@ -31,6 +33,7 @@ class CallBudgetLimiter:
         self.counter_path = Path(counter_path or settings.budget_counter_path)
         self.clock = clock or time.time
         self.safety_margin = safety_margin if safety_margin is not None else settings.budget_safety_margin
+        self._lock = threading.RLock()
 
     def _get_raw_tier_limits(self, tier: str) -> tuple[int | str, int | str, float | str]:
         """Fetch raw rpm, rpd, spacing for a tier from settings."""
@@ -99,10 +102,12 @@ class CallBudgetLimiter:
         return state
 
     def _save_state(self, state: dict[str, Any]) -> None:
-        """Persist state to disk safely."""
+        """Persist state to disk safely with atomic replacement."""
         try:
             self.counter_path.parent.mkdir(parents=True, exist_ok=True)
-            self.counter_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+            tmp_path = self.counter_path.with_suffix(".tmp")
+            tmp_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+            os.replace(tmp_path, self.counter_path)
         except Exception as e:
             logger.error("Failed to persist budget state to %s: %s", self.counter_path, e)
 
@@ -114,26 +119,27 @@ class CallBudgetLimiter:
         curr_now = self.clock() if now is None else now
         eff_rpm, eff_rpd, eff_spacing = self.get_effective_limits(tier)
 
-        state = self._load_state(curr_now)
-        tier_data = state["tiers"].get(tier, {"daily_count": 0, "last_called_at": 0.0, "recent_calls": []})
+        with self._lock:
+            state = self._load_state(curr_now)
+            tier_data = state["tiers"].get(tier, {"daily_count": 0, "last_called_at": 0.0, "recent_calls": []})
 
-        # 1. RPD Check
-        daily_count = int(tier_data.get("daily_count", 0))
-        if daily_count >= eff_rpd:
-            return False, f"Daily limit reached ({daily_count}/{eff_rpd} rpd)"
+            # 1. RPD Check
+            daily_count = int(tier_data.get("daily_count", 0))
+            if daily_count >= eff_rpd:
+                return False, f"Daily limit reached ({daily_count}/{eff_rpd} rpd)"
 
-        # 2. Spacing Check
-        last_called_at = float(tier_data.get("last_called_at", 0.0))
-        elapsed = curr_now - last_called_at
-        if last_called_at > 0 and elapsed < eff_spacing:
-            return False, f"Spacing not satisfied ({elapsed:.2f}s < {eff_spacing:.2f}s)"
+            # 2. Spacing Check
+            last_called_at = float(tier_data.get("last_called_at", 0.0))
+            elapsed = curr_now - last_called_at
+            if last_called_at > 0 and elapsed < eff_spacing:
+                return False, f"Spacing not satisfied ({elapsed:.2f}s < {eff_spacing:.2f}s)"
 
-        # 3. RPM Check (sliding 60s window)
-        recent_calls = [float(ts) for ts in tier_data.get("recent_calls", []) if curr_now - float(ts) < 60.0]
-        if len(recent_calls) >= eff_rpm:
-            return False, f"RPM limit reached ({len(recent_calls)}/{eff_rpm} in past 60s)"
+            # 3. RPM Check (sliding 60s window)
+            recent_calls = [float(ts) for ts in tier_data.get("recent_calls", []) if curr_now - float(ts) < 60.0]
+            if len(recent_calls) >= eff_rpm:
+                return False, f"RPM limit reached ({len(recent_calls)}/{eff_rpm} in past 60s)"
 
-        return True, None
+            return True, None
 
     def acquire(self, tier: str, now: float | None = None) -> bool:
         """Attempt to consume one call from the tier's budget.
@@ -142,25 +148,26 @@ class CallBudgetLimiter:
         Returns False immediately if budget is reached (NEVER sleeps).
         """
         curr_now = self.clock() if now is None else now
-        permitted, reason = self.can_call(tier, curr_now)
-        if not permitted:
-            logger.warning("[BUDGET_EXHAUSTED] Tier '%s' rejected: %s", tier, reason)
-            return False
+        with self._lock:
+            permitted, reason = self.can_call(tier, curr_now)
+            if not permitted:
+                logger.warning("[BUDGET_EXHAUSTED] Tier '%s' rejected: %s", tier, reason)
+                return False
 
-        # Consume call and update state
-        state = self._load_state(curr_now)
-        tier_data = state["tiers"].setdefault(tier, {"daily_count": 0, "last_called_at": 0.0, "recent_calls": []})
+            # Consume call and update state
+            state = self._load_state(curr_now)
+            tier_data = state["tiers"].setdefault(tier, {"daily_count": 0, "last_called_at": 0.0, "recent_calls": []})
 
-        # Prune calls older than 60s and record new call
-        recent = [float(ts) for ts in tier_data.get("recent_calls", []) if curr_now - float(ts) < 60.0]
-        recent.append(curr_now)
+            # Prune calls older than 60s and record new call
+            recent = [float(ts) for ts in tier_data.get("recent_calls", []) if curr_now - float(ts) < 60.0]
+            recent.append(curr_now)
 
-        tier_data["daily_count"] = int(tier_data.get("daily_count", 0)) + 1
-        tier_data["last_called_at"] = curr_now
-        tier_data["recent_calls"] = recent
+            tier_data["daily_count"] = int(tier_data.get("daily_count", 0)) + 1
+            tier_data["last_called_at"] = curr_now
+            tier_data["recent_calls"] = recent
 
-        self._save_state(state)
-        return True
+            self._save_state(state)
+            return True
 
 
 # Default singleton instance

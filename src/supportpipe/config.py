@@ -61,6 +61,13 @@ class Settings(BaseSettings):
     budget_groq_rpd: int | str = "OWNER_CONFIRM"
     budget_groq_spacing: float | str = "OWNER_CONFIRM"
 
+    # Security & CORS Settings
+    allowed_origins: list[str] = [
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
+        "http://localhost:8501",
+    ]
+
     # Escalation Thresholds (Defaults tuned on dev split)
     category_confidence_threshold: float = 0.65
     priority_confidence_threshold: float = 0.60

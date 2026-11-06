@@ -248,5 +248,19 @@ def spike_cmd(count: int) -> None:
     run_spike(count)
 
 
+@main.command(name="serve")
+@click.option("--host", default="127.0.0.1", help="Host IP to bind web server.")
+@click.option("--port", default=8000, type=int, help="Port to bind web server.")
+def serve_cmd(host: str, port: int) -> None:
+    """Launch the interactive SupportPipe Cockpit Web Server."""
+    import uvicorn
+
+    click.echo("=" * 70)
+    click.echo("  🚀 SupportPipe Fintech Cockpit Web Server Running!")
+    click.echo(f"  🌐 Open in Browser: http://{host}:{port}")
+    click.echo("=" * 70)
+    uvicorn.run("supportpipe.server:app", host=host, port=port, reload=True)
+
+
 if __name__ == "__main__":
     main()
