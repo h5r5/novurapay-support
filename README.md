@@ -52,7 +52,7 @@
 
 ```mermaid
 flowchart TD
-    %% Styling Definitions
+    %% تعریف أنماط الألوان
     classDef blueBox fill:#0f172a,stroke:#38bdf8,stroke-width:1.5px,color:#f8fafc;
     classDef purpleBox fill:#2e1065,stroke:#c084fc,stroke-width:1.5px,color:#faf5ff;
     classDef greenBox fill:#064e3b,stroke:#34d399,stroke-width:2px,color:#ecfdf5;
@@ -60,66 +60,58 @@ flowchart TD
     classDef zincBox fill:#18181b,stroke:#71717a,stroke-width:1.5px,color:#f4f4f5;
     classDef diamondBox fill:#27272a,stroke:#e4e4e7,stroke-width:1.5px,color:#ffffff;
 
-    subgraph S1["1. استقبال التذاكر وتطهير اللهجات"]
-        direction TB
-        RAW["طابور تذاكر العملاء الخام<br><i>(لهجة عراقية • لغات كردية • عرابيزي)</i>"]:::blueBox
-        NORM["معالج وتنقية النصوص<br>• إزالة مد الحروف <i>('مليييووونين وربععع' -> 'مليونين وربع')</i><br>• معالجة الفونيمات الصوتية للعرابيزي وتحويل الأرقام"]:::blueBox
+    subgraph S1["1. استقبال التذاكر وتنقية النص"]
+        RAW["طابور رسائل وتذاكر العملاء<br><i>(عامية عراقية • لغات كردية • عرابيزي)</i>"]:::blueBox
+        NORM["معالجة وتطهير النص<br>• إزالة مد الحروف <i>('مليونيننن وربعع' -> 'مليونين وربع')</i><br>• تحويل الأرقام المشرقية وعزل حيل الرموز الخفية"]:::blueBox
         RAW --> NORM
     end
 
-    subgraph S2["2. الاستخراج الحتمي السريع والمحرك المحلي (~0.5ms)"]
-        direction TB
-        EXT["محرك استخراج الكيانات وحماية الخصوصية"]:::blueBox
-        EXT --> ENT1["<b>المراجع:</b> الأنماط المعتمدة TXN-XXXXXX"]:::zincBox
-        EXT --> ENT2["<b>المبالغ والنقد:</b> دينار ودولار <i>(دفتر، شدة، ورقة، طابوقة)</i>"]:::zincBox
-        EXT --> ENT3["<b>التواريخ:</b> نسبية وسريانية <i>('15 نيسان'، 'تشرين'، 'صارلي شهر')</i>"]:::zincBox
-        EXT --> ENT4["<b>الأمان:</b> حجب البيانات PII <i>(0780****123)</i> وعزل حيل RTL"]:::amberBox
+    subgraph S2["2. استخراج الكيانات وحماية الخصوصية (~0.5ms)"]
+        EXT["استخراج بيانات المعاملة المصرفية<br>• المبالغ الدارجة: <i>دفتر ($100k)، شدة ($10k)، ورقة ($100)، طابوقة، باكة</i><br>• المراجع: TXN-XXXXXX | التواريخ النسبية والسريانية<br>• حجب بيانات العميل الحساسة: PII Masking <i>(0780****123)</i>"]:::blueBox
     end
 
-    subgraph S3["3. الشلال الهجين والتدقيق الدلالي بنماذج LLM السحابية"]
-        direction TB
-        M1["المرحلة 1: المحرك المحلي MOCK 13<br>TF-IDF + LinearSVC معاير (زمن أقل من 2ms)"]:::zincBox
+    subgraph S3["3. مسار اتخاذ القرار والشلال الهجين"]
+        M1["المحرك المحلي الميداني MOCK 13<br><i>(LinearSVC + TF-IDF معاير • زمن 1.8 مللي ثانية)</i>"]:::zincBox
         DEC1{"درجة الثقة >= 0.85؟<br><i>(أنماط واضحة ومألوفة)</i>"}:::diamondBox
+        PASS_FAST["حسم محلي فوري<br><i>(87.2% من التذاكر • كلفة 0.00$)</i>"]:::greenBox
+        M2["المحرك السحابي JEV 1.13<br><i>(استدلال دلالي للحالات الرمادية والمعقدة)</i>"]:::purpleBox
+        AUDIT["مدقق الذكاء الاصطناعي LLM<br><i>(Google Gemini Flash / Groq)</i><br>تدقيق المبالغ المستخرجة وتصحيحها ورصد التباين"]:::purpleBox
+
         M1 --> DEC1
-
-        DEC1 -->|نعم: 87.2% من التذاكر| PASS_FAST["حسم محلي فوري<br><i>(كلفة 0.00$ • زمن 1.8 مللي ثانية)</i>"]:::greenBox
-        DEC1 -->|لا: 12.8% حالات رمادية| M2["المرحلة 2: محرك JEV 1.13 السحابي<br>تحليل دلالي احتمالي معاير (~368ms)"]:::purpleBox
-
-        AUDIT["مدقق الذكاء الاصطناعي التوليدي LLM<br><i>(Google Gemini Flash / Groq Llama-3.3)</i><br>• تدقيق الكيانات وتصحيح المبالغ المستخرجة<br>• رصد التباينات وتوليد وسوم التدقيق"]:::purpleBox
-        M2 --> AUDIT
+        DEC1 -->|نعم| PASS_FAST
+        DEC1 -->|لا: حالات معقدة| M2
         PASS_FAST --> AUDIT
+        M2 --> AUDIT
     end
 
-    subgraph S4["4. بوابة الأمان والامتثال المصرفي والتوجيه الحتمي"]
-        direction TB
-        GATE{"بوابة التحقق واكتمال البيانات"}:::diamondBox
+    subgraph S4["4. بوابة الأمان المصرفي والتوجيه الحتمي"]
+        GATE{"فحص الأمان واكتمال المعاملة"}:::diamondBox
+        SEC_ALERT["طابور العزل والتجميد الأمني<br><i>(محاولات اختراق أو تلاعب بالأوامر • حظر توليد أي رد)</i>"]:::amberBox
+        ROUTE["جدول التوجيه الحتمي للأقسام<br><i>(routing_table.yaml -> الفريق المالي المختص)</i>"]:::greenBox
+
         AUDIT --> GATE
-
-        GATE -->|محاولة اختراق أو تلاعب أمني| SEC_QUARANTINE["طابور العزل والتجميد الأمني<br><i>(حظر توليد أي رد للعميل • إشعار أمني فوري)</i>"]:::amberBox
-        GATE -->|بيانات ناقصة أو تذكرة غامضة| DRAFT_CLARIFY["مسار استكمال البيانات<br><i>(توليد مسودة طلب بيانات ناقصة من العميل)</i>"]:::purpleBox
-        GATE -->|معاملة معتمدة ومكتملة| ROUTE["جدول التوجيه الحتمي للأقسام<br><i>(routing_table.yaml -> الفرق المختصة)</i>"]:::greenBox
+        GATE -->|محاولة اختراق أو هجوم| SEC_ALERT
+        GATE -->|معاملة معتمدة أو بيانات تحتاج استكمال| ROUTE
     end
 
-    subgraph S5["5. صياغة الردود المزدوجة واعتماد المشرف البشري (Dual-Mode Drafting)"]
-        direction TB
-        ONLINE_LLM["المسار السحابي الأساسي (Live LLM)<br><i>(Google Gemini Flash / Groq)</i><br>• صياغة ردود سياقية مقيدة بالبيانات<br>• صياغة مسودات استكمال البيانات الناقصة"]:::blueBox
-        OFFLINE_FALLBACK["المسار الاحتياطي الذكي الأوفلاين (Smart Offline)<br><i>(DraftManager + templates_ar.yaml / ku)</i><br>• ينشط فورياً عند انقطاع السحابة أو نفاذ الكوتا<br>• حقن المتغيرات ديناميكياً (زمن 0ms • كلفة $0.00)"]:::zincBox
+    subgraph S5["5. صياغة الردود المزدوجة واعتماد المشرف البشري"]
+        DRAFT_SELECT{"حالة الاتصال بالنماذج؟"}:::diamondBox
+        ONLINE_DRAFT["المسار السحابي بنماذج LLM<br><i>(Gemini Flash / Groq)</i><br>• صياغة رد مصرفي مقيد بالحقائق المستخرجة<br>• صياغة مسودة طلب استكمال البيانات الناقصة"]:::blueBox
+        OFFLINE_DRAFT["المسار الاحتياطي الأوفلاين<br><i>(DraftManager + templates_ar.yaml / ku)</i><br>• ينشط فورياً عند انقطاع السحابة أو نفاذ الكوتا<br>• حقن المتغيرات المستخرجة بقوالب معتمدة (كلفة 0$)"]:::zincBox
+        COCKPIT["قمرة عمليات التدقيق والاعتماد للمشرف البشري<br><i>(حظر الإرسال الآلي • لا تخرج أي رسالة للعميل إلا بموافقة الموظف)</i>"]:::greenBox
 
-        ROUTE --> ONLINE_LLM
-        ROUTE --> OFFLINE_FALLBACK
-        DRAFT_CLARIFY --> ONLINE_LLM
-        DRAFT_CLARIFY --> OFFLINE_FALLBACK
-
-        ONLINE_LLM --> REVIEW["قمرة عمليات التدقيق والاعتماد البشري<br><i>(حظر الإرسال الآلي • لا يخرج أي رد للعميل إلا بموافقة الموظف)</i>"]:::greenBox
-        OFFLINE_FALLBACK --> REVIEW
+        ROUTE --> DRAFT_SELECT
+        DRAFT_SELECT -->|متصل| ONLINE_DRAFT
+        DRAFT_SELECT -->|أوفلاين أو تعذر الاتصال| OFFLINE_DRAFT
+        ONLINE_DRAFT --> COCKPIT
+        OFFLINE_DRAFT --> COCKPIT
     end
 
-    subgraph S6["6. حلقة التعلم النشط ومستودع التباينات المستمر"]
-        direction TB
-        DISC["مستودع التباينات <i>(learning_store.py)</i><br>• تسجيل حالات اختلاف المحرك المحلي عن النموذج السحابي<br>• اقتراح قواعد جديدة طورت MOCK من v1 إلى v13"]:::zincBox
+    subgraph S6["6. حلقة التعلم النشط ومستودع التباينات"]
+        DISC["مستودع التباينات الدائم <i>(learning_store.py)</i><br>• تسجيل حالات الاختلاف واقتراح قواعد جديدة لتطوير MOCK تلقائياً"]:::zincBox
         AUDIT -.->|تسجيل التباين| DISC
-        REVIEW -.->|تصحيحات المشرف البشري| DISC
-        DISC -.->|إعادة تدريب وتطوير القواعد| M1
+        COCKPIT -.->|تصحيحات المشرف| DISC
+        DISC -.->|إعادة تدريب القواعد وتحديثها| M1
     end
 
     NORM --> EXT
@@ -256,66 +248,101 @@ flowchart TD
 
 ---
 
+---
+
+## معرض صور قمرة العمليات والداشبورد التفاعلي (Dashboard Visual Gallery)
+
+توفر المنظومة واجهة تشغيل حية للمشرفين المصرفيين مبنية بـ HTML5 / Vanilla JS بدون أي أطر عمل ثقيلة، لضمان استجابة لحظية في بيئات الفروع والمكاتب الخلفية:
+
+| قمرة فحص المحركات المباشر (Model Duel) | طابور المشرف البشري واعتماد المسودات (Review Queue) |
+| :---: | :---: |
+| ![قمرة فحص المحركات المباشر](docs/screenshots/01_live_testing_model_duel.png) | ![طابور المشرف البشري](docs/screenshots/02_review_queue.png) |
+| *مقارنة حية لسرعة ودقة MOCK 13 و JEV و Gemini جنباً إلى جنب* | *فحص المسودات واعتماد الإرسال بنقرة واحدة مع منع الهلوسة* |
+
+| مراقبة الأداء وزمن الاستجابة (AI Observability) | مستودع التعلم النشط وتوليد القواعد (Active Learning) |
+| :---: | :---: |
+| ![مراقبة الأداء](docs/screenshots/03_ai_observability_evidence.png) | ![مستودع التعلم النشط](docs/screenshots/05_active_learning_discrepancy.png) |
+| *رصد حقيقي لمعدل الإنتاجية (TPS) وتوفير تكاليف السحابة بنسبة 84%* | *تسجيل التباينات واقتراح قواعد Regex جديدة تلقائياً* |
+
+---
+
 ## دليل التشغيل السريع وقمرة العمليات (Quickstart)
 
-### 1. التثبيت وتهيئة البيئة
-تعتمد المنظومة معايير بايثون الحديثة وتُدار عبر أداة `uv`:
-```bash
-# استنساخ المستودع
+### 1. خطوات التثبيت السريع (Installation)
+
+#### لمستخدمي نظام Windows (عبر PowerShell):
+```powershell
+# استنساخ المستودع والدخول للمجلد
 git clone https://github.com/h5r5/novurapay-support.git
 cd novurapay-support
 
-# تثبيت الحزم وحزم التطوير بالكامل
+# تثبيت بيئة العمل والحزم دفعة واحدة باستخدام uv (الأسرع والأدق):
 uv sync --extra dev
 
-# أو باستخدام pip التقليدي:
+# أو باستخدام pip التقليدي إذا لم تكن أداة uv مثبتة لديك:
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 pip install -e ".[dev]"
 ```
 
-### 2. فحص سلامة البيئة التشغيلية
+#### لمستخدمي أنظمة macOS و Linux (عبر Terminal):
 ```bash
-uv run supportpipe health
+# استنساخ المستودع والدخول للمجلد
+git clone https://github.com/h5r5/novurapay-support.git
+cd novurapay-support
+
+# تثبيت بيئة العمل والحزم دفعة واحدة باستخدام uv:
+uv sync --extra dev
+
+# أو باستخدام pip التقليدي:
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
 ```
 
-### 3. تشغيل المعالجة الدفعية المباشرة
-توفر المنظومة خيار `--mode` للتشغيل عبر مختلف أنظمة التشغيل بسلاسة:
+---
+
+### 2. تشغيل قمرة العمليات والداشبورد بنقرة واحدة (1-Click Web Cockpit)
+لتشغيل واجهة الويب التفاعلية للمشرفين والموظفين فوراً:
 ```bash
-# النمط المحلي السريع (معالجة محلية بدون سحابة)
+uv run python -m supportpipe.server
+```
+ثم افتح متصفحك على الرابط: **`http://127.0.0.1:8000`**
+
+---
+
+### 3. تشغيل المعالجة الدفعية المباشرة (Batch Pipeline Run)
+لتشغيل المنظومة على ملف تذاكر دفعي (مثل حزمة التطوير المعتمدة):
+```bash
+# النمط المحلي السريع (معالجة محلية بالكامل بدون إنترنت وبكلفة $0.00):
 uv run supportpipe run --input data/splits/dev.jsonl --mode offline
 
-# نمط الشلال الهجين (إجماع MOCK 13 مع JEV 1.13)
+# نمط الشلال الهجين (إجماع MOCK 13 مع محرك JEV 1.13 السحابي):
 uv run supportpipe run --input data/splits/dev.jsonl --mode hybrid
 
-# معالجة حزمة تذاكر مخصصة
-uv run supportpipe run --input <path_to_tickets.jsonl> --mode offline
+# فحص أي ملف تذاكر مخصص لديك:
+uv run supportpipe run --input <مسار_ملف_التذاكر.jsonl> --mode offline
 ```
 
-*ملاحظة لمستخدمي Windows PowerShell عند تعيين المتغير يدوياً:*
-```powershell
-$env:LLM_MODE="offline"; uv run supportpipe run --input data/splits/dev.jsonl
-```
+---
 
-### 4. تشغيل المقارنة الميدانية بين المحركات (MOCK مقابل JEV مقابل الشلال)
+### 4. تشغيل المقارنة الميدانية المباشرة بين المحركات (Benchmark Runner)
 ```bash
-# فحص حزمة التطوير الذهبية (219 تذكرة)
+# تقييم حزمة التطوير الذهبية (219 تذكرة):
 uv run python scripts/benchmark_tri_mode.py --dataset dev --threshold 0.85
 
-# فحص كامل حزمة الستريس (4,321 تذكرة عبر 10 خيوط متزامنة)
+# تقييم كامل حزمة الستريس تيست (4,321 تذكرة عبر 10 خيوط معالجة متزامنة):
 uv run python scripts/benchmark_tri_mode.py --dataset stress --threshold 0.85 --workers 10
 ```
 
-### 5. تشغيل قمرة العمليات التفاعلية (Web Cockpit)
-```bash
-uv run python -m supportpipe.server
-# افتح الرابط التالي في المتصفح: http://127.0.0.1:8000
-```
+---
 
-### 6. تشغيل الفحوصات والتحليل الساكن
+### 5. تشغيل الفحوصات الآلية وضمان الجودة
 ```bash
-# تشغيل جميع الاختبارات المؤتمتة (239 اختباراً)
+# تشغيل كامل حزمة الاختبارات المؤتمتة (239 اختبار نجاح بنسبة 100%):
 uv run pytest tests/ -v
 
-# فحص التنسيق وجودة الكود
+# فحص سلامة وتنسيق الكود البرمجي:
 uv run ruff check src tests scripts
 ```
 

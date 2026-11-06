@@ -63,65 +63,57 @@ flowchart TD
     classDef diamondBox fill:#27272a,stroke:#e4e4e7,stroke-width:1.5px,color:#ffffff;
 
     subgraph S1["1. INGESTION & DIALECT SANITIZATION"]
-        direction TB
         RAW["Raw Customer Ticket Queue<br><i>(Iraqi Arabic • Kurdish Sorani/Kurmanji • Arabizi)</i>"]:::blueBox
-        NORM["Text Sanitizer & Normalizer<br>• Character elongation collapse <i>('ملييونين وربععع' -> 'مليونين وربع')</i><br>• Arabizi phoneme enrichment & Eastern digits to ASCII"]:::blueBox
+        NORM["Text Sanitizer & Normalizer<br>• Character elongation collapse <i>('مليونيننن وربعع' -> 'مليونين وربع')</i><br>• Eastern digits conversion & hidden trojan character isolation"]:::blueBox
         RAW --> NORM
     end
 
     subgraph S2["2. ULTRA-FAST DETERMINISTIC EXTRACTION (~0.5ms)"]
-        direction TB
-        EXT["Entity Extraction & Privacy Sanitizer Engine"]:::blueBox
-        EXT --> ENT1["<b>Reference:</b> Canonical TXN-XXXXXX patterns"]:::zincBox
-        EXT --> ENT2["<b>Amount & Slang:</b> IQD, USD <i>(daftar, shidda, warqa, tabouqa)</i>"]:::zincBox
-        EXT --> ENT3["<b>Dates:</b> Relative & Syriac <i>('15 Nisan', 'Tishreen 1', 'sarli shahar')</i>"]:::zincBox
-        EXT --> ENT4["<b>Safety:</b> PII Masking <i>(0780****123)</i> & BiDi Trojan quarantine"]:::amberBox
+        EXT["Entity Extraction & Privacy Sanitizer<br>• Currency slang: <i>al-daftar ($100k), al-shidda ($10k), al-warqa ($100), tabouqa, baqa</i><br>• Canonical references: TXN-XXXXXX | Relative & Syriac calendar dates<br>• Automated PII protection: <i>(0780****123)</i>"]:::blueBox
     end
 
     subgraph S3["3. TWO-STAGE HYBRID WATERFALL & CLOUD AUDITING"]
-        direction TB
-        M1["Stage 1: System 1 Local Offline ML <i>(MOCK 13)</i><br>TF-IDF + Calibrated LinearSVC (Latency < 2ms)"]:::zincBox
+        M1["Stage 1: Local Heuristic Engine MOCK 13<br><i>(Calibrated LinearSVC + TF-IDF • 1.85ms latency)</i>"]:::zincBox
         DEC1{"Confidence >= 0.85?<br><i>(Recognized Patterns)</i>"}:::diamondBox
+        PASS_FAST["Fast-Exit Offline Prediction<br><i>(87.2% of Volume • $0.00 Cost)</i>"]:::greenBox
+        M2["Stage 2: TypeSafe JEV 1.13 Cloud<br><i>(Calibrated RLCD Choice Engine for edge cases)</i>"]:::purpleBox
+        AUDIT["Cloud LLM Auditor<br><i>(Google Gemini Flash / Groq)</i><br>Audits extraction, corrects amounts & logs discrepancies"]:::purpleBox
+
         M1 --> DEC1
-
-        DEC1 -->|Yes: 87.2% of Volume| PASS_FAST["Fast-Exit Offline Prediction<br><i>(Zero Cloud Cost • 1.8ms Latency)</i>"]:::greenBox
-        DEC1 -->|No: 12.8% Gray Cases| M2["Stage 2: System 2 TypeSafe JEV 1.13 Cloud<br>Calibrated RLCD Choice Engine (~368ms)"]:::purpleBox
-
-        AUDIT["Cloud LLM Auditor <i>(Google Gemini / Groq)</i><br>Audits extraction, corrects amounts & logs discrepancies"]:::purpleBox
-        M2 --> AUDIT
+        DEC1 -->|Yes| PASS_FAST
+        DEC1 -->|No: Complex Cases| M2
         PASS_FAST --> AUDIT
+        M2 --> AUDIT
     end
 
     subgraph S4["4. SAFETY & BANKING COMPLIANCE GATE"]
-        direction TB
         GATE{"Safety & Completeness Gate"}:::diamondBox
-        AUDIT --> GATE
+        SEC_ALERT["Security Quarantine Queue<br><i>(Prompt injection / hostile payloads • zero reply generated)</i>"]:::amberBox
+        ROUTE["Deterministic Routing Table<br><i>(routing_table.yaml -> Operational Squads)</i>"]:::greenBox
 
-        GATE -->|Hostile Injection / Override Attack| SEC_QUARANTINE["Security Quarantine Queue<br><i>(Zero Reply Generated • Immediate Audit Freeze)</i>"]:::amberBox
-        GATE -->|Incomplete Data / Missing Ref| DRAFT_CLARIFY["Clarification Drafting Pipeline<br><i>(Generates follow-up request for missing info)</i>"]:::purpleBox
-        GATE -->|Validated & Complete| ROUTE["Deterministic Routing Table<br><i>(routing_table.yaml -> Squads)</i>"]:::greenBox
+        AUDIT --> GATE
+        GATE -->|Hostile Attack / Injection| SEC_ALERT
+        GATE -->|Validated Transaction or Clarification Needed| ROUTE
     end
 
     subgraph S5["5. DUAL-MODE DRAFTING & SUPERVISOR APPROVAL"]
-        direction TB
-        ONLINE_LLM["Primary Cloud LLM Drafter<br><i>(Google Gemini Flash / Groq)</i><br>• Contextual responses strictly bound to entities<br>• Drafts clarification requests for missing data"]:::blueBox
-        OFFLINE_FALLBACK["Smart Offline Fallback Engine<br><i>(DraftManager + templates_ar.yaml / ku)</i><br>• Triggers immediately on cloud outage or quota 429<br>• Dynamic variable injection (0ms • $0.00 cost)"]:::zincBox
+        DRAFT_SELECT{"LLM Cloud Connectivity?"}:::diamondBox
+        ONLINE_DRAFT["Primary Cloud LLM Drafter<br><i>(Gemini Flash / Groq)</i><br>• Contextual responses strictly bound to entities<br>• Follow-up clarification requests for missing data"]:::blueBox
+        OFFLINE_DRAFT["Smart Offline Fallback Engine<br><i>(DraftManager + templates_ar.yaml / ku)</i><br>• Instant trigger on network drop or 429 quota exhaustion<br>• Dynamic entity interpolation ($0.00 cost • 0ms latency)"]:::zincBox
+        COCKPIT["Operations Cockpit Supervisor Review Queue<br><i>(Zero Outbound Auto-Send • Human Approval Mandatory)</i>"]:::greenBox
 
-        ROUTE --> ONLINE_LLM
-        ROUTE --> OFFLINE_FALLBACK
-        DRAFT_CLARIFY --> ONLINE_LLM
-        DRAFT_CLARIFY --> OFFLINE_FALLBACK
-
-        ONLINE_LLM --> REVIEW["Operations Cockpit Review Queue<br><i>(Zero Outbound Auto-Send • Supervisor Approval Required)</i>"]:::greenBox
-        OFFLINE_FALLBACK --> REVIEW
+        ROUTE --> DRAFT_SELECT
+        DRAFT_SELECT -->|Online| ONLINE_DRAFT
+        DRAFT_SELECT -->|Offline or Quota Reached| OFFLINE_DRAFT
+        ONLINE_DRAFT --> COCKPIT
+        OFFLINE_DRAFT --> COCKPIT
     end
 
     subgraph S6["6. ACTIVE LEARNING & CONTINUOUS DISCREPANCY STORE"]
-        direction TB
-        DISC["Active Learning Store <i>(learning_store.py)</i><br>• Records local vs cloud LLM disagreements<br>• Proposes candidate rules to evolve MOCK v1 -> v13"]:::zincBox
+        DISC["Active Learning Store <i>(learning_store.py)</i><br>• Records local vs cloud LLM disagreements<br>• Auto-proposes candidate rules to evolve MOCK v1 -> v13"]:::zincBox
         AUDIT -.->|Log Divergence| DISC
-        REVIEW -.->|Human Corrections| DISC
-        DISC -.->|Retrain & Hardening| M1
+        COCKPIT -.->|Human Supervisor Feedback| DISC
+        DISC -.->|Retrain & Hardening Loop| M1
     end
 
     NORM --> EXT
@@ -265,67 +257,101 @@ To evaluate real-world generalizability and prevent over-tuning, SupportPipe was
 
 ---
 
+---
+
+## Operations Cockpit & Interactive Dashboard Showcase
+
+SupportPipe provides an ultra-responsive, zero-framework HTML5 / Vanilla JS Web Cockpit for banking operations teams, ensuring instantaneous triage and auditability:
+
+| Live Model Duel & Testing | Supervisor Review & Grounded Draft Queue |
+| :---: | :---: |
+| ![Live Model Duel](docs/screenshots/01_live_testing_model_duel.png) | ![Supervisor Review Queue](docs/screenshots/02_review_queue.png) |
+| *Side-by-side verification of MOCK 13, JEV, and Gemini latency & accuracy* | *1-click response approval or editing with zero hallucinated figures* |
+
+| Live AI Observability & Performance | Active Learning Discrepancy Store |
+| :---: | :---: |
+| ![Live AI Observability](docs/screenshots/03_ai_observability_evidence.png) | ![Active Learning Discrepancy Store](docs/screenshots/05_active_learning_discrepancy.png) |
+| *Real-time throughput metrics (TPS), P95 latencies, and 84% cloud cost savings* | *Continuous divergence logging and automated candidate regex rule proposals* |
+
+---
+
 ## Quickstart & Command Center
 
-### 1. Installation
-SupportPipe uses standard Python packaging managed via `uv`:
+### 1. Fast Installation
+
+#### For Windows Users (via PowerShell):
+```powershell
+# Clone the repository
+git clone https://github.com/h5r5/novurapay-support.git
+cd novurapay-support
+
+# Install dependencies with uv (fastest & most reliable):
+uv sync --extra dev
+
+# Or with traditional pip:
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -e ".[dev]"
+```
+
+#### For macOS & Linux Users (via Terminal):
 ```bash
 # Clone the repository
 git clone https://github.com/h5r5/novurapay-support.git
 cd novurapay-support
 
-# Install dependencies and development packages
+# Install dependencies with uv:
 uv sync --extra dev
 
-# Alternatively, using standard pip:
+# Or with traditional pip:
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev]"
 ```
 
-### 2. Environment Health Check
+---
+
+### 2. Launch 1-Click Operations Cockpit UI
+Run the high-speed Web Cockpit server:
 ```bash
-uv run supportpipe health
+uv run python -m supportpipe.server
 ```
+Open your browser at: **`http://127.0.0.1:8000`**
+
+---
 
 ### 3. Run Deterministic Batch Processing
-SupportPipe provides a native `--mode` flag that executes cross-platform without environment variable workarounds:
-
+Execute the batch pipeline over customer ticket queues:
 ```bash
-# Offline mode (Fast local heuristic execution)
+# Fast local offline mode (zero cloud cost, sub-second execution):
 uv run supportpipe run --input data/splits/dev.jsonl --mode offline
 
-# Hybrid Waterfall mode (MOCK 13 + JEV 1.13 consensus)
+# Hybrid Waterfall mode (MOCK 13 local + JEV 1.13 cloud consensus):
 uv run supportpipe run --input data/splits/dev.jsonl --mode hybrid
 
-# Process custom ticket batch file
+# Process custom ticket batch:
 uv run supportpipe run --input <path_to_tickets.jsonl> --mode offline
 ```
 
-*Note for Windows PowerShell users setting environment variables manually:*
-```powershell
-$env:LLM_MODE="offline"; uv run supportpipe run --input data/splits/dev.jsonl
-```
+---
 
 ### 4. Run Multi-Engine Benchmark (MOCK vs JEV vs Waterfall)
 ```bash
-# Evaluate Gold Development Set (219 tickets)
+# Evaluate Gold Development Set (219 tickets):
 uv run python scripts/benchmark_tri_mode.py --dataset dev --threshold 0.85
 
-# Evaluate Full Stress Test Set (4,321 tickets with 10 worker threads)
+# Evaluate Full Stress Test Set (4,321 tickets with 10 concurrent threads):
 uv run python scripts/benchmark_tri_mode.py --dataset stress --threshold 0.85 --workers 10
 ```
 
-### 5. Launch Native Interactive Operations Cockpit UI
-```bash
-uv run python -m supportpipe.server
-# Open http://127.0.0.1:8000 in your browser
-```
+---
 
-### 6. Run Test Suite & Linters
+### 5. Automated Tests & Quality Assurance
 ```bash
-# Run all 239 automated tests
+# Run all 239 automated unit and integration tests:
 uv run pytest tests/ -v
 
-# Run code style & static analysis
+# Run code style & static analysis:
 uv run ruff check src tests scripts
 ```
 
